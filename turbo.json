@@ -1,0 +1,58 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local", ".env"],
+  "globalEnv": [
+    "NODE_ENV",
+    "DATABASE_URL",
+    "REDIS_URL",
+    "NEXTAUTH_SECRET",
+    "NEXTAUTH_URL",
+    "NEXT_PUBLIC_API_URL",
+    "NEXT_PUBLIC_APP_URL",
+    "NEXT_PUBLIC_SENTRY_DSN"
+  ],
+  "globalPassThroughEnv": ["CI", "GITHUB_SHA"],
+  "tasks": {
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**/*.tsx", "src/**/*.ts", "tsconfig.json"],
+      "outputs": []
+    },
+    "lint": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "lint:api": {
+      "cache": false,
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["typecheck", "lint"],
+      "outputs": ["coverage/**", ".coverage/**"]
+    },
+    "test:api": {
+      "cache": false,
+      "outputs": [".coverage/**", "htmlcov/**"]
+    },
+    "build": {
+      "dependsOn": ["^build", "typecheck", "lint"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "inputs": [
+        "src/**",
+        "public/**",
+        "package.json",
+        "tsconfig.json",
+        "next.config.*",
+        "tailwind.config.*",
+        "postcss.config.*"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "clean": {
+      "cache": false
+    }
+  }
+}

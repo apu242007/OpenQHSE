@@ -1,0 +1,418 @@
+{
+  "name": "Inspección Pre-Operacional de Equipos Pesados de Minería",
+  "description": "Checklist diario pre-operacional para equipos pesados en operaciones mineras: camiones de acarreo, excavadoras, cargadores frontales y motoniveladoras. Cumple con DS 132 (Chile) y estándares MSHA (EE.UU.).",
+  "category": "Equipos y Maquinaria",
+  "is_global": true,
+  "tags": ["minería", "equipos pesados", "pre-operacional", "DS132", "MSHA", "camión", "excavadora"],
+  "schema_def": {
+    "sections": [
+      {
+        "title": "1. Identificación del Equipo y Operador",
+        "order": 1,
+        "questions": [
+          {
+            "id": "eq_tipo",
+            "text": "Tipo de equipo a inspeccionar",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Camión de acarreo (rígido)",
+              "Camión articulado",
+              "Excavadora hidráulica",
+              "Cargador frontal (Wheel Loader)",
+              "Motoniveladora",
+              "Bulldozer / Tractor de orugas",
+              "Perforadora",
+              "Otro equipo pesado"
+            ],
+            "weight": 0.5,
+            "help_text": "Seleccione el tipo principal de equipo. Esto activará preguntas específicas de la máquina."
+          },
+          {
+            "id": "eq_codigo",
+            "text": "Código / Número de identificación del equipo (patente o tag interno)",
+            "type": "text",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Ej: CAT-001, EX-045, 3X-2291"
+          },
+          {
+            "id": "eq_modelo",
+            "text": "Marca y modelo del equipo",
+            "type": "text",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Ej: Caterpillar 793F, Komatsu PC4000"
+          },
+          {
+            "id": "eq_horometro",
+            "text": "Lectura actual del horómetro (horas)",
+            "type": "number",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Registre el valor exacto mostrado en el panel del equipo"
+          },
+          {
+            "id": "eq_turno",
+            "text": "Turno de operación",
+            "type": "single_choice",
+            "required": true,
+            "options": ["Día (06:00 - 18:00)", "Noche (18:00 - 06:00)"],
+            "weight": 0.5,
+            "help_text": null
+          },
+          {
+            "id": "op_nombre",
+            "text": "Nombre completo del operador",
+            "type": "text",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": null
+          },
+          {
+            "id": "op_licencia",
+            "text": "Número de licencia interna de operación (clase y vigencia verificada)",
+            "type": "text",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Debe estar vigente para el tipo de equipo inspeccionado"
+          },
+          {
+            "id": "inspeccion_fecha",
+            "text": "Fecha y hora de la inspección",
+            "type": "date",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": null
+          },
+          {
+            "id": "inspeccion_ubicacion",
+            "text": "Ubicación GPS al momento de la inspección",
+            "type": "gps",
+            "required": false,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Capture la coordenada GPS desde el dispositivo"
+          }
+        ]
+      },
+      {
+        "title": "2. Sistema Mecánico y de Frenos",
+        "order": 2,
+        "questions": [
+          {
+            "id": "frenos_servicio",
+            "text": "¿Los frenos de servicio responden correctamente al aplicarlos a velocidad baja?",
+            "type": "single_choice",
+            "required": true,
+            "options": ["Correcto — Sin observaciones", "Deficiente — Respuesta tardía o parcial", "No operativo — Falla total"],
+            "weight": 3.0,
+            "help_text": "Pruebe en área plana antes de iniciar operación. FALLA = equipo no opera."
+          },
+          {
+            "id": "frenos_estacionamiento",
+            "text": "¿El freno de estacionamiento (parking brake) mantiene el equipo inmovilizado en pendiente del área de prueba?",
+            "type": "single_choice",
+            "required": true,
+            "options": ["Correcto — Sin observaciones", "Deficiente — Desliza levemente", "No operativo — No mantiene posición"],
+            "weight": 3.0,
+            "help_text": "Crítico para camiones en pendientes de mina"
+          },
+          {
+            "id": "frenos_foto",
+            "text": "Foto del sistema de frenos (visible desde acceso de servicio)",
+            "type": "photo",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Requerida cuando se reporta falla en frenos de servicio o estacionamiento",
+            "conditional": {
+              "show_if": {
+                "field": "frenos_servicio",
+                "operator": "neq",
+                "value": "Correcto — Sin observaciones"
+              }
+            }
+          },
+          {
+            "id": "direccion",
+            "text": "¿La dirección hidráulica responde sin resistencia anormal, vibración o juego excesivo?",
+            "type": "single_choice",
+            "required": true,
+            "options": ["Correcto — Sin observaciones", "Observación menor — Documentar", "Falla — Equipo fuera de servicio"],
+            "weight": 3.0,
+            "help_text": null
+          },
+          {
+            "id": "neumaticos_estado",
+            "text": "Estado general de neumáticos / orugas",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Bueno — Sin daños visibles, presión correcta",
+              "Regular — Desgaste avanzado pero operativo",
+              "Malo — Cortes, ampollas o presión crítica"
+            ],
+            "weight": 2.0,
+            "help_text": "Para equipos sobre orugas, evalúe tensión y estado de zapatas"
+          },
+          {
+            "id": "neumaticos_presion",
+            "text": "Presión de neumáticos (PSI) — registre el valor más bajo detectado",
+            "type": "number",
+            "required": true,
+            "options": null,
+            "weight": 1.5,
+            "help_text": "Consulte tabla de presiones del fabricante para el modelo específico. Rango típico CAT 793: 95-105 PSI",
+            "conditional": {
+              "show_if": {
+                "field": "eq_tipo",
+                "operator": "contains",
+                "value": "Camión"
+              }
+            }
+          },
+          {
+            "id": "niveles_aceite_motor",
+            "text": "¿El nivel de aceite del motor está dentro del rango operativo (dipstick entre MIN y MAX)?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 2.0,
+            "help_text": "Verifique con equipo en posición nivelada y motor frío o en ralentí 5 min."
+          },
+          {
+            "id": "niveles_hidraulico",
+            "text": "¿El nivel de aceite hidráulico es correcto según visor o dipstick?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 2.0,
+            "help_text": null
+          },
+          {
+            "id": "fugas_visibles",
+            "text": "¿Se observan fugas de fluidos (aceite, hidráulico, combustible, refrigerante) bajo el equipo o en mangueras?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Sin fugas visibles",
+              "Fuga menor — goteo lento, documentar para mantenimiento",
+              "Fuga mayor — charco o chorro, equipo fuera de servicio"
+            ],
+            "weight": 2.5,
+            "help_text": "Inspeccione el piso bajo el equipo y recorra visualmente mangueras y conexiones"
+          },
+          {
+            "id": "fugas_foto",
+            "text": "Fotografía de la fuga detectada",
+            "type": "photo",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Documente la ubicación exacta y magnitud de la fuga",
+            "conditional": {
+              "show_if": {
+                "field": "fugas_visibles",
+                "operator": "neq",
+                "value": "Sin fugas visibles"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "title": "3. Sistema Eléctrico, Luces y Visibilidad",
+        "order": 3,
+        "questions": [
+          {
+            "id": "luces_delanteras",
+            "text": "¿Las luces delanteras (alta y baja) funcionan correctamente?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 2.0,
+            "help_text": "Obligatorias para operación en turnos nocturnos y zonas de baja visibilidad"
+          },
+          {
+            "id": "luces_traseras_alarma",
+            "text": "¿Las luces traseras, stop y alarma de retroceso (beeper) funcionan?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 2.5,
+            "help_text": "La alarma de retroceso es crítica en operaciones de mina. Verificar decibeles mínimos requeridos."
+          },
+          {
+            "id": "luces_estroboscopicas",
+            "text": "¿Las luces estroboscópicas / balizas rotatorias de advertencia están operativas?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 2.0,
+            "help_text": null
+          },
+          {
+            "id": "espejos_visibilidad",
+            "text": "Estado de espejos retrovisores y sistemas de visibilidad (cámaras, radares de proximidad)",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Completo y operativo — todos los sistemas funcionan",
+              "Parcial — falta un espejo o una cámara (documentar)",
+              "Deficiente — falta visibilidad crítica, no operar"
+            ],
+            "weight": 2.5,
+            "help_text": "Incluya cámara de retroceso, radares Proximity Awareness System si aplica"
+          },
+          {
+            "id": "cabina_cinturon",
+            "text": "¿El cinturón de seguridad del operador está en buenas condiciones y traba correctamente?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 2.0,
+            "help_text": "Verifique mecanismo de traba, estado de la tela y anclajes"
+          },
+          {
+            "id": "cabina_rops_fops",
+            "text": "¿La estructura ROPS/FOPS de la cabina está íntegra (sin dobleces, cortes, soldaduras no autorizadas)?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 3.0,
+            "help_text": "ROPS = Roll Over Protection Structure | FOPS = Falling Object Protection Structure. Cualquier modificación invalida la certificación."
+          },
+          {
+            "id": "panel_alarmas",
+            "text": "Al encender el equipo, ¿el panel de instrumentos indica alguna alarma activa o luz de advertencia?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Sin alarmas — panel limpio al arrancar",
+              "Alarma de advertencia — baja prioridad (ej. mantenimiento próximo)",
+              "Alarma de acción — media prioridad, consultar supervisor",
+              "Alarma crítica — no operar, reportar a mantenimiento"
+            ],
+            "weight": 2.5,
+            "help_text": "Registre el código de falla exacto del panel si hay alarma"
+          },
+          {
+            "id": "panel_codigo_falla",
+            "text": "Código(s) de falla mostrados en el panel de diagnóstico",
+            "type": "text",
+            "required": true,
+            "options": null,
+            "weight": 1.0,
+            "help_text": "Ej: E0222, 168-03. Consulte manual del operador para descripción",
+            "conditional": {
+              "show_if": {
+                "field": "panel_alarmas",
+                "operator": "neq",
+                "value": "Sin alarmas — panel limpio al arrancar"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "title": "4. Dispositivos de Seguridad y EPP",
+        "order": 4,
+        "questions": [
+          {
+            "id": "extintor",
+            "text": "¿El extintor de incendios está presente, accesible, con seguro intacto y dentro de la fecha de vencimiento?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — presente y vigente",
+              "Vencido — requiere reemplazo inmediato",
+              "Ausente — no está en el equipo",
+              "Inaccesible — obstruido o sin soporte"
+            ],
+            "weight": 3.0,
+            "help_text": "Capacidad mínima recomendada para equipos pesados: 9 kg PQS"
+          },
+          {
+            "id": "cunas_calzos",
+            "text": "¿Los tacos / cuñas de inmovilización (chocks) están presentes y en buen estado?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 2.0,
+            "help_text": "Deben estar sujetos al equipo, no sueltos en la caja o cabina"
+          },
+          {
+            "id": "kit_derrame",
+            "text": "¿El kit de control de derrames (absorbente, paños, bolsa) está completo a bordo?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 1.5,
+            "help_text": "Requerimiento ambiental en zonas de operación minera"
+          },
+          {
+            "id": "epp_operador",
+            "text": "¿El operador porta el EPP completo requerido para acceder al equipo? (Seleccione todo lo que falta)",
+            "type": "multi_choice",
+            "required": true,
+            "options": [
+              "Casco de seguridad con barbuquejo",
+              "Lentes de seguridad",
+              "Protección auditiva",
+              "Guantes de trabajo",
+              "Calzado de seguridad con puntera de acero",
+              "Ropa de alta visibilidad",
+              "Ninguno — EPP completo y correcto"
+            ],
+            "weight": 2.0,
+            "help_text": "Si hay algún ítem faltante además de 'Ninguno', el operador no debe iniciar operaciones"
+          },
+          {
+            "id": "accesos_escaleras",
+            "text": "¿Las escaleras de acceso a la cabina, pasamanos y superficies antideslizantes están en buen estado?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Bueno — sin daños ni acumulación de barro/grasa",
+              "Regular — requiere limpieza o reparación menor",
+              "Malo — peldaño roto, pasamanos suelto o ausente"
+            ],
+            "weight": 2.0,
+            "help_text": "Incluya condición de los tres puntos de contacto disponibles"
+          },
+          {
+            "id": "observaciones_generales",
+            "text": "Observaciones generales adicionales del operador",
+            "type": "text",
+            "required": false,
+            "options": null,
+            "weight": 0.0,
+            "help_text": "Anote cualquier anomalía no cubierta en las secciones anteriores"
+          },
+          {
+            "id": "firma_operador",
+            "text": "Firma digital del operador confirmando la inspección",
+            "type": "signature",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Al firmar, el operador certifica que realizó la inspección personal y reportó todas las anomalías"
+          }
+        ]
+      }
+    ]
+  },
+  "scoring_config": {
+    "method": "weighted",
+    "max_score": 100.0,
+    "pass_threshold": 80.0,
+    "scoring_notes": "Puntaje <80% = Equipo requiere revisión supervisor. Cualquier falla en frenos, dirección, ROPS/FOPS o alarma crítica = equipo fuera de servicio independiente del puntaje total."
+  }
+}

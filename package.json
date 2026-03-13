@@ -1,0 +1,61 @@
+{
+  "name": "openqhse",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Open-source enterprise QHSE management platform for heavy industry",
+  "license": "AGPL-3.0",
+  "author": "OpenQHSE Contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openqhse/openqhse.git"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:api": "cd apps/api && python -m pytest tests/ -v --tb=short",
+    "lint": "turbo run lint",
+    "lint:api": "cd apps/api && ruff check . && ruff format --check .",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "clean": "turbo run clean",
+    "db:migrate": "cd apps/api && alembic upgrade head",
+    "db:rollback": "cd apps/api && alembic downgrade -1",
+    "db:seed": "cd apps/api && python -m scripts.seed_dev_data",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:dev": "docker compose up --build",
+    "docker:prod": "docker compose -f docker-compose.yml -f docker/docker-compose.prod.yml up --build -d",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.1",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5",
+    "turbo": "^2.3.0",
+    "typescript": "^5.7.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ],
+    "*.py": [
+      "ruff check --fix",
+      "ruff format"
+    ]
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

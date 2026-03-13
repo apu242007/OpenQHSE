@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# Build outputs
+dist/
+.next/
+.expo/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+*.log
+logs/
+
+# Storage
+uploads/
+minio-data/
+
+# Database
+*.sql.bak
+pgdata/
+
+# Misc
+*.bak
+*.tmp
+.turbo

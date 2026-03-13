@@ -1,0 +1,398 @@
+{
+  "name": "Checklist de Operaciones de Perforación Petrolera (API RP 54)",
+  "description": "Lista de verificación de seguridad para operaciones de perforación y workover en pozos de petróleo y gas, basada en API RP 54 (Recommended Practice for Occupational Safety for Oil and Gas Well Drilling and Servicing Operations). Aplicable a taladros terrestres y plataformas marinas.",
+  "category": "Petróleo y Gas",
+  "is_global": true,
+  "tags": ["perforación", "API RP 54", "petróleo", "gas", "well drilling", "BOP", "H2S", "workover"],
+  "schema_def": {
+    "sections": [
+      {
+        "title": "1. Información del Pozo y Preparación del Sitio",
+        "order": 1,
+        "questions": [
+          {
+            "id": "pozo_nombre",
+            "text": "Nombre y código del pozo / programa de perforación",
+            "type": "text",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Ej: POZO-LIMON-23A | WO-2024-007"
+          },
+          {
+            "id": "pozo_tipo_operacion",
+            "text": "Tipo de operación a realizar",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Perforación exploratoria (wildcat)",
+              "Perforación de desarrollo",
+              "Workover (reacondicionamiento)",
+              "Abandono de pozo",
+              "Completación",
+              "Operación especial — especificar en observaciones"
+            ],
+            "weight": 0.5,
+            "help_text": null
+          },
+          {
+            "id": "pozo_profundidad_objetivo",
+            "text": "Profundidad objetivo del pozo (metros o pies)",
+            "type": "number",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Indique la unidad usada en el campo 'Observaciones del campo'"
+          },
+          {
+            "id": "pozo_presencia_h2s",
+            "text": "¿El programa del pozo indica presencia esperada de H₂S (ácido sulfhídrico) ≥ 10 ppm?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 2.0,
+            "help_text": "Consulte el programa de perforación y datos de pozos vecinos. Si hay incertidumbre, tratar como pozo H2S."
+          },
+          {
+            "id": "pozo_h2s_plan",
+            "text": "¿Está disponible y comunicado el Plan de Contingencia de H₂S (incluyendo zona de seguridad, puntos de encuentro y sistema de monitoreo continuo)?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Plan documentado, comunicado en reunión de seguridad, monitores calibrados",
+              "Parcial — Plan existe pero no comunicado formalmente al personal",
+              "No conforme — Sin plan de contingencia H₂S",
+              "No aplica — Pozo no H₂S según programa"
+            ],
+            "weight": 3.5,
+            "help_text": "API RP 54 sección 8: requisitos específicos para operaciones con H₂S",
+            "conditional": {
+              "show_if": {
+                "field": "pozo_presencia_h2s",
+                "operator": "eq",
+                "value": "true"
+              }
+            }
+          },
+          {
+            "id": "sitio_demarcacion",
+            "text": "¿El área de operaciones está claramente demarcada con barreras físicas, señalización y zonas de exclusión definidas?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 2.0,
+            "help_text": "Incluye zona caliente (hot zone), zona de instalaciones y perímetro de seguridad"
+          },
+          {
+            "id": "sitio_vias_evacuacion",
+            "text": "¿Las vías de evacuación y puntos de encuentro (muster points) están despejados, señalizados y conocidos por todo el personal?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 3.0,
+            "help_text": "Verifique al menos 2 rutas de evacuación independientes desde la mesa de trabajo"
+          },
+          {
+            "id": "reunion_seguridad",
+            "text": "¿Se realizó la reunión de seguridad (safety meeting) pre-turno con todo el personal de la cuadrilla?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 2.5,
+            "help_text": "API RP 54 requiere reunión de seguridad antes de cada turno. Verificar registro firmado."
+          }
+        ]
+      },
+      {
+        "title": "2. Equipo de Control de Pozo y Prevención de Reventones (BOP)",
+        "order": 2,
+        "questions": [
+          {
+            "id": "bop_tipo",
+            "text": "Tipo de sistema BOP (Blowout Preventer) instalado",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "BOP anular simple",
+              "BOP anular + arietes ciegos",
+              "Stack completo (anular + arietes variables + arietes ciegos/corte)",
+              "Diverter (pozos superficiales de baja presión)",
+              "Sin BOP — justificar en observaciones"
+            ],
+            "weight": 1.0,
+            "help_text": "Consulte el programa de perforación y regulaciones locales para stack requerido según presión de poro esperada"
+          },
+          {
+            "id": "bop_presion_trabajo",
+            "text": "Presión nominal de trabajo del BOP (psi)",
+            "type": "number",
+            "required": true,
+            "options": null,
+            "weight": 1.0,
+            "help_text": "Debe ser superior a la presión máxima esperada del pozo. Verificar certificado del fabricante."
+          },
+          {
+            "id": "bop_prueba_presion",
+            "text": "¿El BOP fue probado a presión según API RP 53 en los últimos 7 días (o según regulación aplicable) y la prueba pasó?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Prueba aprobada, registro disponible con fecha y firma del Toolpusher",
+              "Pendiente — Prueba programada pero no realizada",
+              "No conforme — Prueba fallida o sin realizar",
+              "Fuera de plazo — Prueba vencida (>7 días)"
+            ],
+            "weight": 4.0,
+            "help_text": "CRÍTICO: No se permite perforar sin BOP probado y aprobado. API RP 53 especifica procedimientos de prueba."
+          },
+          {
+            "id": "bop_lineas_mata_choke",
+            "text": "¿Las líneas de matar (kill line) y estrangulación (choke line) están instaladas, probadas y accesibles?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 3.0,
+            "help_text": "Verificar válvulas manuales y actuadas, presión de prueba y estado de mangueras"
+          },
+          {
+            "id": "bop_acumulador",
+            "text": "¿El sistema acumulador (unidad hidráulica Koomey) tiene presión suficiente (mínimo 200 psi sobre presión operativa) para cerrar el BOP sin energía de red?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 3.5,
+            "help_text": "API RP 53: el acumulador debe poder cerrar el BOP completo sin bomba hidráulica activa"
+          },
+          {
+            "id": "bop_entrenamiento",
+            "text": "¿La cuadrilla realizó práctica de cierre de pozo (well control drill) en los últimos 7 días?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Drill realizado, tiempos dentro de parámetros, registro disponible",
+              "Parcial — Drill realizado pero tiempo de cierre excedió límite (2 min BOP completo)",
+              "No conforme — Sin drill realizado en últimos 7 días"
+            ],
+            "weight": 3.0,
+            "help_text": "API RP 54 sección 5.3: drills de control de pozo obligatorios. Tiempo máximo cierre BOP: 2 minutos."
+          }
+        ]
+      },
+      {
+        "title": "3. Integridad Mecánica del Taladro y Sistemas de Izaje",
+        "order": 3,
+        "questions": [
+          {
+            "id": "mast_derrick_inspeccion",
+            "text": "¿El mástil/derrick fue inspeccionado antes de iniciar operaciones y está dentro de su límite de carga certificada?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Inspección documentada, capacidad confirmada, sin daños estructurales",
+              "Observación menor — Corrosión superficial o tensores por ajustar",
+              "No conforme — Daño estructural, capacidad comprometida o sin inspección"
+            ],
+            "weight": 3.5,
+            "help_text": "La carga de izaje total (sarta de perforación + Kelly + swivel) no debe exceder el 80% de la capacidad nominal del mástil"
+          },
+          {
+            "id": "crown_saver",
+            "text": "¿El dispositivo anti-golpe de corona (crown-o-matic / crown saver) está instalado y funcionando?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 4.0,
+            "help_text": "CRÍTICO: El crown-o-matic previene que el bloque de viaje golpee la corona del mástil. Verificar test de funcionamiento."
+          },
+          {
+            "id": "traveling_block_cuñas",
+            "text": "¿Las cuñas (slips) de sujeción del tubo están en buen estado y operan correctamente desde la consola del perforador?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Operación suave, sin desgaste excesivo en dies (muelas)",
+              "Observación — Desgaste en dies, programar reemplazo",
+              "No conforme — Cuñas trabadas, mangueras dañadas o dies gastados (no retienen)"
+            ],
+            "weight": 3.0,
+            "help_text": "Inspeccione dies (muelas) por desgaste. Deben reemplazarse al alcanzar 50% de desgaste visible"
+          },
+          {
+            "id": "sarta_perforacion",
+            "text": "¿La sarta de perforación (drill string) fue inspeccionada visualmente por daños (ampollas, corrosión, dobladuras) al armar?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 2.5,
+            "help_text": "Use luz UV para detectar grietas en cajas y pines. Registrar números de serie de componentes críticos (BHA)."
+          },
+          {
+            "id": "sistema_rotacion",
+            "text": "¿El sistema de rotación (top drive o mesa rotaria) fue probado sin carga y funciona dentro de parámetros (RPM, torque, freno)?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 2.5,
+            "help_text": null
+          },
+          {
+            "id": "sistema_lodos",
+            "text": "Estado del sistema de circulación de lodos (bombas, línea de alta presión, manifold, pit system)",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Sin fugas, bombas a presión nominal, pit levels normales",
+              "Observación — Fuga menor en manifold o bomba auxiliar con problemas",
+              "No conforme — Fuga significativa o presión de bombas fuera de rango"
+            ],
+            "weight": 3.0,
+            "help_text": "Verificar presiones de test en línea de alta. Chequear nivel de pit vs. cálculo de volumen de sarta"
+          },
+          {
+            "id": "sistema_lodos_foto",
+            "text": "Fotografía de la fuga o anomalía detectada en el sistema de lodos (bombas, manifold, líneas o pit system)",
+            "type": "photo",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Documente la ubicación exacta, severidad y estado actual. Incluya referencia de equipo afectado (bomba 1, 2, línea de alta presión, etc.)",
+            "conditional": {
+              "show_if": {
+                "field": "sistema_lodos",
+                "operator": "neq",
+                "value": "Conforme — Sin fugas, bombas a presión nominal, pit levels normales"
+              }
+            }
+          },
+          {
+            "id": "sistema_deteccion_patadas",
+            "text": "¿El sistema de detección temprana de patadas (pit level indicators, flow show, pit alarms) está calibrado y con alarmas activas?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 4.0,
+            "help_text": "CRÍTICO: La detección temprana de patadas es la primera línea de defensa contra reventones. Verificar calibración y alarmas audibles."
+          }
+        ]
+      },
+      {
+        "title": "4. Personal, EPP y Ambiente de Trabajo Seguro",
+        "order": 4,
+        "questions": [
+          {
+            "id": "personal_certificaciones",
+            "text": "¿Todo el personal de control de pozo crítico (Perforador, Toolpusher) tiene certificación vigente IWCF o IADC Well Control?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Todos los roles críticos con certificación vigente (<2 años)",
+              "Parcial — Algún personal con certificación próxima a vencer (<3 meses)",
+              "No conforme — Personal sin certificación o con certificación vencida"
+            ],
+            "weight": 3.5,
+            "help_text": "Verificar certificados físicos o base de datos IWCF/IADC. API RP 54 + IADC: renovación cada 2 años."
+          },
+          {
+            "id": "epp_perforacion",
+            "text": "¿Todo el personal en área de perforación porta el EPP mínimo requerido por API RP 54?",
+            "type": "multi_choice",
+            "required": true,
+            "options": [
+              "Casco de seguridad (clase E mínimo)",
+              "Lentes de seguridad / careta facial",
+              "Protección auditiva (zona de bombas y motor)",
+              "Guantes resistentes a hidrocarburos",
+              "Calzado de seguridad antideslizante",
+              "Overol FR (resistente al fuego) en zona de riesgo",
+              "Equipo SCBA / respirador para H₂S (si aplica)",
+              "Chaleco salvavidas (operaciones offshore)",
+              "Ninguno faltante — EPP completo y correcto"
+            ],
+            "weight": 2.5,
+            "help_text": "Seleccione los ítems PRESENTES Y CORRECTOS. Si falta alguno crítico, detener operación."
+          },
+          {
+            "id": "detectores_gas",
+            "text": "¿Los detectores de gases portátiles (H₂S, LEL) están calibrados, con baterías cargadas y probados antes del turno?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Calibración vigente, bumped (probados), alarmas activas",
+              "Parcial — Equipos presentes pero sin bump test documentado hoy",
+              "No conforme — Detectores sin calibración vigente o ausentes"
+            ],
+            "weight": 3.5,
+            "help_text": "Límites de alarma H₂S: 1ra alarma 5 ppm, evacuación 10 ppm (API RP 49). LEL: alarma 10%, evacuación 25%."
+          },
+          {
+            "id": "permisos_trabajo",
+            "text": "¿Todas las actividades de trabajo en frío y caliente (soldadura, corte, chispeo) tienen Permiso de Trabajo vigente aprobado por el Toolpusher?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Todos los permisos emitidos y firmados",
+              "Parcial — Algunas actividades sin permiso formal",
+              "No conforme — Actividades de riesgo sin permiso",
+              "No aplica — No hay trabajo en caliente/frío planificado en este turno"
+            ],
+            "weight": 3.0,
+            "help_text": null
+          },
+          {
+            "id": "sistema_comunicacion",
+            "text": "¿El sistema de comunicación entre mesa de perforación, cabina del perforador y oficina del toolpusher está operativo (radio, intercomunicador)?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 2.5,
+            "help_text": "Incluir comunicación con base terrestre y helipuerto (offshore)"
+          },
+          {
+            "id": "orden_limpieza",
+            "text": "Estado general de orden y limpieza en área de trabajo (piso, escaleras, zona de tubing)",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Bueno — Sin derrames, pasillos despejados, materiales organizados",
+              "Regular — Derrames menores o materiales desordenados",
+              "Malo — Piso resbaladizo, pasillos obstruidos o acumulación de residuos"
+            ],
+            "weight": 2.0,
+            "help_text": "Resbalones y caídas son la causa más frecuente de lesiones en taladros (API RP 54)"
+          },
+          {
+            "id": "orden_limpieza_obs",
+            "text": "Describa las condiciones deficientes de orden y limpieza identificadas y las acciones correctivas inmediatas requeridas",
+            "type": "text",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Indique: ubicación exacta (ej: 'piso rig floor frente a mesa rotaria'), naturaleza del problema y responsable de la corrección antes de iniciar turno",
+            "conditional": {
+              "show_if": {
+                "field": "orden_limpieza",
+                "operator": "neq",
+                "value": "Bueno — Sin derrames, pasillos despejados, materiales organizados"
+              }
+            }
+          },
+          {
+            "id": "firma_supervisor",
+            "text": "Firma del Supervisor de Operaciones / Toolpusher",
+            "type": "signature",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Autoriza el inicio de operaciones confirmando conformidad con todos los ítems del checklist"
+          }
+        ]
+      }
+    ]
+  },
+  "scoring_config": {
+    "method": "weighted",
+    "max_score": 100.0,
+    "pass_threshold": 85.0,
+    "scoring_notes": "Puntaje <85%: No iniciar operaciones hasta corregir hallazgos. Ítems marcados CRÍTICO (crown-o-matic, BOP probado, detección patadas, H₂S plan): cualquier falla = detención inmediata de operaciones independiente del puntaje total."
+  }
+}

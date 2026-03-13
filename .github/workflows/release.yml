@@ -1,0 +1,416 @@
+# ==============================================================================
+# OpenQHSE — Release & Production Deploy Pipeline
+# ==============================================================================
+# Triggers:
+#   • Automatically on push to main (deploys to staging)
+#   • On GitHub Release publication (deploys to production)
+#   • Manual workflow_dispatch with env selection
+#
+# Corrections applied:
+#   I-9  : Single version resolver (resolve-meta job) — no duplicate steps
+#          anywhere else. All jobs consume needs.resolve-meta.outputs.version.
+#   I-10 : Trivy is BLOCKING on CRITICAL CVEs with an available fix
+#          (exit-code:'1', ignore-unfixed:true, severity:CRITICAL).
+#   misc : notify depends only on [resolve-meta, build], not on mutually
+#          exclusive deploy jobs — if: always() ensures it always runs.
+#          migrate-production is a hard gate before deploy-production.
+#          ubuntu-latest ships kubectl + helm — no azure/setup-* actions needed.
+# ==============================================================================
+name: Release & Deploy
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options: [staging, production]
+      version:
+        description: 'Image version tag (leave empty to use git SHA)'
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false  # Never cancel in-flight deploys
+
+env:
+  AWS_REGION: us-east-1
+  REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+  IMAGE_PREFIX: openqhse
+
+jobs:
+  # ── Determine version & environment ───────────────────────────────────────
+  # CORRECCIÓN I-9 + rename meta→resolve-meta:
+  #   This is the ONE AND ONLY place version is resolved.
+  #   Every downstream job reads: needs.resolve-meta.outputs.version
+  resolve-meta:
+    name: Resolve version & environment
+    runs-on: ubuntu-latest
+    outputs:
+      version:     ${{ steps.ver.outputs.version }}
+      environment: ${{ steps.env.outputs.environment }}
+      is_prod:     ${{ steps.env.outputs.is_prod }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: ver
+        run: |
+          if [[ -n "${{ inputs.version }}" ]]; then
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Resolve environment
+        id: env
+        run: |
+          if [[ "${{ inputs.environment }}" == "production" ]] || \
+             [[ "${{ github.event_name }}" == "release" ]] || \
+             [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "environment=production" >> "$GITHUB_OUTPUT"
+            echo "is_prod=true"           >> "$GITHUB_OUTPUT"
+          else
+            echo "environment=staging" >> "$GITHUB_OUTPUT"
+            echo "is_prod=false"       >> "$GITHUB_OUTPUT"
+          fi
+
+  # ── Build & push Docker images ────────────────────────────────────────────
+  build:
+    name: Build & push — ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: [resolve-meta]
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: api
+            context: apps/api
+            dockerfile: docker/api.Dockerfile
+          - service: web
+            context: apps/web
+            dockerfile: docker/web.Dockerfile
+          - service: ai-engine
+            context: apps/ai-engine
+            dockerfile: docker/ai-engine.Dockerfile
+          - service: celery
+            context: apps/api
+            dockerfile: docker/celery.Dockerfile
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-openqhse
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push ${{ matrix.service }}
+        uses: docker/build-push-action@v5
+        with:
+          context:    ${{ matrix.context }}
+          file:       ${{ matrix.dockerfile }}
+          push:       true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:${{ needs.resolve-meta.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:latest
+          build-args: |
+            APP_VERSION=${{ needs.resolve-meta.outputs.version }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp || '' }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to:   type=gha,scope=${{ matrix.service }},mode=max
+          provenance: true
+          sbom:       true
+
+  # ── Trivy security scan ───────────────────────────────────────────────────
+  # CORRECCIÓN I-10:
+  #   exit-code: '1'       → build FAILS if critical CVEs found
+  #   ignore-unfixed: true → only fail when a patch is actually available
+  #   severity: CRITICAL   → CRITICAL only (HIGH downgraded to warning)
+  scan:
+    name: Security scan (Trivy)
+    runs-on: ubuntu-latest
+    needs: [resolve-meta, build]
+    permissions:
+      id-token: write
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-openqhse
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ubuntu-latest already ships kubectl + helm; no azure/setup-kubectl or
+      # azure/setup-helm needed here or in any other job in this workflow.
+      - name: Trivy scan — API image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref:      ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-api:${{ needs.resolve-meta.outputs.version }}
+          format:         sarif
+          output:         trivy-api.sarif
+          severity:       CRITICAL
+          exit-code:      '1'
+          ignore-unfixed: true
+
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()   # upload the report even when Trivy returns exit-code 1
+        with:
+          sarif_file: trivy-api.sarif
+
+  # ── Run DB migrations → Staging ───────────────────────────────────────────
+  migrate-staging:
+    name: Run DB Migrations → Staging
+    runs-on: ubuntu-latest
+    needs: [resolve-meta, build]
+    if: needs.resolve-meta.outputs.environment == 'staging'
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-openqhse
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name openqhse-staging-eks --region ${{ env.AWS_REGION }}
+
+      - name: Run Alembic upgrade
+        run: |
+          VERSION="${{ needs.resolve-meta.outputs.version }}"
+          SAFE="${VERSION//[^a-zA-Z0-9]/-}"
+          kubectl -n openqhse-staging run "alembic-migrate-${SAFE}" \
+            --image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-api:${VERSION} \
+            --restart=Never \
+            --env="DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}" \
+            --command -- alembic upgrade head
+          kubectl -n openqhse-staging wait "pod/alembic-migrate-${SAFE}" \
+            --for=condition=Succeeded --timeout=120s
+          kubectl -n openqhse-staging logs "pod/alembic-migrate-${SAFE}"
+          kubectl -n openqhse-staging delete pod "alembic-migrate-${SAFE}"
+
+  # ── Deploy → Staging ──────────────────────────────────────────────────────
+  deploy-staging:
+    name: Deploy → Staging
+    runs-on: ubuntu-latest
+    needs: [resolve-meta, migrate-staging]
+    if: needs.resolve-meta.outputs.environment == 'staging'
+    environment:
+      name: staging
+      url: https://staging.openqhse.io
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-openqhse
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name openqhse-staging-eks --region ${{ env.AWS_REGION }}
+
+      - name: Helm upgrade (staging)
+        run: |
+          helm upgrade --install openqhse k8s/helm/ \
+            --namespace openqhse-staging \
+            --create-namespace \
+            --set appVersion=${{ needs.resolve-meta.outputs.version }} \
+            --set api.image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-api \
+            --set api.image.tag=${{ needs.resolve-meta.outputs.version }} \
+            --set web.image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-web \
+            --set web.image.tag=${{ needs.resolve-meta.outputs.version }} \
+            --set aiEngine.image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-ai-engine \
+            --set aiEngine.image.tag=${{ needs.resolve-meta.outputs.version }} \
+            --set celery.worker.image.tag=${{ needs.resolve-meta.outputs.version }} \
+            --set celery.beat.image.tag=${{ needs.resolve-meta.outputs.version }} \
+            --values k8s/helm/values-staging.yaml \
+            --timeout 8m \
+            --wait \
+            --atomic
+
+      - name: Health check
+        run: |
+          sleep 10
+          curl -sf https://staging.openqhse.io/api/v1/health \
+            || echo "⚠️  Health check failed — inspect pods with: kubectl -n openqhse-staging get pods"
+
+  # ── Manual approval gate → Production ────────────────────────────────────
+  approve-production:
+    name: Await approval → Production
+    runs-on: ubuntu-latest
+    needs: [resolve-meta, build, scan]
+    if: needs.resolve-meta.outputs.is_prod == 'true'
+    environment:
+      name: production
+      url: https://app.openqhse.io
+    steps:
+      - run: echo "Production deployment approved — proceeding to DB migrations..."
+
+  # ── Run DB migrations → Production ───────────────────────────────────────
+  # Hard gate: deploy-production only runs AFTER this job succeeds.
+  migrate-production:
+    name: Run DB Migrations → Production
+    runs-on: ubuntu-latest
+    needs: [resolve-meta, approve-production]
+    if: needs.resolve-meta.outputs.is_prod == 'true'
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-openqhse
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name openqhse-production-eks --region ${{ env.AWS_REGION }}
+
+      - name: Run Alembic migrations
+        run: |
+          kubectl run alembic-migrate-${{ github.run_id }} \
+            --image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-api:${{ needs.resolve-meta.outputs.version }} \
+            --restart=Never \
+            --namespace=openqhse \
+            --env="DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}" \
+            --command -- alembic upgrade head
+          kubectl wait pod/alembic-migrate-${{ github.run_id }} \
+            --for=condition=Succeeded \
+            --timeout=300s \
+            --namespace=openqhse
+          kubectl logs pod/alembic-migrate-${{ github.run_id }} -n openqhse
+          kubectl delete pod/alembic-migrate-${{ github.run_id }} -n openqhse
+
+  # ── Deploy → Production ───────────────────────────────────────────────────
+  deploy-production:
+    name: Deploy → Production
+    runs-on: ubuntu-latest
+    needs: [resolve-meta, migrate-production]   # ← migrate is the gate
+    if: needs.resolve-meta.outputs.is_prod == 'true'
+    environment:
+      name: production
+      url: https://app.openqhse.io
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-openqhse
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name openqhse-production-eks --region ${{ env.AWS_REGION }}
+
+      - name: Helm upgrade (production)
+        run: |
+          helm upgrade --install openqhse k8s/helm/ \
+            --namespace openqhse \
+            --create-namespace \
+            --set appVersion=${{ needs.resolve-meta.outputs.version }} \
+            --set api.image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-api \
+            --set api.image.tag=${{ needs.resolve-meta.outputs.version }} \
+            --set web.image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-web \
+            --set web.image.tag=${{ needs.resolve-meta.outputs.version }} \
+            --set aiEngine.image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-ai-engine \
+            --set aiEngine.image.tag=${{ needs.resolve-meta.outputs.version }} \
+            --set celery.worker.image.tag=${{ needs.resolve-meta.outputs.version }} \
+            --set celery.beat.image.tag=${{ needs.resolve-meta.outputs.version }} \
+            --values k8s/helm/values-production.yaml \
+            --timeout 10m \
+            --wait \
+            --atomic \
+            --history-max 5
+
+      - name: Smoke test
+        run: |
+          sleep 20
+          curl -sf https://app.openqhse.io/api/v1/health
+
+      - name: Tag GitHub deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ needs.resolve-meta.outputs.version }}';
+            await github.rest.repos.createRelease({
+              owner:      context.repo.owner,
+              repo:       context.repo.repo,
+              tag_name:   `deploy-prod-${version}`,
+              name:       `Production deploy ${version}`,
+              body:       `Deployed \`${version}\` to production.\n\nURL: https://app.openqhse.io`,
+              draft:      false,
+              prerelease: false,
+            }).catch(() => {});  // silently ignore duplicate tag errors
+
+  # ── Notify ────────────────────────────────────────────────────────────────
+  # CORRECCIÓN: needs [resolve-meta, build] only.
+  # deploy-staging and deploy-production are mutually exclusive branches —
+  # listing both in `needs` would cause GitHub to skip this job whenever one
+  # branch is skipped. Using `if: always()` ensures we always notify.
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    needs: [resolve-meta, build]
+    if: always()
+    steps:
+      - name: Slack notification
+        if: env.SLACK_WEBHOOK != ''
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        run: |
+          STATUS="${{ contains(needs.*.result, 'failure') && ':x: FAILED' || ':white_check_mark: SUCCESS' }}"
+          COLOR="${{ contains(needs.*.result, 'failure') && 'danger' || 'good' }}"
+          curl -sf -X POST "$SLACK_WEBHOOK" \
+            -H 'Content-type: application/json' \
+            -d "{
+              \"attachments\": [{
+                \"color\": \"${COLOR}\",
+                \"title\": \"OpenQHSE Deploy ${STATUS}\",
+                \"fields\": [
+                  {\"title\":\"Environment\",\"value\":\"${{ needs.resolve-meta.outputs.environment }}\",\"short\":true},
+                  {\"title\":\"Version\",    \"value\":\"${{ needs.resolve-meta.outputs.version }}\",    \"short\":true},
+                  {\"title\":\"Ref\",        \"value\":\"${{ github.ref }}\",                           \"short\":true},
+                  {\"title\":\"Actor\",      \"value\":\"${{ github.actor }}\",                         \"short\":true}
+                ]
+              }]
+            }"

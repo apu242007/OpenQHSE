@@ -1,0 +1,89 @@
+{{/*
+  OpenQHSE — PostgreSQL backup CronJob
+  Runs nightly at 02:00 UTC, streams a gzipped pg_dump directly to S3.
+  Requires:
+    .Values.backup.enabled      (bool)   — toggle the whole CronJob
+    .Values.backup.s3Bucket     (string) — target S3 bucket name
+    .Values.backup.awsRegion    (string) — default "us-east-1"
+    .Values.backup.schedule     (string) — default "0 2 * * *"
+    .Values.existingSecret / fullname secret must contain key: database-url
+*/}}
+{{- if .Values.backup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "openqhse.fullname" . }}-postgres-backup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "openqhse.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backup
+spec:
+  # "0 2 * * *" = 02:00 UTC every day
+  schedule: {{ .Values.backup.schedule | default "0 2 * * *" | quote }}
+  timeZone: "Etc/UTC"
+  concurrencyPolicy: Forbid            # never overlap two backup runs
+  successfulJobsHistoryLimit: 7        # keep one week of successful runs
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 3600      # hard timeout: 1 hour
+      template:
+        metadata:
+          labels:
+            app: postgres-backup
+            {{- include "openqhse.selectorLabels" . | nindent 12 }}
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: {{ include "openqhse.serviceAccountName" . }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999             # postgres system user
+            fsGroup: 999
+          containers:
+            - name: postgres-backup
+              image: postgres:17-alpine
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.existingSecret | default (include "openqhse.fullname" .) }}
+                      key: database-url
+                - name: BACKUP_BUCKET
+                  value: {{ required "backup.s3Bucket is required when backup.enabled=true" .Values.backup.s3Bucket | quote }}
+                - name: AWS_DEFAULT_REGION
+                  value: {{ .Values.backup.awsRegion | default "us-east-1" | quote }}
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -euo pipefail
+                  TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
+                  FILENAME="${TIMESTAMP}.sql.gz"
+                  echo "[backup] Starting PostgreSQL dump — ${TIMESTAMP}"
+                  pg_dump "$DATABASE_URL" \
+                    | gzip \
+                    | aws s3 cp - "s3://${BACKUP_BUCKET}/${FILENAME}" \
+                        --storage-class STANDARD_IA \
+                        --expected-size 0
+                  echo "[backup] Upload complete: s3://${BACKUP_BUCKET}/${FILENAME}"
+              resources:
+                requests:
+                  cpu: "100m"
+                  memory: "256Mi"
+                limits:
+                  cpu: "500m"
+                  memory: "512Mi"
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: tmp
+              emptyDir: {}
+{{- end }}

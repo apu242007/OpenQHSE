@@ -1,0 +1,203 @@
+# ═══════════════════════════════════════════════════════════════
+# OpenQHSE Platform — Development Docker Compose
+# ═══════════════════════════════════════════════════════════════
+
+services:
+  # ── PostgreSQL ────────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: openqhse-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: openqhse
+      POSTGRES_PASSWORD: openqhse_dev
+      POSTGRES_DB: openqhse
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openqhse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ─────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: openqhse-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── MinIO (S3-compatible storage) ─────────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: openqhse-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # ── Ollama (local LLM) ───────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: openqhse-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          memory: 4G
+
+  # ── API Backend ───────────────────────────────────────────
+  api:
+    build:
+      context: ..
+      dockerfile: docker/api.Dockerfile
+    container_name: openqhse-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://openqhse:openqhse_dev@postgres:5432/openqhse
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: dev-secret-key-change-in-production
+      CORS_ORIGINS: http://localhost:3000
+      ENVIRONMENT: development
+      DEBUG: "true"
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: openqhse
+      MINIO_USE_SSL: "false"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../apps/api:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ── AI Engine ─────────────────────────────────────────────
+  ai-engine:
+    build:
+      context: ..
+      dockerfile: docker/ai-engine.Dockerfile
+    container_name: openqhse-ai-engine
+    restart: unless-stopped
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: llama3.1:8b
+      REDIS_URL: redis://redis:6379/2
+      API_BASE_URL: http://api:8000/api/v1
+      ENVIRONMENT: development
+    ports:
+      - "8001:8001"
+    depends_on:
+      - redis
+      - ollama
+    volumes:
+      - ../apps/ai-engine:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+
+  # ── Celery Worker ─────────────────────────────────────────
+  celery-worker:
+    build:
+      context: ..
+      dockerfile: docker/celery.Dockerfile
+    container_name: openqhse-celery-worker
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://openqhse:openqhse_dev@postgres:5432/openqhse
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      SECRET_KEY: dev-secret-key-change-in-production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../apps/api:/app
+
+  # ── Celery Beat (scheduler) ──────────────────────────────
+  celery-beat:
+    build:
+      context: ..
+      dockerfile: docker/celery.Dockerfile
+    container_name: openqhse-celery-beat
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://openqhse:openqhse_dev@postgres:5432/openqhse
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: celery -A app.celery_app:celery beat --loglevel=info
+    volumes:
+      - ../apps/api:/app
+
+  # ── Prometheus ────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: openqhse-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=30d"
+
+  # ── Grafana ───────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: openqhse-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  ollama_data:
+  prometheus_data:
+  grafana_data:

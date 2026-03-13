@@ -1,0 +1,46 @@
+[project]
+name = "openqhse-ai-engine"
+version = "0.7.0"
+description = "OpenQHSE AI Engine — LLM-powered inspection analysis, risk scoring and report generation (LangChain 0.3.x LCEL / Ollama 0.4.x)"
+requires-python = ">=3.11"
+license = { text = "AGPL-3.0" }
+
+dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "httpx>=0.26.0",
+    # LangChain 0.3.x — LCEL-based API (replaces deprecated LLMChain/ConversationBufferMemory)
+    "langchain>=0.3.0",
+    "langchain-community>=0.3.0",
+    "langchain-core>=0.3.0",
+    "langchain-ollama>=0.2.0",
+    # Ollama Python client 0.4.x — attribute-access response objects (response.message.content)
+    "ollama>=0.4.0",
+    "redis>=5.0.0",
+    "structlog>=24.1.0",
+    "prometheus-fastapi-instrumentator>=6.1.0",
+    "tiktoken>=0.5.2",
+    "numpy>=1.26.0",
+    "scikit-learn>=1.4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.23.0",
+    "httpx>=0.26.0",
+    "ruff>=0.1.0",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "S", "B", "A", "C4", "PT"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

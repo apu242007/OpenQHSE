@@ -1,0 +1,54 @@
+# ── Version control ──────────────────────────────────────────
+.git
+.gitignore
+.gitattributes
+
+# ── Node ─────────────────────────────────────────────────────
+node_modules
+**/node_modules
+**/.npm
+**/.yarn
+.pnpm-store
+
+# ── Next.js build output ─────────────────────────────────────
+apps/web/.next
+apps/web/out
+
+# ── Python ───────────────────────────────────────────────────
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.venv*
+**/venv
+**/.env
+**/*.egg-info
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+
+# ── Infrastructure & CI (not needed in containers) ───────────
+.github
+k8s
+infra
+docker
+docs
+scripts
+
+# ── Editor & OS ──────────────────────────────────────────────
+.vscode
+.idea
+**/.DS_Store
+**/Thumbs.db
+
+# ── Test artifacts ───────────────────────────────────────────
+**/coverage
+**/.coverage
+**/htmlcov
+**/test-results
+**/*.log
+
+# ── Env files (use compose environment: instead) ─────────────
+**/.env.local
+**/.env.production
+**/.env.staging

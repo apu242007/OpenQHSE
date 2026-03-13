@@ -1,0 +1,105 @@
+{
+  "name": "OpenQHSE Platform",
+  "short_name": "OpenQHSE",
+  "description": "Plataforma open-source de gestión QHSE para industria pesada. Inspecciones, incidentes, permisos, auditorías y más.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0066FF",
+  "background_color": "#141921",
+  "lang": "es",
+  "dir": "ltr",
+  "categories": ["business", "productivity", "utilities"],
+  "screenshots": [
+    {
+      "src": "/screenshots/dashboard.webp",
+      "sizes": "1280x720",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "Dashboard principal de OpenQHSE"
+    },
+    {
+      "src": "/screenshots/mobile-inspection.webp",
+      "sizes": "390x844",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Inspección móvil"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nueva Inspección",
+      "short_name": "Inspección",
+      "description": "Iniciar una nueva inspección de seguridad",
+      "url": "/inspections/new",
+      "icons": [{ "src": "/icons/shortcut-inspection.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Reportar Incidente",
+      "short_name": "Incidente",
+      "description": "Registrar un nuevo incidente",
+      "url": "/incidents/new",
+      "icons": [{ "src": "/icons/shortcut-incident.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Marketplace",
+      "short_name": "Marketplace",
+      "description": "Explorar templates QHSE",
+      "url": "/marketplace",
+      "icons": [{ "src": "/icons/shortcut-marketplace.png", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

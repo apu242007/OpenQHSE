@@ -1,0 +1,463 @@
+{
+  "name": "Auditoría Ambiental ISO 14001:2015 — Evaluación Completa del SGA",
+  "description": "Auditoría interna completa del Sistema de Gestión Ambiental (SGA) basada en los 10 capítulos de ISO 14001:2015. Evalúa el nivel de conformidad de la organización, identifica aspectos ambientales significativos, obligaciones de cumplimiento y el desempeño ambiental medible.",
+  "category": "Auditorías y Conformidad",
+  "is_global": true,
+  "tags": ["ISO 14001", "ambiental", "SGA", "auditoría interna", "aspecto ambiental", "conformidad", "EMS"],
+  "schema_def": {
+    "sections": [
+      {
+        "title": "1. Contexto de la Organización y Partes Interesadas (Cláusulas 4.1 — 4.4)",
+        "order": 1,
+        "questions": [
+          {
+            "id": "c4_contexto_externo",
+            "text": "4.1 — ¿La organización ha identificado los factores externos e internos relevantes para su propósito ambiental (condiciones ambientales locales, regulación, partes interesadas, tecnología, actividades)?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Análisis PESTEL/FODA ambiental documentado y actualizado (<2 años)",
+              "Conforme parcial — Factores identificados sin análisis formal documentado",
+              "No conforme menor — Análisis incompleto o desactualizado (>2 años)",
+              "No conforme mayor — Sin identificación de contexto ambiental"
+            ],
+            "weight": 2.0,
+            "help_text": "Incluir condiciones ambientales que pueden verse afectadas o que afectan a la organización: calidad del aire, agua, suelo, biodiversidad local, comunidades vecinas"
+          },
+          {
+            "id": "c4_partes_interesadas",
+            "text": "4.2 — ¿La organización ha identificado las partes interesadas ambientales (reguladores, comunidades, ONGs, clientes) y sus necesidades y expectativas?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Registro actualizado con necesidades y expectativas documentadas",
+              "Conforme parcial — Identificadas pero sin análisis de necesidades/expectativas",
+              "No conforme menor — Identificación parcial (falta reguladores o comunidad)",
+              "No conforme mayor — Sin identificación formal de partes interesadas"
+            ],
+            "weight": 2.0,
+            "help_text": "Evidencias: registro de partes interesadas, actas de reunión con comunidades, comunicaciones con autoridad ambiental"
+          },
+          {
+            "id": "c4_alcance_sga",
+            "text": "4.3 — ¿El alcance del SGA está definido, documentado y disponible, considerando los límites físicos y las actividades, productos y servicios que pueden tener impactos ambientales significativos?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Documentado, incluye actividades tercerizadas relevantes, accesible",
+              "Conforme parcial — Definido pero sin actividades tercerizadas o instalaciones auxiliares",
+              "No conforme menor — Alcance ambiguo o no actualizado",
+              "No conforme mayor — Sin documento de alcance del SGA"
+            ],
+            "weight": 2.0,
+            "help_text": "El alcance debe ser creíble y no excluir actividades con impactos significativos. Verificar si incluye contratistas clave."
+          },
+          {
+            "id": "c4_procesos_sga",
+            "text": "4.4 — ¿El SGA está establecido, implementado, mantenido y continuamente mejorado, integrando los procesos de gestión ambiental en los procesos del negocio?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — SGA integrado en procesos operativos con evidencia de mejora continua",
+              "Conforme parcial — SGA implementado pero no integrado (funciona como silo separado)",
+              "No conforme menor — Implementación parcial de procesos SGA",
+              "No conforme mayor — SGA no implementado sistemáticamente"
+            ],
+            "weight": 2.5,
+            "help_text": "La integración del SGA en la cadena de valor es un requisito implícito de ISO 14001:2015"
+          }
+        ]
+      },
+      {
+        "title": "2. Liderazgo Ambiental y Política (Cláusula 5)",
+        "order": 2,
+        "questions": [
+          {
+            "id": "c5_liderazgo",
+            "text": "5.1 — ¿La alta dirección demuestra liderazgo y compromiso con el SGA? (política firmada, recursos asignados, integración en estrategia de negocio, participación en revisión)",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Evidencia objetiva sólida de liderazgo activo",
+              "Conforme parcial — Compromiso declarado, participación limitada",
+              "No conforme menor — Compromiso formal pero sin evidencia de acciones",
+              "No conforme mayor — Alta dirección desvinculada del SGA"
+            ],
+            "weight": 2.5,
+            "help_text": "A diferencia de ISO 14001:2004, la versión 2015 exige liderazgo directo de la alta dirección, no solo un 'representante'"
+          },
+          {
+            "id": "c5_politica_ambiental",
+            "text": "5.2 — ¿La política ambiental incluye todos los compromisos requeridos por ISO 14001:2015 cl. 5.2?",
+            "type": "multi_choice",
+            "required": true,
+            "options": [
+              "Apropiada al contexto y actividades de la organización",
+              "Compromiso de protección del medio ambiente (prevención contaminación, biodiversidad, clima)",
+              "Compromiso de cumplir obligaciones de cumplimiento aplicables",
+              "Compromiso de mejora continua del SGA para mejorar desempeño ambiental",
+              "Disponible como información documentada",
+              "Comunicada dentro de la organización",
+              "Disponible para partes interesadas (publicada o bajo solicitud)",
+              "Revisada periódicamente para mantener pertinencia"
+            ],
+            "weight": 2.5,
+            "help_text": "La política debe ir más allá de 'prevención de contaminación' — ISO 14001:2015 amplía a biodiversidad, cambio climático, uso sostenible de recursos"
+          },
+          {
+            "id": "c5_roles_responsabilidades",
+            "text": "5.3 — ¿La alta dirección ha asignado y comunicado responsabilidades y autoridades para el SGA, asegurando que el SGA cumpla los requisitos de la norma y se informe su desempeño a la alta dirección?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Organigrama ambiental, descripciones de cargo y canales de reporte claros",
+              "Conforme parcial — Responsable de SGA designado sin estructura de soporte formal",
+              "No conforme menor — Responsabilidades compartidas sin claridad de autoridad",
+              "No conforme mayor — Sin asignación formal de responsabilidades ambientales"
+            ],
+            "weight": 2.0,
+            "help_text": null
+          }
+        ]
+      },
+      {
+        "title": "3. Planificación — Aspectos, Riesgos y Objetivos Ambientales (Cláusula 6)",
+        "order": 3,
+        "questions": [
+          {
+            "id": "c6_aspectos_ambientales",
+            "text": "6.1.2 — ¿La organización identifica los aspectos ambientales de sus actividades/productos/servicios considerando el ciclo de vida y condiciones normales, anormales y de emergencia?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Identificación sistemática documentada, ciclo de vida considerado, actualizada",
+              "Conforme parcial — Aspectos identificados sin consideración de ciclo de vida o condiciones anormales",
+              "No conforme menor — Identificación parcial (faltan actividades tercerizadas o instalaciones auxiliares)",
+              "No conforme mayor — Sin identificación formal de aspectos ambientales"
+            ],
+            "weight": 3.5,
+            "help_text": "Aspectos típicos: emisiones al aire, vertimientos al agua, generación de residuos, uso de suelo, consumo de energía/agua, ruido, vibración"
+          },
+          {
+            "id": "c6_aspectos_significativos",
+            "text": "¿Los aspectos ambientales significativos (AAS) están determinados con criterios definidos y documentados (escala, gravedad, probabilidad, partes interesadas)?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Metodología documentada, AAS determinados y comunicados",
+              "Conforme parcial — AAS determinados con criterios no documentados",
+              "No conforme menor — Metodología subjetiva o sin criterios claros",
+              "No conforme mayor — Sin determinación de aspectos significativos"
+            ],
+            "weight": 3.5,
+            "help_text": "La norma no prescribe la metodología, pero sí exige que sea sistemática. Verifique consistencia y repetibilidad del método usado."
+          },
+          {
+            "id": "c6_numero_aas",
+            "text": "¿Cuántos Aspectos Ambientales Significativos (AAS) tiene actualmente la organización documentados?",
+            "type": "number",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Un número inusualmente bajo (<3) puede indicar subestimación. Un número muy alto (>30) puede indicar falta de criterio de priorización."
+          },
+          {
+            "id": "c6_riesgos_oportunidades",
+            "text": "6.1.1 — ¿La organización ha determinado los riesgos y oportunidades ambientales (incluyendo obligaciones de cumplimiento y situaciones de emergencia) y planificado acciones para abordarlos?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Riesgos y oportunidades documentados con planes de acción integrados en SGA",
+              "Conforme parcial — Identificados sin planes de acción formales",
+              "No conforme menor — Solo riesgos, sin oportunidades de mejora ambiental",
+              "No conforme mayor — Sin análisis de riesgos y oportunidades del SGA"
+            ],
+            "weight": 3.0,
+            "help_text": "ISO 14001:2015 exige también identificar oportunidades (ej: eficiencia energética, economía circular, nuevos mercados sostenibles)"
+          },
+          {
+            "id": "c6_obligaciones_cumplimiento",
+            "text": "6.1.3 — ¿La organización mantiene actualizada la identificación de sus obligaciones de cumplimiento ambiental (legales + compromisos voluntarios) y evalúa su cumplimiento periódicamente?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Registro legal ambiental actualizado (<6 meses), evaluación de cumplimiento documentada",
+              "Conforme parcial — Registrado pero sin evaluación formal de cumplimiento",
+              "No conforme menor — Desactualizado (>12 meses) o incompleto",
+              "No conforme mayor — Sin identificación de obligaciones de cumplimiento"
+            ],
+            "weight": 4.0,
+            "help_text": "Incluir: permisos ambientales, normativas de emisiones/vertimientos, certificaciones voluntarias, acuerdos con comunidades, compromisos corporativos (ESG)"
+          },
+          {
+            "id": "c6_objetivos_ambientales",
+            "text": "6.2 — ¿Los objetivos ambientales son SMART, coherentes con la política y los AAS, con indicadores de desempeño ambiental y plan de acción con recursos y plazos asignados?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Objetivos SMART, KPIs ambientales, plan de acción con seguimiento documentado",
+              "Conforme parcial — Objetivos definidos sin KPIs o sin seguimiento periódico",
+              "No conforme menor — Objetivos vagos o sin relación con AAS",
+              "No conforme mayor — Sin objetivos ambientales definidos"
+            ],
+            "weight": 3.0,
+            "help_text": "KPIs típicos: reducción de residuos (%), consumo de agua (m³/unidad producida), emisiones CO₂ (tCO₂e/año), índice de reciclaje (%)"
+          }
+        ]
+      },
+      {
+        "title": "4. Apoyo y Operación Ambiental (Cláusulas 7 y 8)",
+        "order": 4,
+        "questions": [
+          {
+            "id": "c7_competencia_ambiental",
+            "text": "7.2 — ¿Las personas que trabajan en actividades con impacto ambiental significativo son competentes (formación, capacitación, experiencia específica)?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Perfiles de cargo con requisitos ambientales, planes de formación activos, registros",
+              "Conforme parcial — Capacitación ambiental general, sin especificidad por rol",
+              "No conforme menor — Brechas de competencia en roles con impacto ambiental alto",
+              "No conforme mayor — Sin gestión de competencias ambientales"
+            ],
+            "weight": 2.5,
+            "help_text": "Roles típicos: operadores de planta, gestores de residuos, conductores de sustancias peligrosas, mantenimiento de sistemas de tratamiento"
+          },
+          {
+            "id": "c7_comunicacion_ambiental",
+            "text": "7.4 — ¿La organización tiene un proceso de comunicación interna y externa sobre SGA, incluyendo comunicación proactiva sobre desempeño ambiental?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Comunicación bidireccional documentada, reporte ambiental publicado",
+              "Conforme parcial — Comunicación interna activa, externa reactiva solo",
+              "No conforme menor — Comunicación ad hoc sin proceso formal",
+              "No conforme mayor — Sin comunicación ambiental formal"
+            ],
+            "weight": 2.0,
+            "help_text": "ISO 14001:2015 agrega la decisión explícita de si comunicar externamente. Si se decide comunicar, debe ser coherente, confiable y transparente."
+          },
+          {
+            "id": "c8_controles_aas",
+            "text": "8.1 — ¿Existen controles operacionales documentados para cada Aspecto Ambiental Significativo, incluyendo criterios operativos y procedimientos?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Procedimientos o instrucciones para todos los AAS, verificados en campo",
+              "Conforme parcial — Controles para AAS mayores, falta para algunos menores",
+              "No conforme menor — Controles documentados pero no implementados en campo",
+              "No conforme mayor — Sin controles operacionales para AAS"
+            ],
+            "weight": 3.5,
+            "help_text": "Verifique muestra de 3 AAS: ¿existe procedimiento escrito? ¿el personal lo conoce? ¿hay registros de cumplimiento?"
+          },
+          {
+            "id": "c8_cadena_suministro",
+            "text": "8.1 — ¿La organización controla los impactos ambientales de proveedores y contratistas relevantes (bienes y servicios externalizados)?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Criterios ambientales en selección, evaluación de proveedores y requisitos contractuales",
+              "Conforme parcial — Criterios ambientales en contratos sin evaluación formal de proveedores",
+              "No conforme menor — Control solo de contratistas en sitio, no de proveedores remotos",
+              "No conforme mayor — Sin control ambiental de la cadena de suministro"
+            ],
+            "weight": 2.5,
+            "help_text": "ISO 14001:2015 amplía el control a toda la cadena de valor con perspectiva de ciclo de vida"
+          },
+          {
+            "id": "c8_preparacion_emergencias",
+            "text": "8.2 — ¿Los planes de respuesta a emergencias ambientales (derrames, fugas, incendios con impacto ambiental) están actualizados, comunicados y probados mediante simulacros?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Plan actualizado, simulacros con escenario ambiental realizados (<12 meses), mejoras documentadas",
+              "Conforme parcial — Plan existe, simulacro sin componente ambiental específico",
+              "No conforme menor — Plan desactualizado o sin pruebas de simulacro",
+              "No conforme mayor — Sin plan de respuesta a emergencias ambientales"
+            ],
+            "weight": 3.0,
+            "help_text": "El plan debe incluir: protocolo de notificación a autoridad ambiental, materiales de contención de derrames, comunicación a comunidades afectadas"
+          },
+          {
+            "id": "c8_residuos_peligrosos",
+            "text": "¿El manejo de residuos peligrosos cumple con la legislación aplicable (registro, etiquetado, almacenamiento, transporte, disposición final con gestor autorizado)?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Todos los requisitos legales cumplidos con evidencia documental",
+              "Conforme parcial — Cumplimiento parcial (ej: registro correcto, pero almacenamiento con observaciones)",
+              "No conforme menor — Incumplimiento de requisitos formales sin riesgo ambiental inmediato",
+              "No conforme mayor — Incumplimiento con riesgo de impacto ambiental real"
+            ],
+            "weight": 3.5,
+            "help_text": "Solicitar: manifiestos de transporte, contratos con gestores autorizados, hojas de datos de seguridad (SDS) de residuos, inspección del área de almacenamiento"
+          },
+          {
+            "id": "c8_residuos_foto_almacenamiento",
+            "text": "Fotografía del área de almacenamiento de residuos peligrosos mostrando el incumplimiento o hallazgo detectado",
+            "type": "photo",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Documente: recipientes sin etiqueta o etiqueta incorrecta, incompatibilidad química, falta de kit de derrames, acumulación excesiva o instalación inadecuada (sin techo, sin bunding)",
+            "conditional": {
+              "show_if": {
+                "field": "c8_residuos_peligrosos",
+                "operator": "neq",
+                "value": "Conforme — Todos los requisitos legales cumplidos con evidencia documental"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "title": "5. Evaluación del Desempeño y Mejora Ambiental (Cláusulas 9 y 10)",
+        "order": 5,
+        "questions": [
+          {
+            "id": "c9_monitoreo_ambiental",
+            "text": "9.1.1 — ¿La organización monitorea, mide y analiza las variables ambientales clave con la frecuencia establecida (emisiones, vertimientos, residuos, consumo de recursos)?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Plan de monitoreo implementado, laboratorios acreditados, datos disponibles",
+              "Conforme parcial — Monitoreo realizado pero sin plan formal o frecuencia inadecuada",
+              "No conforme menor — Monitoreo incompleto (falta algún parámetro clave)",
+              "No conforme mayor — Sin monitoreo ambiental formal"
+            ],
+            "weight": 3.5,
+            "help_text": "Verificar: plan de monitoreo ambiental, últimos informes de laboratorio, comparación con límites permisibles"
+          },
+          {
+            "id": "c9_evaluacion_cumplimiento",
+            "text": "9.1.2 — ¿La organización evalúa periódicamente el cumplimiento de sus obligaciones de cumplimiento ambiental y mantiene conocimiento de su estado de conformidad?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Evaluación documentada, periodicidad definida, incumplimientos gestionados",
+              "Conforme parcial — Evaluación informal basada en monitoreo, sin proceso sistemático",
+              "No conforme menor — Evaluación de cumplimiento desactualizada (>12 meses)",
+              "No conforme mayor — Sin evaluación formal de cumplimiento de obligaciones"
+            ],
+            "weight": 4.0,
+            "help_text": "ISO 14001:2015 requiere que la organización CONOZCA su nivel de cumplimiento, no solo que tenga las normas identificadas"
+          },
+          {
+            "id": "c9_auditoria_interna",
+            "text": "9.2 — ¿Se han realizado auditorías internas del SGA con programa planificado, auditores competentes e independientes, e informes con seguimiento de hallazgos?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Programa anual cumplido, auditores calificados, cierre de hallazgos documentado",
+              "Conforme parcial — Auditorías realizadas sin programa formal o auditores no independientes",
+              "No conforme menor — Programa incompleto (menos del 80% ejecutado en el año)",
+              "No conforme mayor — Sin auditorías internas del SGA realizadas"
+            ],
+            "weight": 3.0,
+            "help_text": null
+          },
+          {
+            "id": "c9_revision_direccion",
+            "text": "9.3 — ¿La revisión por la dirección incluye las entradas requeridas (AAS, objetivos, monitoreo, auditorías, partes interesadas) y genera salidas con decisiones y acciones?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Acta de revisión completa con entradas ISO 14001:2015 y decisiones documentadas",
+              "Conforme parcial — Revisión realizada sin todas las entradas requeridas",
+              "No conforme menor — Revisión parcial o sin documentación de decisiones",
+              "No conforme mayor — Sin revisión por la dirección del SGA"
+            ],
+            "weight": 3.0,
+            "help_text": "Verificar que el acta incluya: desempeño vs. objetivos, estado de acciones previas, oportunidades de mejora y cambios al SGA acordados"
+          },
+          {
+            "id": "c10_no_conformidades",
+            "text": "10.2 — ¿Existe un proceso para tratar no conformidades y acciones correctivas del SGA, con análisis de causa raíz y verificación de eficacia?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Proceso sistemático con análisis causa raíz y seguimiento de eficacia documentado",
+              "Conforme parcial — Acciones correctivas realizadas sin análisis de causa raíz formal",
+              "No conforme menor — No conformidades registradas sin seguimiento de cierre",
+              "No conforme mayor — Sin proceso de gestión de no conformidades"
+            ],
+            "weight": 3.0,
+            "help_text": "Revisar las últimas 5 NC: ¿tienen causa raíz identificada? ¿las acciones correctivas se implementaron? ¿se verificó su eficacia?"
+          },
+          {
+            "id": "c10_desempeno_tendencia",
+            "text": "¿Las tendencias de desempeño ambiental (últimos 3 años) muestran mejora en los indicadores clave alineados con los objetivos del SGA?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Mejora sostenida — Tendencia positiva en ≥80% de los indicadores clave",
+              "Mejora parcial — Progreso en algunos indicadores, estancamiento en otros",
+              "Sin cambio — Desempeño estable sin mejora clara",
+              "Deterioro — Tendencia negativa en indicadores clave",
+              "No aplicable — SGA nuevo (<3 años de datos)"
+            ],
+            "weight": 3.0,
+            "help_text": "Solicitar historial de KPIs ambientales: consumo de agua, energía, generación de residuos, emisiones, vertimientos vs. metas anuales"
+          },
+          {
+            "id": "hallazgos_incumplimiento_legal",
+            "text": "¿Se identificaron incumplimientos de obligaciones de cumplimiento legal ambiental durante esta auditoría?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 1.0,
+            "help_text": "Un incumplimiento legal puede generar multas, suspensión de permisos y daño reputacional. Requiere acción correctiva inmediata."
+          },
+          {
+            "id": "hallazgos_descripcion_legal",
+            "text": "Describa el incumplimiento legal detectado, incluyendo el requisito legal infringido, la evidencia y el impacto potencial",
+            "type": "text",
+            "required": true,
+            "options": null,
+            "weight": 1.0,
+            "help_text": "Ej: 'Vertimiento al río X excede límite de DBO establecido en Resolución Y. Informe lab. fecha Z muestra DBO = 320 mg/L vs. límite 200 mg/L'",
+            "conditional": {
+              "show_if": {
+                "field": "hallazgos_incumplimiento_legal",
+                "operator": "eq",
+                "value": "true"
+              }
+            }
+          },
+          {
+            "id": "foto_evidencia_ambiental",
+            "text": "Fotografía de evidencia de impacto ambiental o hallazgo crítico identificado durante la auditoría de campo",
+            "type": "photo",
+            "required": false,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Incluya fotografías de: áreas de almacenamiento de residuos, fuentes de emisión, puntos de descarga, estado de instalaciones de control ambiental",
+            "conditional": {
+              "show_if": {
+                "field": "hallazgos_incumplimiento_legal",
+                "operator": "eq",
+                "value": "true"
+              }
+            }
+          },
+          {
+            "id": "firma_auditor_ambiental",
+            "text": "Firma digital del Auditor Ambiental Líder",
+            "type": "signature",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "El auditor certifica que los hallazgos están respaldados por evidencia objetiva y la auditoría fue conducida conforme al plan de auditoría y requisitos de ISO 19011:2018"
+          }
+        ]
+      }
+    ]
+  },
+  "scoring_config": {
+    "method": "weighted",
+    "max_score": 100.0,
+    "pass_threshold": 70.0,
+    "scoring_notes": "90-100%: SGA maduro y efectivo. 70-89%: Conforme con oportunidades de mejora. 50-69%: Brechas significativas — plan de acción requerido. <50%: SGA ineficaz — revisión completa requerida. Incumplimiento legal detectado: acción correctiva inmediata independiente del puntaje. Para certificación ISO 14001: no deben existir No Conformidades Mayores al momento de la auditoría de certificación."
+  }
+}

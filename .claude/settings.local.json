@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\.\\(yml|yaml\\)$\")",
+      "Bash(grep -n \"export default\\\\|return \\(\\\\|</div>$\\\\|kpi\\\\|KPI\\\\|widget\\\\|Widget\" \"c:\\\\Users\\\\jorge\\\\OpenQHSE Platform\\\\apps\\\\web\\\\src\\\\app\\\\\\(dashboard\\)\\\\dashboard\\\\page.tsx\")",
+      "Bash(find '/c/Users/jorge/OpenQHSE Platform/apps' -name *form* -type f)",
+      "Bash(find '/c/Users/jorge/OpenQHSE Platform/apps/web/src' -name *form* -type f)",
+      "Bash(find '/c/Users/jorge/OpenQHSE Platform/apps/web/src/app' -path *form* -type f)",
+      "Bash(grep -n \"\"\"report\"\"\" \"c:\\\\Users\\\\jorge\\\\OpenQHSE Platform\\\\apps\\\\web\\\\src\\\\i18n\\\\messages\\\\en.json\")",
+      "Bash(grep -n \"\"\"report\"\"\" \"c:\\\\Users\\\\jorge\\\\OpenQHSE Platform\\\\apps\\\\web\\\\src\\\\i18n\\\\messages\\\\pt.json\")",
+      "Bash(pnpm dev:*)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /PID 70248 /F)",
+      "Bash(taskkill /PID 70736 /F)",
+      "Bash(taskkill /PID 65420 /F)",
+      "Bash(cmd //c \"taskkill /PID 70248 /F & taskkill /PID 70736 /F & taskkill /PID 65420 /F\")",
+      "Bash(cmd //c \"netstat -ano | findstr :3000 | findstr LISTENING\")"
+    ]
+  }
+}

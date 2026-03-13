@@ -1,0 +1,94 @@
+[project]
+name = "openqhse-api"
+version = "0.1.0"
+description = "OpenQHSE Platform - FastAPI Backend"
+readme = "README.md"
+license = { text = "AGPL-3.0" }
+requires-python = ">=3.12"
+dependencies = [
+    # ── Web framework ───────────────────────────────────────
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "python-multipart>=0.0.12",
+    "orjson>=3.10.0",
+    # ── Database ────────────────────────────────────────────
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30.0",
+    "alembic>=1.14.0",
+    "psycopg2-binary>=2.9.0",   # sync driver para Celery tasks
+    # ── Validation & Config ─────────────────────────────────
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.7.0",
+    # ── Auth — joserfc reemplaza python-jose (CVEs activos) ──
+    "joserfc>=0.12.0",
+    "passlib[bcrypt]>=1.7.4",
+    # ── Cache & Queues ──────────────────────────────────────
+    "redis>=5.2.0",
+    "celery>=5.4.0",
+    "celery-redbeat>=2.3.0",    # Redis-backed beat scheduler
+    # ── Rate Limiting ───────────────────────────────────────
+    "slowapi>=0.1.9",
+    # ── Storage ─────────────────────────────────────────────
+    "boto3>=1.35.0",
+    "httpx>=0.28.0",
+    # ── Email ───────────────────────────────────────────────
+    "aiosmtplib>=3.0.0",
+    "jinja2>=3.1.4",
+    # ── Observability ───────────────────────────────────────
+    "structlog>=24.4.0",
+    "prometheus-fastapi-instrumentator>=7.0.0",
+    "sentry-sdk[fastapi]>=2.0.0",
+    # ── File processing ─────────────────────────────────────
+    "pillow>=11.0.0",
+    "openpyxl>=3.1.2",
+    "reportlab>=4.2.0",
+    "qrcode[pil]>=8.0.0",
+    "python-barcode>=0.15.1",
+    "pandas>=2.2.0",
+    # ── AI / LLM ────────────────────────────────────────────
+    "langchain>=0.3.0",
+    "langchain-community>=0.3.0",
+    "ollama>=0.4.0",
+    # ── WebSockets ──────────────────────────────────────────
+    "websockets>=14.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=5.0.0",
+    "httpx>=0.28.0",
+    "factory-boy>=3.3.0",
+    "faker>=33.0.0",
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM", "TCH"]
+ignore = ["ANN101", "ANN102", "ANN401"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta:__legacy__"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+exclude = ["alembic*", "tests*"]

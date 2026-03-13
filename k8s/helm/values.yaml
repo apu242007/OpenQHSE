@@ -1,0 +1,352 @@
+# ============================================================
+# OpenQHSE Helm Chart — values.yaml
+# ============================================================
+# All environment-specific secrets (passwords, secret keys,
+# API tokens) MUST be set via --set or an external secret
+# manager (e.g. AWS Secrets Manager, Vault, Sealed Secrets).
+# Never commit real secrets to this file.
+# ============================================================
+
+# ── Chart metadata ──────────────────────────────────────────
+nameOverride: ""
+fullnameOverride: ""
+commonLabels: {}
+commonAnnotations: {}
+
+# ── Global ──────────────────────────────────────────────────
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+
+# ── API ─────────────────────────────────────────────────────
+api:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: openqhse/api
+    tag: ""  # defaults to .Chart.AppVersion
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+    annotations: {}
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  # Horizontal Pod Autoscaler
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  # Rolling update strategy
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  # Pod disruption budget
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8000
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: 8000
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    failureThreshold: 3
+  env:
+    ENVIRONMENT: production
+    DEBUG: "false"
+    LOG_LEVEL: "INFO"
+    WORKERS: "4"
+    CORS_ORIGINS: "https://app.openqhse.io"
+  existingSecret: "openqhse-api-secrets"
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "8000"
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# ── Web ─────────────────────────────────────────────────────
+web:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: openqhse/web
+    tag: ""
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+    annotations: {}
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 75
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  livenessProbe:
+    httpGet:
+      path: /api/health
+      port: 3000
+    initialDelaySeconds: 20
+    periodSeconds: 15
+  readinessProbe:
+    httpGet:
+      path: /api/health
+      port: 3000
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  env:
+    NEXT_PUBLIC_API_URL: "https://app.openqhse.io/api/v1"
+    NEXT_PUBLIC_AI_URL:  "https://app.openqhse.io/ai"
+    NODE_ENV: "production"
+  existingSecret: ""
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+
+# ── AI Engine ───────────────────────────────────────────────
+aiEngine:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: openqhse/ai-engine
+    tag: ""
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8100
+    targetPort: 8100
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 80
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8100
+    initialDelaySeconds: 60
+    periodSeconds: 30
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: 8100
+    initialDelaySeconds: 30
+    periodSeconds: 15
+  env:
+    ENVIRONMENT: production
+    LOG_LEVEL: "INFO"
+    DEFAULT_MODEL: "gpt-4o-mini"
+  existingSecret: "openqhse-ai-secrets"
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "8100"
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# ── Celery ──────────────────────────────────────────────────
+celery:
+  worker:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: openqhse/api
+      tag: ""
+      pullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 70
+    queues: "default,notifications,reports,maintenance"
+    concurrency: 4
+    loglevel: "info"
+    livenessProbe:
+      exec:
+        command: ["celery", "-A", "app.celery_app", "inspect", "ping", "-d", "celery@$HOSTNAME"]
+      initialDelaySeconds: 60
+      periodSeconds: 60
+      timeoutSeconds: 30
+      failureThreshold: 3
+    podAnnotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/metrics"
+      prometheus.io/port: "9540"
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+  beat:
+    enabled: true
+    image:
+      repository: openqhse/api
+      tag: ""
+      pullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    loglevel: "info"
+    persistence:
+      enabled: true
+      storageClass: ""
+      accessMode: ReadWriteOnce
+      size: 1Gi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+  flower:
+    enabled: false
+    image:
+      repository: mher/flower
+      tag: "2.0"
+    service:
+      port: 5555
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+
+# ── Ingress ─────────────────────────────────────────────────
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  hosts:
+    - host: app.openqhse.io
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: api
+        - path: /ai
+          pathType: Prefix
+          service: ai-engine
+        - path: /
+          pathType: Prefix
+          service: web
+  tls:
+    - secretName: openqhse-tls
+      hosts:
+        - app.openqhse.io
+
+# ── DB Migrations Job ────────────────────────────────────────
+migrations:
+  enabled: true
+  image:
+    repository: openqhse/api
+    tag: ""
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  backoffLimit: 3
+  restartPolicy: OnFailure
+
+# ── Marketplace Seed Job (run once) ──────────────────────────
+seedMarketplace:
+  enabled: false
+  image:
+    repository: openqhse/api
+    tag: ""
+    pullPolicy: IfNotPresent
+  args: ["python", "scripts/seed_marketplace.py"]
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  backoffLimit: 2
+  restartPolicy: OnFailure
+
+# ── PostgreSQL (Bitnami subchart) ───────────────────────────
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: ""
+    username: openqhse
+    password: ""
+    database: openqhse
+  primary:
+    persistence:
+      size: 20Gi
+
+# ── Redis (Bitnami subchart) ───────────────────────────────
+redis:
+  enabled: true
+  auth:
+    password: ""
+  master:
+    persistence:
+      size: 2Gi
+
+# ── Monitoring ──────────────────────────────────────────────
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+  grafana:
+    enabled: true
+    adminPassword: ""

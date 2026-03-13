@@ -1,0 +1,485 @@
+{
+  "name": "Auditoría ISO 45001:2018 — Evaluación Completa del SGSSyO",
+  "description": "Auditoría interna completa del Sistema de Gestión de Seguridad y Salud en el Trabajo basada en los 10 capítulos de ISO 45001:2018. Permite evaluar el nivel de conformidad de la organización y emitir hallazgos clasificados por severidad.",
+  "category": "Auditorías y Conformidad",
+  "is_global": true,
+  "tags": ["ISO 45001", "SST", "auditoría interna", "SGSSyO", "conformidad", "OHSMS"],
+  "schema_def": {
+    "sections": [
+      {
+        "title": "1. Contexto de la Organización (Cláusula 4)",
+        "order": 1,
+        "questions": [
+          {
+            "id": "c4_partes_interesadas",
+            "text": "4.2 — ¿La organización ha identificado y documentado las partes interesadas relevantes (trabajadores, contratistas, reguladores, vecinos) y sus necesidades y expectativas en materia de SST?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Documentado, actualizado y comunicado",
+              "Conforme parcial — Identificado pero no actualizado (<12 meses)",
+              "No conforme menor — Identificación incompleta",
+              "No conforme mayor — No existe identificación formal",
+              "No aplica — Justificar en observaciones"
+            ],
+            "weight": 2.0,
+            "help_text": "Evidencias típicas: registro de partes interesadas, actas de reunión, matriz de requisitos legales"
+          },
+          {
+            "id": "c4_alcance",
+            "text": "4.3 — ¿El alcance del SGSSyO está definido, documentado y disponible como información documentada?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Documentado, actualizado y comunicado",
+              "Conforme parcial — Definido pero no actualizado (<12 meses)",
+              "No conforme menor — Alcance incompleto o ambiguo",
+              "No conforme mayor — No existe documento de alcance"
+            ],
+            "weight": 2.0,
+            "help_text": "El alcance debe incluir los límites físicos, actividades, productos/servicios y relaciones con otras organizaciones"
+          },
+          {
+            "id": "c4_alcance_evidencia",
+            "text": "Referencia del documento de alcance del SGSSyO (código y versión)",
+            "type": "text",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Ej: POL-SGSSyO-001 Rev.3",
+            "conditional": {
+              "show_if": {
+                "field": "c4_alcance",
+                "operator": "eq",
+                "value": "Conforme — Documentado, actualizado y comunicado"
+              }
+            }
+          },
+          {
+            "id": "c4_procesos",
+            "text": "4.4 — ¿La organización ha establecido, implementado, mantenido y mejorado continuamente el SGSSyO, incluyendo los procesos necesarios y sus interacciones?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Evidencia objetiva disponible",
+              "Conforme parcial — Implementado sin evidencia de mejora continua",
+              "No conforme menor — Algunos procesos sin definir",
+              "No conforme mayor — SGSSyO no implementado sistemáticamente"
+            ],
+            "weight": 2.5,
+            "help_text": "Verifique mapa de procesos del SGSSyO, procedimientos y registros"
+          }
+        ]
+      },
+      {
+        "title": "2. Liderazgo y Participación de los Trabajadores (Cláusula 5)",
+        "order": 2,
+        "questions": [
+          {
+            "id": "c5_liderazgo",
+            "text": "5.1 — ¿La alta dirección demuestra liderazgo y compromiso con el SGSSyO? (política firmada, participación en revisiones, asignación de recursos)",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Evidencia objetiva sólida",
+              "Conforme parcial — Compromiso documentado pero participación limitada",
+              "No conforme menor — Compromiso declarado sin evidencias",
+              "No conforme mayor — Alta dirección no involucrada"
+            ],
+            "weight": 3.0,
+            "help_text": "Solicitar: política firmada por CEO/Gerente General, actas de revisión por la dirección, presupuesto SST aprobado"
+          },
+          {
+            "id": "c5_politica",
+            "text": "5.2 — ¿La política de SST cumple todos los requisitos de ISO 45001 cl. 5.2? (Compromisos: prevención, cumplimiento legal, participación, mejora continua)",
+            "type": "multi_choice",
+            "required": true,
+            "options": [
+              "Apropiada al contexto y tamaño de la organización",
+              "Incluye compromiso de proporcionar condiciones seguras",
+              "Incluye compromiso de eliminación de peligros y reducción de riesgos",
+              "Incluye compromiso de cumplir requisitos legales aplicables",
+              "Incluye compromiso de consulta y participación de trabajadores",
+              "Incluye compromiso de mejora continua del SGSSyO",
+              "Disponible como información documentada",
+              "Comunicada a todos los trabajadores y partes interesadas"
+            ],
+            "weight": 3.0,
+            "help_text": "Seleccione TODOS los compromisos presentes en la política vigente"
+          },
+          {
+            "id": "c5_roles",
+            "text": "5.3 — ¿La alta dirección ha asignado y comunicado roles, responsabilidades y autoridades para el SGSSyO?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Matriz RACI o equivalente documentada y comunicada",
+              "Conforme parcial — Roles asignados pero no formalmente comunicados",
+              "No conforme menor — Asignación parcial de roles",
+              "No conforme mayor — Sin asignación formal de responsabilidades SST"
+            ],
+            "weight": 2.5,
+            "help_text": "Evidencias: organigramas SST, descripción de cargos, resoluciones de nombramiento"
+          },
+          {
+            "id": "c5_consulta",
+            "text": "5.4 — ¿La organización establece, implementa y mantiene procesos para la consulta y participación de los trabajadores y sus representantes?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Mecanismos formales operativos con registros",
+              "Conforme parcial — Mecanismos existen pero participación baja",
+              "No conforme menor — Solo consulta, sin participación activa",
+              "No conforme mayor — Sin mecanismos de participación"
+            ],
+            "weight": 3.0,
+            "help_text": "ISO 45001 distingue 'consulta' (se pide opinión) de 'participación' (se involucra en decisiones). Ambas son requeridas."
+          },
+          {
+            "id": "c5_participacion_evidencia",
+            "text": "Indique los mecanismos de participación activos en la organización",
+            "type": "multi_choice",
+            "required": false,
+            "options": [
+              "Comité Paritario de SST (CPHS / COPASST)",
+              "Representantes de los trabajadores en SST",
+              "Grupos de mejora / Círculos de calidad SST",
+              "Participación en identificación de peligros (ART / AST)",
+              "Participación en investigación de incidentes",
+              "Encuestas / buzón de sugerencias SST",
+              "Reuniones de seguridad regulares (toolbox meetings)"
+            ],
+            "weight": 1.5,
+            "help_text": "Seleccione todos los mecanismos vigentes con registros disponibles"
+          }
+        ]
+      },
+      {
+        "title": "3. Planificación — Riesgos, Requisitos Legales y Objetivos (Cláusula 6)",
+        "order": 3,
+        "questions": [
+          {
+            "id": "c6_identificacion_peligros",
+            "text": "6.1.2.1 — ¿La organización tiene un proceso sistemático y proactivo para la identificación de peligros (incluye trabajo rutinario/no rutinario, emergencias, factores humanos)?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Proceso documentado, aplicado y actualizado",
+              "Conforme parcial — Proceso aplicado pero no actualizado (>12 meses)",
+              "No conforme menor — Proceso informal o parcial",
+              "No conforme mayor — Sin proceso de identificación de peligros"
+            ],
+            "weight": 3.5,
+            "help_text": "Verifique metodología usada (HAZOP, What-If, listas de verificación) y cobertura de todas las actividades"
+          },
+          {
+            "id": "c6_evaluacion_riesgos",
+            "text": "6.1.2.2 — ¿La organización evalúa los riesgos para SST a partir de los peligros identificados, utilizando una metodología validada?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Metodología documentada, resultados actualizados",
+              "Conforme parcial — Evaluación realizada, metodología no descrita",
+              "No conforme menor — Evaluación parcial o desactualizada",
+              "No conforme mayor — Sin evaluación formal de riesgos"
+            ],
+            "weight": 3.5,
+            "help_text": "Solicitar matriz de riesgos, fecha de última actualización, aprobación por responsable competente"
+          },
+          {
+            "id": "c6_jerarquia_controles",
+            "text": "6.1.4 — ¿Los controles operacionales siguen la jerarquía de controles de ISO 45001 (eliminación > sustitución > controles de ingeniería > controles administrativos > EPP)?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Jerarquía aplicada y documentada en controles",
+              "Conforme parcial — Aplica jerarquía sin documentarla explícitamente",
+              "No conforme menor — Prioridad incorrecta (se prioriza EPP sobre controles de ingeniería)",
+              "No conforme mayor — Sin aplicación de jerarquía de controles"
+            ],
+            "weight": 3.0,
+            "help_text": "La dependencia excesiva del EPP como control primario es una no conformidad frecuente"
+          },
+          {
+            "id": "c6_requisitos_legales",
+            "text": "6.1.3 — ¿La organización mantiene actualizada la identificación de requisitos legales y otros requisitos de SST aplicables?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Matriz legal actualizada (<6 meses) y evaluada",
+              "Conforme parcial — Identificados pero sin evaluación de cumplimiento",
+              "No conforme menor — Matriz desactualizada (>12 meses)",
+              "No conforme mayor — Sin identificación de requisitos legales"
+            ],
+            "weight": 3.0,
+            "help_text": "Incluir: legislación nacional, reglamentos sectoriales, convenios colectivos, normas técnicas aplicables"
+          },
+          {
+            "id": "c6_objetivos",
+            "text": "6.2 — ¿Los objetivos de SST son SMART (Específicos, Medibles, Alcanzables, Relevantes, con Plazo), consistentes con la política y con plan de acción documentado?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Objetivos SMART con plan de acción y seguimiento periódico",
+              "Conforme parcial — Objetivos definidos sin plan de acción formal",
+              "No conforme menor — Objetivos vagos o sin indicadores",
+              "No conforme mayor — Sin objetivos de SST definidos"
+            ],
+            "weight": 2.5,
+            "help_text": "Solicitar: ficha de objetivos, indicadores KPI SST, informe de seguimiento más reciente"
+          }
+        ]
+      },
+      {
+        "title": "4. Apoyo — Recursos, Competencia, Comunicación e Información Documentada (Cláusula 7)",
+        "order": 4,
+        "questions": [
+          {
+            "id": "c7_recursos",
+            "text": "7.1 — ¿La organización determina y proporciona los recursos necesarios para el establecimiento, implementación y mejora del SGSSyO?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Presupuesto SST aprobado y ejecutado",
+              "Conforme parcial — Recursos disponibles pero sin presupuesto formal",
+              "No conforme menor — Recursos insuficientes documentados",
+              "No conforme mayor — Sin asignación de recursos SST"
+            ],
+            "weight": 2.5,
+            "help_text": null
+          },
+          {
+            "id": "c7_competencia",
+            "text": "7.2 — ¿La organización asegura que los trabajadores son competentes (educación, formación, experiencia) para realizar trabajos que afecten al desempeño en SST?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Perfil de competencias definido, brechas identificadas y planes de formación activos",
+              "Conforme parcial — Formación realizada sin análisis de brecha formal",
+              "No conforme menor — Competencias no definidas para algunos roles críticos",
+              "No conforme mayor — Sin gestión de competencias SST"
+            ],
+            "weight": 3.0,
+            "help_text": "Verifique: perfiles de cargo con requisitos SST, registros de formación, certificaciones requeridas"
+          },
+          {
+            "id": "c7_competencia_brechas",
+            "text": "Describa las brechas de competencia SST identificadas, los roles críticos afectados y el plan de formación activo para cerrarlas (curso, proveedor, fecha estimada)",
+            "type": "text",
+            "required": true,
+            "options": null,
+            "weight": 1.0,
+            "help_text": "Ej: 'Inspector SST — Falta certificación IRCA Lead Auditor. Acción: Curso programado Q2-2025 con Instituto XYZ'",
+            "conditional": {
+              "show_if": {
+                "field": "c7_competencia",
+                "operator": "neq",
+                "value": "Conforme — Perfil de competencias definido, brechas identificadas y planes de formación activos"
+              }
+            }
+          },
+          {
+            "id": "c7_toma_conciencia",
+            "text": "7.3 — ¿Los trabajadores tienen conciencia de la política SST, peligros y riesgos relevantes a su trabajo, y consecuencias de incumplir el SGSSyO?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Programa de sensibilización activo con evaluación de efectividad",
+              "Conforme parcial — Inducción realizada sin verificación de comprensión",
+              "No conforme menor — Sensibilización informal o incompleta",
+              "No conforme mayor — Sin actividades de sensibilización"
+            ],
+            "weight": 2.5,
+            "help_text": "Incluye inducción, charlas, cartelería, evaluaciones de comprensión"
+          },
+          {
+            "id": "c7_comunicacion",
+            "text": "7.4 — ¿La organización tiene procesos para comunicación interna y externa sobre SST (qué, cuándo, a quién, cómo)?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Matriz de comunicaciones documentada y operativa",
+              "Conforme parcial — Comunicación ocurre pero sin proceso formal",
+              "No conforme menor — Comunicación interna solo, falta externa",
+              "No conforme mayor — Sin proceso de comunicación SST"
+            ],
+            "weight": 2.0,
+            "help_text": null
+          },
+          {
+            "id": "c7_info_documentada",
+            "text": "7.5 — ¿La información documentada requerida por ISO 45001 está controlada (creación, actualización, distribución, acceso, control de versiones)?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Sistema de gestión documental con control de versiones",
+              "Conforme parcial — Control existe pero no es sistemático",
+              "No conforme menor — Documentos sin control de versiones o acceso no controlado",
+              "No conforme mayor — Sin control de documentos e información"
+            ],
+            "weight": 2.5,
+            "help_text": "Verifique procedimiento de control documental y muestra aleatoria de documentos"
+          }
+        ]
+      },
+      {
+        "title": "5. Operación, Evaluación del Desempeño y Mejora (Cláusulas 8, 9 y 10)",
+        "order": 5,
+        "questions": [
+          {
+            "id": "c8_controles_operacionales",
+            "text": "8.1 — ¿Los controles operacionales para los riesgos significativos están implementados, documentados y verificados en campo?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Controles implementados con verificación periódica en campo",
+              "Conforme parcial — Controles documentados pero verificación en campo insuficiente",
+              "No conforme menor — Algunos controles críticos sin implementar",
+              "No conforme mayor — Controles operacionales no implementados"
+            ],
+            "weight": 3.5,
+            "help_text": "Seleccione muestra de 5 riesgos significativos y verifique en campo sus controles"
+          },
+          {
+            "id": "c8_gestion_cambios",
+            "text": "8.1.3 — ¿Existe un proceso formal de gestión del cambio (MOC) que evalúa impactos en SST antes de implementar cambios?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Procedimiento MOC activo con registros de cambios evaluados",
+              "Conforme parcial — Se evalúan cambios mayores, no los menores",
+              "No conforme menor — Proceso informal, sin registros sistemáticos",
+              "No conforme mayor — Sin gestión del cambio en SST"
+            ],
+            "weight": 2.5,
+            "help_text": "Incluye cambios en: procesos, equipos, personal clave, instalaciones, materiales peligrosos, legislación"
+          },
+          {
+            "id": "c8_preparacion_emergencias",
+            "text": "8.2 — ¿Los planes de respuesta a emergencias están actualizados, comunicados y probados mediante simulacros?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Plan actualizado, simulacros realizados con evaluación y mejoras",
+              "Conforme parcial — Plan existe pero simulacros no realizados en últimos 12 meses",
+              "No conforme menor — Plan desactualizado o incompleto",
+              "No conforme mayor — Sin planes de respuesta a emergencias"
+            ],
+            "weight": 3.0,
+            "help_text": "Solicitar: plan de emergencias vigente, registros de simulacros con fecha y evaluación post-ejercicio"
+          },
+          {
+            "id": "c9_monitoreo",
+            "text": "9.1 — ¿La organización monitorea, mide, analiza y evalúa su desempeño en SST con indicadores proactivos y reactivos?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — KPIs proactivos y reactivos, análisis de tendencias, informes periódicos",
+              "Conforme parcial — Solo indicadores reactivos (tasa de accidentes)",
+              "No conforme menor — Medición ad hoc sin sistema formal",
+              "No conforme mayor — Sin medición del desempeño SST"
+            ],
+            "weight": 3.0,
+            "help_text": "KPIs proactivos: inspecciones realizadas, capacitaciones, observaciones. Reactivos: IF, IG, días perdidos"
+          },
+          {
+            "id": "c9_auditoria_interna",
+            "text": "9.2 — ¿Se realizan auditorías internas del SGSSyO con programa planificado, auditores competentes e independientes, e informes formales?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Programa anual cumplido, auditores calificados, informes con hallazgos y seguimiento",
+              "Conforme parcial — Auditorías realizadas sin programa formal",
+              "No conforme menor — Auditorías parciales o sin auditores independientes",
+              "No conforme mayor — Sin auditorías internas realizadas"
+            ],
+            "weight": 3.0,
+            "help_text": "Verifique: programa de auditorías, registros de auditorías previas, calificación de auditores internos"
+          },
+          {
+            "id": "c9_revision_direccion",
+            "text": "9.3 — ¿La alta dirección realiza revisiones periódicas del SGSSyO con las entradas y salidas requeridas por ISO 45001?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Revisiones documentadas con todas las entradas/salidas requeridas",
+              "Conforme parcial — Revisiones realizadas sin todas las entradas requeridas",
+              "No conforme menor — Revisiones esporádicas sin metodología formal",
+              "No conforme mayor — Sin revisión por la dirección"
+            ],
+            "weight": 3.0,
+            "help_text": "Frecuencia mínima recomendada: anual. Entradas: resultados auditorías, KPIs, accidentes, cambios, objetivos"
+          },
+          {
+            "id": "c10_incidentes",
+            "text": "10.2 — ¿Existe un proceso robusto de reporte, investigación y análisis de causa raíz de incidentes y no conformidades, con acciones correctivas verificadas?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Proceso sistemático con análisis causa raíz (5-Why/Ishikawa/Bow-Tie) y seguimiento de acciones",
+              "Conforme parcial — Investigaciones realizadas sin metodología de causa raíz formal",
+              "No conforme menor — Investigaciones superficiales o sin seguimiento de acciones",
+              "No conforme mayor — Sin proceso de investigación de incidentes"
+            ],
+            "weight": 3.5,
+            "help_text": "Revise muestra de 3 investigaciones recientes. Verifique causa raíz real vs. causa inmediata"
+          },
+          {
+            "id": "c10_mejora_continua",
+            "text": "10.3 — ¿La organización mejora continuamente la idoneidad, adecuación y eficacia del SGSSyO con acciones demostrables?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — Evidencia de mejoras implementadas con impacto medible en desempeño SST",
+              "Conforme parcial — Mejoras implementadas sin medición de impacto",
+              "No conforme menor — Mejoras reactivas solo (post-accidente)",
+              "No conforme mayor — Sin evidencia de mejora continua"
+            ],
+            "weight": 2.5,
+            "help_text": null
+          },
+          {
+            "id": "hallazgos_criticos",
+            "text": "¿Se identificaron No Conformidades Mayores (NCM) durante esta auditoría?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Una NCM requiere acción correctiva antes de que la certificación/conformidad pueda mantenerse"
+          },
+          {
+            "id": "hallazgos_descripcion",
+            "text": "Describa los hallazgos críticos identificados, indicando cláusula ISO 45001 afectada y evidencia objetiva",
+            "type": "text",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Formato sugerido: [NCM/NCm/OBS] Cláusula X.X — Descripción — Evidencia objetiva",
+            "conditional": {
+              "show_if": {
+                "field": "hallazgos_criticos",
+                "operator": "eq",
+                "value": "true"
+              }
+            }
+          },
+          {
+            "id": "auditor_firma",
+            "text": "Firma digital del auditor líder",
+            "type": "signature",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "El auditor certifica que los hallazgos están respaldados por evidencia objetiva y la auditoría fue conducida conforme al programa"
+          }
+        ]
+      }
+    ]
+  },
+  "scoring_config": {
+    "method": "weighted",
+    "max_score": 100.0,
+    "pass_threshold": 70.0,
+    "scoring_notes": "90-100%: Excelente — Sistema maduro. 70-89%: Satisfactorio — Mejoras menores. 50-69%: Deficiente — Acciones correctivas requeridas. <50%: Crítico — Plan de acción urgente. Cualquier NCM automáticamente requiere plan de acción con fecha."
+  }
+}

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es" style="color-scheme: dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0066FF" />
+  <title>Sin conexión — OpenQHSE</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      background: #141921;
+      color: #e2e8f0;
+      font-family: system-ui, -apple-system, sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+    .icon { font-size: 4rem; }
+    h1 { margin: 0; font-size: 1.5rem; font-weight: 800; }
+    p  { margin: 0; color: #94a3b8; max-width: 360px; }
+    a  {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: #0066FF; color: #fff;
+      border: none; border-radius: .75rem;
+      padding: .6rem 1.4rem; font-size: .9rem; font-weight: 700;
+      cursor: pointer; text-decoration: none;
+    }
+    a:hover { background: #0052cc; }
+    small { color: #475569; font-size: .75rem; }
+  </style>
+</head>
+<body>
+  <div class="icon">📡</div>
+  <h1>Sin conexión a internet</h1>
+  <p>OpenQHSE no pudo conectarse al servidor. Revisa tu conexión y vuelve a intentar.</p>
+  <a href="/dashboard">Reintentar</a>
+  <small>Los datos guardados localmente siguen disponibles en la aplicación móvil.</small>
+</body>
+</html>

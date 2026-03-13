@@ -1,0 +1,405 @@
+{
+  "name": "Permiso de Entrada a Espacio Confinado — Entrada Permitida",
+  "description": "Permiso y checklist de seguridad para ingreso a espacios confinados de entrada permitida (permit-required confined spaces), conforme a OSHA 29 CFR 1910.146, norma ANSI Z117.1 y legislación latinoamericana aplicable. Incluye evaluación atmosférica, plan de rescate y autorización formal.",
+  "category": "Trabajo de Alto Riesgo",
+  "is_global": true,
+  "tags": ["espacio confinado", "OSHA 1910.146", "permiso de trabajo", "atmosfera", "rescate", "gases", "SST"],
+  "schema_def": {
+    "sections": [
+      {
+        "title": "1. Identificación del Espacio Confinado y del Trabajo",
+        "order": 1,
+        "questions": [
+          {
+            "id": "ec_identificacion",
+            "text": "Identificación / nombre del espacio confinado",
+            "type": "text",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Ej: Tanque TK-401, Alcantarilla AG-7, Pozo de Inspección PI-12, Silo S-3"
+          },
+          {
+            "id": "ec_tipo",
+            "text": "Tipo de espacio confinado",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Tanque de almacenamiento (líquidos/gases)",
+              "Silo / Tolva / Bin",
+              "Alcantarilla / Cámara de inspección",
+              "Caldera / Recipiente a presión",
+              "Pozo / Excavación > 1.2 m profundidad",
+              "Ducto / Tubería de gran diámetro",
+              "Bóveda / Vault eléctrica o de telecomunicaciones",
+              "Otro — especificar"
+            ],
+            "weight": 0.5,
+            "help_text": null
+          },
+          {
+            "id": "ec_trabajo_realizar",
+            "text": "Descripción del trabajo a realizar dentro del espacio confinado",
+            "type": "text",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Sea específico: qué tarea, qué herramientas se usarán, duración estimada"
+          },
+          {
+            "id": "ec_ubicacion_gps",
+            "text": "Coordenada GPS / ubicación exacta del espacio confinado",
+            "type": "gps",
+            "required": false,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Facilita localización en caso de emergencia de rescate"
+          },
+          {
+            "id": "ec_clasificacion",
+            "text": "¿El espacio confinado fue formalmente clasificado como 'de entrada permitida' (permit-required) por personal competente?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Sí — clasificado como permit-required, clasificación documentada",
+              "Sí — clasificado como permit-required, sin documentación formal",
+              "No — espacio sin clasificación formal (requiere clasificación antes de entrar)",
+              "Espacio de entrada libre (non-permit) — justificar con evaluación"
+            ],
+            "weight": 2.0,
+            "help_text": "Un espacio es 'de entrada permitida' si tiene ≥1 de: atmósfera peligrosa, peligro de engullimiento, geometría que atrapa, o cualquier otro peligro serio reconocido."
+          },
+          {
+            "id": "ec_contenido_previo",
+            "text": "¿Qué contenía el espacio confinado antes de esta entrada? (historial de contenidos)",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Nunca ha contenido materiales peligrosos (nuevo/limpio)",
+              "Agua o fluidos no peligrosos",
+              "Hidrocarburos (combustibles, aceites)",
+              "Productos químicos peligrosos (solventes, ácidos, bases)",
+              "Residuos orgánicos / aguas residuales",
+              "Gases inertizantes (nitrógeno, CO₂)",
+              "Material sólido a granel (granos, polvo)"
+            ],
+            "weight": 1.5,
+            "help_text": "El historial de contenidos determina los riesgos residuales y la limpieza requerida antes de la entrada"
+          }
+        ]
+      },
+      {
+        "title": "2. Pruebas Atmosféricas y Ventilación",
+        "order": 2,
+        "questions": [
+          {
+            "id": "atm_responsable",
+            "text": "Nombre del evaluador atmosférico (persona competente que realizó las mediciones)",
+            "type": "text",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Debe estar certificado en uso del equipo de medición y en interpretación de resultados"
+          },
+          {
+            "id": "atm_oxigeno",
+            "text": "Concentración de Oxígeno (O₂) medida (% volumen)",
+            "type": "number",
+            "required": true,
+            "options": null,
+            "weight": 4.0,
+            "help_text": "Rango seguro: 19.5% — 23.5%. <19.5% = atmósfera deficiente en O₂ (no entrar). >23.5% = enriquecida O₂ (riesgo de incendio, no entrar)."
+          },
+          {
+            "id": "atm_oxigeno_conforme",
+            "text": "¿La lectura de O₂ está dentro del rango seguro (19.5% — 23.5%)?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 4.0,
+            "help_text": "Si es NO, no se autoriza la entrada hasta normalizar atmósfera"
+          },
+          {
+            "id": "atm_lel",
+            "text": "Concentración de gases inflamables medida (% LEL — Límite Explosivo Inferior)",
+            "type": "number",
+            "required": true,
+            "options": null,
+            "weight": 4.0,
+            "help_text": "Límite seguro: < 10% LEL. Entre 10-25% LEL: ventilación forzada y re-medición. >25% LEL: no entrar."
+          },
+          {
+            "id": "atm_lel_conforme",
+            "text": "¿La lectura de LEL es < 10%?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 4.0,
+            "help_text": "Si es NO, aplicar ventilación y re-medir. No entrar hasta lograr <10% LEL."
+          },
+          {
+            "id": "atm_co",
+            "text": "Concentración de Monóxido de Carbono (CO) medida (ppm)",
+            "type": "number",
+            "required": true,
+            "options": null,
+            "weight": 3.5,
+            "help_text": "Límite seguro: <25 ppm (OSHA PEL: 50 ppm, ACGIH TLV-TWA: 25 ppm). >200 ppm: evacuación inmediata."
+          },
+          {
+            "id": "atm_h2s",
+            "text": "Concentración de H₂S (Sulfuro de Hidrógeno) medida (ppm)",
+            "type": "number",
+            "required": true,
+            "options": null,
+            "weight": 3.5,
+            "help_text": "Límite seguro para entrada: <1 ppm (ACGIH TLV). IDLH: 50 ppm. >10 ppm requiere SCBA obligatorio."
+          },
+          {
+            "id": "atm_h2s_scba_requerido",
+            "text": "¿La concentración de H₂S > 10 ppm requiere uso obligatorio de equipo SCBA para la entrada?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 3.5,
+            "help_text": "Si H₂S > 10 ppm, el SCBA es mandatorio. No se admite solo mascarilla con filtro.",
+            "conditional": {
+              "show_if": {
+                "field": "atm_h2s",
+                "operator": "neq",
+                "value": "0"
+              }
+            }
+          },
+          {
+            "id": "atm_puntos_medicion",
+            "text": "¿Las mediciones se realizaron en múltiples puntos del espacio (parte superior, media y fondo) para detectar estratificación de gases?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 2.5,
+            "help_text": "Gases más pesados que el aire (H₂S, propano) se acumulan en el fondo. O₂ y gases livianos (metano) en la parte superior."
+          },
+          {
+            "id": "ventilacion_continua",
+            "text": "¿Se aplicará ventilación forzada continua durante toda la operación con ventilador de extracción o inyección?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Sí — ventilación forzada continua, caudal suficiente verificado",
+              "Sí — ventilación natural únicamente (solo para espacios abiertos y condiciones específicas)",
+              "No requiere — mediciones en rango seguro y espacio auto-ventilado",
+              "No — sin ventilación (requiere justificación y SCBA obligatorio)"
+            ],
+            "weight": 3.0,
+            "help_text": "La ventilación natural es insuficiente en la mayoría de espacios confinados. Caudal mínimo recomendado: 20 cambios de aire/hora."
+          },
+          {
+            "id": "medicion_continua",
+            "text": "¿Se realizará monitoreo atmosférico continuo durante toda la operación con detector fijo o portátil con alarma?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 3.0,
+            "help_text": "OSHA 1910.146(d)(5): las condiciones atmosféricas deben verificarse continuamente durante la ocupación del espacio"
+          }
+        ]
+      },
+      {
+        "title": "3. Personal, Roles y Plan de Rescate",
+        "order": 3,
+        "questions": [
+          {
+            "id": "personal_supervisor",
+            "text": "Nombre del Supervisor de Entrada (Entry Supervisor) que autoriza el permiso",
+            "type": "text",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Persona competente responsable de autorizar la entrada, verificar condiciones y cancelar el permiso si es necesario"
+          },
+          {
+            "id": "personal_vigilante",
+            "text": "Nombre del Vigilante (Attendant) asignado al exterior del espacio",
+            "type": "text",
+            "required": true,
+            "options": null,
+            "weight": 1.0,
+            "help_text": "OSHA 1910.146: el attendant es mandatorio. NUNCA debe entrar al espacio durante su guardia."
+          },
+          {
+            "id": "vigilante_formacion",
+            "text": "¿El Vigilante (Attendant) está capacitado en: identificación de peligros, comunicación con los entrantes, activación de rescate y prohibición de entrar al espacio?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 3.0,
+            "help_text": "El vigilante es la primera línea de rescate. Muchas fatalidades ocurren cuando el vigilante entra al espacio para rescatar."
+          },
+          {
+            "id": "personal_entrantes",
+            "text": "Número de personas autorizadas a entrar al espacio confinado",
+            "type": "number",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Liste los nombres en el campo de observaciones. Máximo determinado por el plan de rescate."
+          },
+          {
+            "id": "rescate_tipo",
+            "text": "Tipo de plan de rescate establecido para esta entrada",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Rescate no-entry: sistema mecánico de recuperación (trípode, winche, arnés) listo y probado",
+              "Rescate por brigada interna entrenada: equipo de rescate en standby en el sitio",
+              "Rescate por servicios externos: bomberos o brigada externa con tiempo de respuesta <4 minutos confirmado",
+              "Sin plan de rescate definido — NO SE AUTORIZA LA ENTRADA"
+            ],
+            "weight": 4.0,
+            "help_text": "OSHA 1910.146(k): el empleador debe desarrollar y implementar procedimientos de rescate antes de autorizar la entrada"
+          },
+          {
+            "id": "rescate_tripode",
+            "text": "¿El sistema de rescate no-entry (trípode + winche + línea de vida) está montado, inspeccionado y probado en el punto de entrada?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 3.5,
+            "help_text": "El sistema debe poder recuperar a un entrante incapacitado sin que nadie entre al espacio",
+            "conditional": {
+              "show_if": {
+                "field": "rescate_tipo",
+                "operator": "eq",
+                "value": "Rescate no-entry: sistema mecánico de recuperación (trípode, winche, arnés) listo y probado"
+              }
+            }
+          },
+          {
+            "id": "comunicacion_rescate",
+            "text": "¿El sistema de comunicación entre entrantes y vigilante está probado y funcionando (radio, señales de cuerda, intercomunicador)?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 2.5,
+            "help_text": "Establecer protocolo de señales de cuerda como respaldo: 1 tirón = estoy bien, 2 tirones = necesito ayuda, 3 tirones = saquen"
+          },
+          {
+            "id": "aislamiento_energia",
+            "text": "¿Todas las fuentes de energía peligrosa (eléctrica, mecánica, hidráulica, neumática) fueron aisladas mediante LOTO (Lockout/Tagout) antes de la entrada?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — LOTO aplicado, candados instalados, verificado por eléctrico autorizado",
+              "Parcial — Algunas fuentes aisladas, otras en proceso",
+              "No aplica — Espacio sin fuentes de energía peligrosa verificadas",
+              "No conforme — Sin aislamiento de energías — NO SE AUTORIZA ENTRADA"
+            ],
+            "weight": 4.0,
+            "help_text": "OSHA 1910.146(d)(3): los medios de entrada/salida no deben ser obstruidos y las energías peligrosas deben estar bloqueadas"
+          }
+        ]
+      },
+      {
+        "title": "4. EPP Específico, Autorización y Cierre del Permiso",
+        "order": 4,
+        "questions": [
+          {
+            "id": "epp_arneses",
+            "text": "¿Cada entrante porta arnés de cuerpo completo con línea de vida conectada al sistema de rescate exterior?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 3.5,
+            "help_text": "El arnés de cuerpo completo (full body harness) con punto de anclaje en la espalda es el único tipo válido para rescate vertical"
+          },
+          {
+            "id": "epp_scba_disponible",
+            "text": "¿Los equipos SCBA (Self-Contained Breathing Apparatus) están disponibles en el sitio, con cilindros a presión completa y en buenas condiciones?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Conforme — SCBA disponibles, presión verificada, máscaras probadas en ajuste facial",
+              "Parcial — SCBA disponibles pero sin verificación de presión hoy",
+              "No aplica — Atmósfera segura sin presencia de gases tóxicos, SCBA de emergencia disponible",
+              "No conforme — Sin SCBA en sitio (requerido para atmósferas IDLH o H₂S > 10 ppm)"
+            ],
+            "weight": 3.5,
+            "help_text": "IDLH = Immediately Dangerous to Life or Health. SCBA de demanda positiva, capacidad mínima 30 minutos"
+          },
+          {
+            "id": "herramientas_antichispa",
+            "text": "¿Las herramientas a usar en el espacio son antichispa (non-sparking) si hay riesgo de atmósfera inflamable?",
+            "type": "single_choice",
+            "required": true,
+            "options": [
+              "Sí — herramientas antichispa verificadas",
+              "No aplica — LEL < 10% confirmado, no hay riesgo de explosión",
+              "No conforme — herramientas convencionales en atmósfera potencialmente inflamable"
+            ],
+            "weight": 2.5,
+            "help_text": "Herramientas de bronce, cobre-berilio o recubiertas son antichispa. Evitar uso de equipos eléctricos no clasificados ATEX/Ex."
+          },
+          {
+            "id": "duracion_permiso",
+            "text": "Duración autorizada de este permiso (horas desde la hora de inicio)",
+            "type": "number",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Máximo recomendado: 8 horas (1 turno). El permiso vence y debe renovarse con nuevas mediciones atmosféricas."
+          },
+          {
+            "id": "cierre_espacio",
+            "text": "Al finalizar el trabajo, ¿se verificó que todos los entrantes salieron del espacio antes de retiro del sistema de ventilación y cierre?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 3.0,
+            "help_text": "El vigilante debe confirmar conteo de personal antes de indicar que el espacio está libre. Esta pregunta se responde al CERRAR el permiso."
+          },
+          {
+            "id": "incidentes_durante_trabajo",
+            "text": "¿Ocurrió algún incidente, casi accidente o condición anormal durante la operación en el espacio confinado?",
+            "type": "boolean",
+            "required": true,
+            "options": null,
+            "weight": 1.0,
+            "help_text": "Se responde al cerrar el permiso. Si ocurrió, completar reporte de incidente separado."
+          },
+          {
+            "id": "descripcion_incidente",
+            "text": "Descripción del incidente o condición anormal ocurrida",
+            "type": "text",
+            "required": true,
+            "options": null,
+            "weight": 1.0,
+            "help_text": "Describa qué ocurrió, a qué hora, cómo se respondió y si se canceló el permiso",
+            "conditional": {
+              "show_if": {
+                "field": "incidentes_durante_trabajo",
+                "operator": "eq",
+                "value": "true"
+              }
+            }
+          },
+          {
+            "id": "autorizacion_supervisor",
+            "text": "Firma del Supervisor de Entrada autorizando el inicio de operaciones",
+            "type": "signature",
+            "required": true,
+            "options": null,
+            "weight": 0.5,
+            "help_text": "Al firmar, el supervisor certifica que TODAS las condiciones de este permiso están satisfechas y la entrada es segura"
+          }
+        ]
+      }
+    ]
+  },
+  "scoring_config": {
+    "method": "weighted",
+    "max_score": 100.0,
+    "pass_threshold": 90.0,
+    "scoring_notes": "Para espacios confinados el umbral es 90%. Los ítems críticos (O₂ en rango, LEL <10%, plan de rescate, LOTO, vigilante presente) son BINARIOS: un solo fallo cancela el permiso. El puntaje final se usa como registro de calidad del proceso de preparación."
+  }
+}
