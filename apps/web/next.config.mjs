@@ -2,9 +2,14 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
+const isGithubPages = process.env.GITHUB_PAGES === 'true';
+const repoName = 'OpenQHSE';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  output: isGithubPages ? 'export' : 'standalone',
+  basePath: isGithubPages ? `/${repoName}` : '',
+  assetPrefix: isGithubPages ? `/${repoName}/` : '',
   reactStrictMode: true,
   typescript: {
     // Type errors are checked in CI lint step; skip during Docker build
@@ -15,6 +20,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
+    unoptimized: isGithubPages,
     remotePatterns: [
       {
         protocol: 'http',
@@ -29,14 +35,16 @@ const nextConfig = {
       },
     ],
   },
-  async rewrites() {
-    return [
-      {
-        source: '/api/v1/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/:path*`,
-      },
-    ];
-  },
+  ...(isGithubPages ? {} : {
+    async rewrites() {
+      return [
+        {
+          source: '/api/v1/:path*',
+          destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/:path*`,
+        },
+      ];
+    },
+  }),
   async headers() {
     return [
       {
