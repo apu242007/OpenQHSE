@@ -53,6 +53,13 @@ jobs:
           sed -i "s/import { getLocale, getMessages } from 'next-intl\/server';//" apps/web/src/app/layout.tsx
           sed -i "s/const locale = await getLocale();/const locale = 'es';/" apps/web/src/app/layout.tsx
           sed -i "s/const messages = await getMessages();/const { default: messages } = await import('@\/i18n\/messages\/es.json');/" apps/web/src/app/layout.tsx
+          # Add generateStaticParams to all dynamic route pages (required for output:export)
+          find apps/web/src/app -path "*/\[*\]*/page.tsx" | while read f; do
+            if ! grep -q "generateStaticParams" "$f"; then
+              echo "" >> "$f"
+              echo "export function generateStaticParams() { return []; }" >> "$f"
+            fi
+          done
 
       - name: Build static export
         working-directory: apps/web
