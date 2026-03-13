@@ -45,7 +45,14 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Remove API routes incompatible with static export
-        run: rm -rf apps/web/src/app/api
+        run: |
+          rm -rf apps/web/src/app/api
+          # Remove force-dynamic from layout.tsx (incompatible with output:export)
+          sed -i "/export const dynamic = 'force-dynamic'/d" apps/web/src/app/layout.tsx
+          # Replace dynamic next-intl server functions with static fallbacks
+          sed -i "s/import { getLocale, getMessages } from 'next-intl\/server';//" apps/web/src/app/layout.tsx
+          sed -i "s/const locale = await getLocale();/const locale = 'es';/" apps/web/src/app/layout.tsx
+          sed -i "s/const messages = await getMessages();/const { default: messages } = await import('@\/i18n\/messages\/es.json');/" apps/web/src/app/layout.tsx
 
       - name: Build static export
         working-directory: apps/web
