@@ -8,7 +8,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Shield, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { api, setTokens } from '@/lib/api-client';
+import { signIn } from 'next-auth/react';
+import { api } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/stores';
 import { registerSchema, type RegisterFormValues } from '@/lib/validations';
 import { cn } from '@/lib/utils';
@@ -56,8 +57,12 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormValues) => {
     setError(null);
     try {
-      const tokens = await api.post<TokenResponse>('/auth/register', data);
-      setTokens(tokens.access_token, tokens.refresh_token);
+      await api.post<TokenResponse>('/auth/register', data);
+      await signIn('credentials', {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
       const user = await api.get<UserResponse>('/auth/me');
       setUser(user);
       router.push('/dashboard');
