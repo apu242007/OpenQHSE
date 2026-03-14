@@ -9,5 +9,6 @@
     // built-in TypeScript. Required so the Next.js TypeScript plugin loads correctly
     // and resolves next/navigation, next/server, next-auth/react, etc. via
     // node-linker=hoisted packages in the monorepo root node_modules/.
-    "typescript.tsdk": "node_modules/typescript/lib"
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true
 }
