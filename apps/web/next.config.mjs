@@ -1,4 +1,8 @@
 import createNextIntlPlugin from 'next-intl/plugin';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -8,6 +12,7 @@ const repoName = 'OpenQHSE';
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: isGithubPages ? 'export' : 'standalone',
+  outputFileTracingRoot: isGithubPages ? undefined : path.join(__dirname, '../..'),
   basePath: isGithubPages ? `/${repoName}` : '',
   assetPrefix: isGithubPages ? `/${repoName}/` : '',
   reactStrictMode: true,
