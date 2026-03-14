@@ -27,8 +27,8 @@ This guide covers five methods to deploy OpenQHSE:
 ### Development
 
 ```bash
-git clone https://github.com/openqhse/platform.git
-cd platform
+git clone https://github.com/apu242007/OpenQHSE.git
+cd OpenQHSE
 docker compose up -d
 ```
 
@@ -293,12 +293,13 @@ kubectl logs -n openqhse deployment/openqhse-api --tail=100
 ### Step 1 — Clone and build
 
 ```bash
-git clone https://github.com/openqhse/platform.git /opt/openqhse
+git clone https://github.com/apu242007/OpenQHSE.git /opt/openqhse
 cd /opt/openqhse
 
-# Install Node deps and build frontend
-npm install
-cd apps/web && npm run build
+# Install Node deps and build frontend (requires pnpm)
+npm install -g pnpm
+pnpm install
+pnpm --filter @openqhse/web run build
 cd /opt/openqhse
 
 # Install Python deps
@@ -478,4 +479,4 @@ gunzip -c backup-20250101.sql.gz | docker compose exec -T postgres psql -U openq
 
 ---
 
-For help, open a [GitHub Discussion](https://github.com/openqhse/platform/discussions) or file an [issue](https://github.com/openqhse/platform/issues).
+For help, open a [GitHub Discussion](https://github.com/apu242007/OpenQHSE/discussions) or file an [issue](https://github.com/apu242007/OpenQHSE/issues).

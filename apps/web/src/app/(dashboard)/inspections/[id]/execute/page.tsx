@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft, Loader2, Save, CheckCircle2, Camera, AlertTriangle,
-  Clock, ChevronLeft, ChevronRight, Flag,
+  Clock, ChevronLeft, ChevronRight, Flag, FileDown,
 } from 'lucide-react';
 import { useInspection, useUpdateInspection, useCompleteInspection, useCreateFinding } from '@/hooks/use-inspections';
 import type { TemplateSection, TemplateQuestion, QuestionResponse, FindingSeverity } from '@/types/inspections';
@@ -22,6 +22,7 @@ export default function ExecuteInspectionPage() {
   const [currentSection, setCurrentSection] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [showFindingModal, setShowFindingModal] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Timer
@@ -91,6 +92,66 @@ export default function ExecuteInspectionPage() {
     setShowFindingModal(null);
   };
 
+  // Map QuestionResponse records → flat values for PDF
+  const handleDownloadPDF = useCallback(async () => {
+    setPdfLoading(true);
+    try {
+      const [{ createElement }, { pdf }, { InspectionPDFDocument }] = await Promise.all([
+        import('react'),
+        import('@react-pdf/renderer'),
+        import('@/components/inspections/pdf-report'),
+      ]);
+
+      const pdfSections = sections;
+
+      // Calculate score from current responses
+      let score = 0; let maxScore = 0;
+      for (const sec of pdfSections) {
+        for (const q of sec.questions) {
+          if (q.question_type === 'yes_no' && q.weight > 0) {
+            maxScore += q.weight;
+            const v = responses[q.id]?.value;
+            if (v === 'Sí' || v === 'yes' || v === true) score += q.weight;
+          }
+        }
+      }
+
+      // Normalize to the string format the PDF component expects
+      const pdfResponses: Record<string, string | number | undefined> = {};
+      for (const [qId, resp] of Object.entries(responses)) {
+        const v = resp?.value;
+        if (v === 'Sí' || v === true)  pdfResponses[qId] = 'yes';
+        else if (v === 'No' || v === false) pdfResponses[qId] = 'no';
+        else pdfResponses[qId] = v as string | number | undefined;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const doc = createElement(InspectionPDFDocument as any, {
+        title:     inspection.title,
+        inspector: inspection.inspector_id ?? '—',
+        site:      inspection.site_id      ?? '—',
+        date:      new Date(),
+        sections:  pdfSections,
+        responses: pdfResponses,
+        score,
+        maxScore,
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const blob = await pdf(doc as any).toBlob();
+      const url  = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href     = url;
+      link.download = `inspeccion-${inspection.reference_number}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+    } finally {
+      setPdfLoading(false);
+    }
+  }, [inspection, sections, responses]);
+
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
@@ -124,6 +185,18 @@ export default function ExecuteInspectionPage() {
             className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-muted"
           >
             <Save className="h-4 w-4" /> Guardar
+          </button>
+          <button
+            type="button"
+            onClick={handleDownloadPDF}
+            disabled={pdfLoading}
+            className="flex items-center gap-1 rounded-lg border border-border bg-primary/5 px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/10 disabled:opacity-40"
+          >
+            {pdfLoading
+              ? <Loader2 className="h-4 w-4 animate-spin" />
+              : <FileDown className="h-4 w-4" />
+            }
+            PDF
           </button>
         </div>
       </div>

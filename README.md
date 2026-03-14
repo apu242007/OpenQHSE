@@ -1,21 +1,21 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/openqhse/platform/main/apps/web/public/icons/icon-192x192.png" alt="OpenQHSE Logo" width="96" />
+<img src="https://raw.githubusercontent.com/apu242007/OpenQHSE/main/apps/web/public/icons/icon-192x192.png" alt="OpenQHSE Logo" width="96" />
 
 # 🛡️ OpenQHSE Platform
 
 ### Enterprise QHSE Management — Open Source, Self-Hosted, Production-Ready
 
-[![CI](https://github.com/openqhse/platform/actions/workflows/ci.yml/badge.svg)](https://github.com/openqhse/platform/actions/workflows/ci.yml)
-[![Release](https://github.com/openqhse/platform/actions/workflows/release.yml/badge.svg)](https://github.com/openqhse/platform/actions/workflows/release.yml)
+[![CI](https://github.com/apu242007/OpenQHSE/actions/workflows/ci.yml/badge.svg)](https://github.com/apu242007/OpenQHSE/actions/workflows/ci.yml)
+[![Release](https://github.com/apu242007/OpenQHSE/actions/workflows/release.yml/badge.svg)](https://github.com/apu242007/OpenQHSE/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-00E5A0.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776ab?logo=python&logoColor=white)](apps/api)
-[![Next.js 14](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](apps/web)
+[![Next.js 15](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](apps/web)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ed?logo=docker&logoColor=white)](docker/)
 [![Helm Chart](https://img.shields.io/badge/Helm-Chart-326ce5?logo=helm&logoColor=white)](k8s/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**[Live Demo](https://app.openqhse.io)** · **[Marketplace](https://app.openqhse.io/marketplace)** · **[Docs](docs/)** · **[Report a Bug](https://github.com/openqhse/platform/issues/new?template=bug_report.md)**
+**[Live Demo](https://app.openqhse.io)** · **[Marketplace](https://app.openqhse.io/marketplace)** · **[Docs](docs/)** · **[Report a Bug](https://github.com/apu242007/OpenQHSE/issues/new?template=bug_report.md)**
 
 </div>
 
@@ -116,8 +116,8 @@
 ### Docker (3 commands — zero configuration needed)
 
 ```bash
-git clone https://github.com/openqhse/platform.git
-cd platform
+git clone https://github.com/apu242007/OpenQHSE.git
+cd OpenQHSE
 docker compose up -d
 ```
 
@@ -128,8 +128,9 @@ Open **http://localhost:3000** and log in: `admin@openqhse.io` / `admin123`
 ### Development mode
 
 ```bash
-# 1. Install all workspace dependencies
-npm install
+# 1. Install all workspace dependencies (requires pnpm)
+npm install -g pnpm   # skip if already installed
+pnpm install
 
 # 2. Set up Python backends
 pip install uv
@@ -148,14 +149,14 @@ cd apps/api && alembic upgrade head && cd ../..
 python scripts/seed_marketplace.py
 
 # 6. Start all dev servers (turbo)
-npm run dev
+pnpm run dev
 ```
 
 ### Available services
 
 | Service | URL | Notes |
 |---------|-----|-------|
-| Web App | http://localhost:3000 | Next.js 14 + PWA |
+| Web App | http://localhost:3000 | Next.js 15 + PWA |
 | API Docs | http://localhost:8000/docs | Swagger UI |
 | AI Engine | http://localhost:8100/docs | LangChain FastAPI |
 | Grafana | http://localhost:3001 | Monitoring |
@@ -203,7 +204,7 @@ python scripts/seed_marketplace.py --reset --summary
 └──────────────┬──────────────────────┬───────────────────┘
                │                      │
        ┌───────▼──────┐     ┌─────────▼───────┐
-       │  Next.js 14  │     │   FastAPI API   │
+       │  Next.js 15  │     │   FastAPI API   │
        │  (PWA + SSR) │     │  (Python 3.11)  │
        └──────────────┘     └────────┬────────┘
                                      │
@@ -223,7 +224,7 @@ python scripts/seed_marketplace.py --reset --summary
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Next.js 14 (App Router), TypeScript strict, Tailwind CSS |
+| Frontend | Next.js 15 (App Router), TypeScript strict, Tailwind CSS |
 | State | TanStack Query v5, Zustand |
 | Mobile | React Native (Expo), SQLite offline, Background Sync |
 | Backend | FastAPI, SQLAlchemy 2 (async), Pydantic v2, Alembic |
@@ -243,7 +244,7 @@ python scripts/seed_marketplace.py --reset --summary
 ```
 ├── apps/
 │   ├── api/          # FastAPI + SQLAlchemy backend (Python 3.11)
-│   ├── web/          # Next.js 14 PWA frontend
+│   ├── web/          # Next.js 15 PWA frontend
 │   ├── mobile/       # React Native / Expo (offline-first)
 │   └── ai-engine/    # LangChain AI microservice
 ├── packages/
@@ -365,16 +366,16 @@ We welcome all contributions!
 
 ```bash
 # 1. Fork & clone
-git clone https://github.com/YOUR_USERNAME/platform.git
-cd platform
+git clone https://github.com/YOUR_USERNAME/OpenQHSE.git
+cd OpenQHSE
 
 # 2. Create a feature branch
 git checkout -b feat/amazing-feature
 
 # 3. Develop and test
 docker compose up -d
-npm run dev
-npm run test
+pnpm run dev
+pnpm run test
 
 # 4. Commit (Conventional Commits)
 git commit -m "feat(marketplace): add new mining template"
@@ -399,7 +400,7 @@ git push origin feat/amazing-feature
 | 🧪 Testing | Unit & integration coverage |
 | 📖 Docs | Tutorials, video walkthroughs |
 | 🎨 UI/UX | Accessibility, mobile responsiveness |
-| 🐛 Bug reports | [Open an issue](https://github.com/openqhse/platform/issues) |
+| 🐛 Bug reports | [Open an issue](https://github.com/apu242007/OpenQHSE/issues) |
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and PR checklist.
 
@@ -445,7 +446,7 @@ If OpenQHSE saves a single life or prevents a single injury — it was worth bui
 
 <div align="center">
 
-**[⭐ Star us on GitHub](https://github.com/openqhse/platform)** — it helps more people discover the project.
+**[⭐ Star us on GitHub](https://github.com/apu242007/OpenQHSE)** — it helps more people discover the project.
 
 [openqhse.io](https://openqhse.io) · [Marketplace](https://app.openqhse.io/marketplace) · [Documentation](docs/) · [MIT License](LICENSE)
 

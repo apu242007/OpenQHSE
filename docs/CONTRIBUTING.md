@@ -31,12 +31,12 @@ By participating you agree to our [Code of Conduct](CODE_OF_CONDUCT.md).
 1. **Fork** the repository on GitHub.
 2. **Clone** your fork locally:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/platform.git
-   cd platform
+   git clone https://github.com/YOUR_USERNAME/OpenQHSE.git
+   cd OpenQHSE
    ```
 3. **Add the upstream remote**:
    ```bash
-   git remote add upstream https://github.com/openqhse/platform.git
+   git remote add upstream https://github.com/apu242007/OpenQHSE.git
    ```
 4. **Create a branch** from `main`:
    ```bash
@@ -50,7 +50,7 @@ By participating you agree to our [Code of Conduct](CODE_OF_CONDUCT.md).
 ```
 apps/
   api/          # FastAPI backend — Python 3.11+
-  web/          # Next.js 14 frontend — TypeScript
+  web/          # Next.js 15 frontend — TypeScript
   mobile/       # React Native / Expo — TypeScript
   ai-engine/    # AI microservice — Python 3.11+
 packages/
@@ -82,8 +82,9 @@ infra/terraform/ # AWS infrastructure (IaC)
 ### Full local setup
 
 ```bash
-# 1. Install Node dependencies (monorepo)
-npm install
+# 1. Install Node dependencies (monorepo — requires pnpm)
+npm install -g pnpm   # skip if already installed
+pnpm install
 
 # 2. Install Python backends
 pip install uv
@@ -343,7 +344,7 @@ To add or update a translation:
 
 ## Reporting Bugs
 
-Please use the [Bug Report template](https://github.com/openqhse/platform/issues/new?template=bug_report.md) and include:
+Please use the [Bug Report template](https://github.com/apu242007/OpenQHSE/issues/new?template=bug_report.md) and include:
 
 - OpenQHSE version (or commit SHA)
 - Steps to reproduce
@@ -355,7 +356,7 @@ Please use the [Bug Report template](https://github.com/openqhse/platform/issues
 
 ## Feature Requests
 
-Use the [Feature Request template](https://github.com/openqhse/platform/issues/new?template=feature_request.md).  
+Use the [Feature Request template](https://github.com/apu242007/OpenQHSE/issues/new?template=feature_request.md).  
 For large changes, open a **Discussion** first to align on approach before writing code.
 
 ---

@@ -57,7 +57,7 @@ provider "aws" {
       Project     = "OpenQHSE"
       Environment = var.environment
       ManagedBy   = "Terraform"
-      Repository  = "github.com/openqhse/platform"
+      Repository  = "github.com/apu242007/OpenQHSE"
     }
   }
 }

@@ -1,13 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
-import { getLocale, getMessages } from 'next-intl/server';
 
 import { Providers } from '@/components/providers/Providers';
 import '@/styles/globals.css';
-
-// next-intl uses headers() for locale detection — opt all routes into dynamic rendering
-export const dynamic = 'force-dynamic';
+import esMessages from '@/i18n/messages/es.json';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -43,14 +40,11 @@ export function generateViewport(): Viewport {
   return { themeColor: '#0066FF' };
 }
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const locale = await getLocale();
-  const messages = await getMessages();
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang={locale} className="dark" suppressHydrationWarning>
+    <html lang="es" className="dark" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
-        <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider locale="es" messages={esMessages}>
           <Providers>{children}</Providers>
         </NextIntlClientProvider>
         {/* PWA service worker registration */}

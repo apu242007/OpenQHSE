@@ -6,6 +6,10 @@ __pycache__/
 venv/
 *.egg-info/
 
+# Lockfiles — only pnpm-lock.yaml is canonical; block other managers
+package-lock.json
+yarn.lock
+
 # Build outputs
 dist/
 .next/

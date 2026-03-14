@@ -37,9 +37,9 @@ else
   log ".env already exists, skipping."
 fi
 
-# ── Install npm dependencies ──────────────────────────────
-log "Installing npm dependencies..."
-npm install
+# ── Install pnpm dependencies ─────────────────────────────
+log "Installing pnpm dependencies..."
+pnpm install --frozen-lockfile
 
 # ── Python backend ─────────────────────────────────────────
 if command -v python3 >/dev/null 2>&1; then

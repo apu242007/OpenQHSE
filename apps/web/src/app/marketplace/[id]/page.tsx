@@ -498,7 +498,7 @@ export default function MarketplaceDetailPage() {
 
           {/* View on GitHub */}
           <a
-            href={`https://github.com/openqhse/platform/tree/main/scripts/templates`}
+            href={`https://github.com/apu242007/OpenQHSE/tree/main/scripts/templates`}
             target="_blank"
             rel="noopener"
             className="flex w-full items-center justify-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-medium hover:bg-muted"

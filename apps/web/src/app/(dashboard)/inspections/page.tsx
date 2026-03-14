@@ -55,6 +55,13 @@ export default function InspectionsPage() {
         <div className="flex gap-2">
           <button
             type="button"
+            onClick={() => router.push('/inspections/demo')}
+            className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10"
+          >
+            <Play className="h-4 w-4" /> Demo sin backend
+          </button>
+          <button
+            type="button"
             onClick={() => router.push('/inspections/schedule')}
             className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted"
           >

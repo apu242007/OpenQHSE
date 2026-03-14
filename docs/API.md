@@ -683,4 +683,4 @@ Until then, use the hooks from `apps/web/src/hooks/` as reference implementation
 
 ---
 
-For questions, open a [GitHub Discussion](https://github.com/openqhse/platform/discussions).
+For questions, open a [GitHub Discussion](https://github.com/apu242007/OpenQHSE/discussions).

@@ -415,7 +415,7 @@ export default function MarketplacePage() {
               Crear cuenta gratis <ChevronRight className="h-4 w-4" />
             </Link>
             <a
-              href="https://github.com/openqhse/platform"
+              href="https://github.com/apu242007/OpenQHSE"
               target="_blank"
               rel="noopener"
               className="flex items-center gap-2 rounded-xl border border-border px-5 py-2.5 text-sm font-semibold hover:bg-muted"

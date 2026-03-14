@@ -70,7 +70,7 @@ export default function MarketplaceLayout({ children }: { children: React.ReactN
         <p>
           OpenQHSE — Open-source QHSE Management Platform · Licencia{' '}
           <a
-            href="https://github.com/openqhse/platform/blob/main/LICENSE"
+            href="https://github.com/apu242007/OpenQHSE/blob/main/LICENSE"
             target="_blank"
             rel="noopener"
             className="text-primary hover:underline"
