@@ -1,0 +1,13 @@
+{
+    "python-envs.defaultEnvManager": "ms-python.python:venv",
+    "python.defaultInterpreterPath": "${workspaceFolder}/apps/api/.venv/Scripts/python.exe",
+    "python.pythonPath": "${workspaceFolder}/apps/api/.venv/Scripts/python.exe",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/apps/api"
+    ],
+    // Use the workspace TypeScript (root node_modules/typescript) instead of VS Code's
+    // built-in TypeScript. Required so the Next.js TypeScript plugin loads correctly
+    // and resolves next/navigation, next/server, next-auth/react, etc. via
+    // node-linker=hoisted packages in the monorepo root node_modules/.
+    "typescript.tsdk": "node_modules/typescript/lib"
+}

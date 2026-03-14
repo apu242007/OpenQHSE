@@ -117,11 +117,16 @@ Get-ChildItem -Recurse -Directory -Force -Filter react -Path apps,packages |
 Remove-Item node_modules -Recurse -Force          # PowerShell
 find . -name node_modules -prune -exec rm -rf {} + # bash/Linux
 
-# 2. Reinstall — node-linker=hoisted in .npmrc ensures everything
+# 2. (Optional) Prune the global pnpm content-addressable store
+#    Only needed if you suspect corrupted cached packages.
+#    Safe to skip on a normal reinstall.
+pnpm store prune
+
+# 3. Reinstall — node-linker=hoisted in .npmrc ensures everything
 #    lands at root node_modules/ with no nested duplicates
 pnpm install
 
-# 3. Verify
+# 4. Verify — exits 1 if multiple react@x.y.z versions are found
 pnpm check:single-react
 ```
 

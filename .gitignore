@@ -22,7 +22,8 @@ dist/
 .env.*.local
 
 # IDE
-.vscode/settings.json
+# settings.json is tracked: it sets typescript.tsdk (workspace TS for monorepo)
+# and Python interpreter paths. Personal overrides belong in user settings.
 .idea/
 *.swp
 *.swo
