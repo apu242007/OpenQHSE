@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   build:
@@ -46,6 +46,10 @@ jobs:
 
       - name: Remove API routes incompatible with static export
         run: rm -rf apps/web/src/app/api
+
+      - name: Use GitHub Pages Next.js config
+        working-directory: apps/web
+        run: rm -f next.config.ts
 
       - name: Build static export
         working-directory: apps/web
