@@ -2,28 +2,31 @@
 FROM node:22-alpine AS web-deps
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/web/package.json apps/web/
 COPY packages/types/package.json packages/types/
 COPY packages/ui/package.json packages/ui/
 COPY packages/config/package.json packages/config/
 
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --workspace=apps/web --ignore-scripts
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
 # ── Builder ──────────────────────────────────────────────────
 FROM node:22-alpine AS web-builder
 WORKDIR /app
 
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+
 COPY --from=web-deps /app/node_modules ./node_modules
-COPY --from=web-deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY . .
 
 # next.config.ts requires Next.js 15+; remove it so .mjs is picked up instead
 RUN rm -f apps/web/next.config.ts
 
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build --workspace=apps/web
+RUN pnpm --filter=@openqhse/web run build
 
 # ── Runner ───────────────────────────────────────────────────
 FROM node:22-alpine AS web-runner
