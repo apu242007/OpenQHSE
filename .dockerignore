@@ -14,6 +14,10 @@ node_modules
 apps/web/.next
 apps/web/out
 
+# ── Turbo cache ──────────────────────────────────────────────
+.turbo
+**/.turbo
+
 # ── Python ───────────────────────────────────────────────────
 **/__pycache__
 **/*.pyc

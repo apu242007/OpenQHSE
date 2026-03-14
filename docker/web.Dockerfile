@@ -26,7 +26,8 @@ COPY . .
 RUN rm -f apps/web/next.config.ts
 
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN pnpm --filter=@openqhse/web run build
+RUN --mount=type=cache,target=/app/apps/web/.next/cache \
+    pnpm --filter=@openqhse/web run build
 
 # ── Runner ───────────────────────────────────────────────────
 FROM node:22-alpine AS web-runner

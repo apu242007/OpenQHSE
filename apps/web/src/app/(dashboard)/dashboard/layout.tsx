@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   LayoutDashboard,
@@ -35,6 +35,7 @@ interface NavItem {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const t = useTranslations('nav');
   const pathname = usePathname();
+  const router = useRouter();
   const { user, clearUser } = useAuthStore();
   const { sidebarOpen, toggleSidebar } = useUIStore();
   const { unreadCount } = useNotificationStore();
@@ -42,7 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const handleLogout = async () => {
     clearUser();
     await signOut({ redirect: false });
-    window.location.href = '/login';
+    router.push('/login');
   };
 
   const navItems: NavItem[] = [

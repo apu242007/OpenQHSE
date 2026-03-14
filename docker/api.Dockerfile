@@ -1,5 +1,5 @@
 # ── API Service ──────────────────────────────────────────────
-FROM python:3.11-slim AS api-base
+FROM python:3.12-slim AS api-base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1

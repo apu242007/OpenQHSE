@@ -15,6 +15,9 @@ const nextConfig = {
   outputFileTracingRoot: isGithubPages ? undefined : path.join(__dirname, '../..'),
   basePath: isGithubPages ? `/${repoName}` : '',
   assetPrefix: isGithubPages ? `/${repoName}/` : '',
+  env: {
+    NEXT_PUBLIC_BASE_PATH: isGithubPages ? `/${repoName}` : '',
+  },
   reactStrictMode: true,
   typescript: {
     // Type errors are checked in CI lint step; skip during Docker build

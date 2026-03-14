@@ -90,7 +90,7 @@ async function request<T>(
     // NextAuth will handle token refresh automatically on the next session read.
     // Redirect to login if we're in a browser context.
     if (typeof window !== "undefined") {
-      window.location.href = "/login";
+      window.location.href = (process.env.NEXT_PUBLIC_BASE_PATH ?? "") + "/login";
     }
     throw new ApiError(401, "Session expired. Please sign in again.");
   }

@@ -194,4 +194,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   // Use JWT strategy (default for Credentials provider)
   session: { strategy: "jwt" },
+
+  // Trust reverse-proxy (nginx) Host headers so auth works via localhost:8080
+  trustHost: true,
 });
