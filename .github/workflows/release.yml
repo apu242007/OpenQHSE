@@ -37,6 +37,7 @@ concurrency:
 env:
   AWS_REGION: us-east-1
   IMAGE_PREFIX: openqhse
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   # ── Determine version & environment ───────────────────────────────────────
