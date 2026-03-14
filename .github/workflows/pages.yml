@@ -61,6 +61,9 @@ jobs:
           NEXT_TELEMETRY_DISABLED: 1
         run: pnpm run build
 
+      - name: Disable Jekyll (allow _next/ directory)
+        run: touch apps/web/out/.nojekyll
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

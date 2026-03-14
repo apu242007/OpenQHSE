@@ -1,9 +1,11 @@
-import { redirect } from 'next/navigation';
+'use client';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-/**
- * Root page redirects to dashboard for authenticated users
- * or login for unauthenticated users.
- */
 export default function RootPage() {
-  redirect('/dashboard');
+  const router = useRouter();
+  useEffect(() => {
+    router.replace('/login');
+  }, [router]);
+  return null;
 }
