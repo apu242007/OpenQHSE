@@ -90,6 +90,46 @@ When proposing significant changes, please open an issue first to discuss the ap
 - Alternatives considered
 - Impact on existing code
 
+## Troubleshooting
+
+### `TypeError: Cannot read properties of null (reading 'useRef')` during build
+
+**Cause:** Two copies of React loaded simultaneously — one from root `node_modules/` and a stale
+nested copy inside `apps/web/node_modules/` or `packages/*/node_modules/`. This happens when
+`pnpm install` is run before `node-linker=hoisted` was set, leaving real (non-hoisted) package
+directories behind.
+
+**Detect:**
+```bash
+# Should show a single tree, all resolving to the same react@x.y.z
+pnpm -r why react
+
+# Should return nothing (no nested copies)
+# PowerShell:
+Get-ChildItem -Recurse -Directory -Force -Filter react -Path apps,packages |
+  Where-Object { $_.FullName -match 'node_modules\\react$' } |
+  Select-Object FullName
+```
+
+**Fix:**
+```bash
+# 1. Wipe all node_modules (root + every workspace)
+Remove-Item node_modules -Recurse -Force          # PowerShell
+find . -name node_modules -prune -exec rm -rf {} + # bash/Linux
+
+# 2. Reinstall — node-linker=hoisted in .npmrc ensures everything
+#    lands at root node_modules/ with no nested duplicates
+pnpm install
+
+# 3. Verify
+pnpm check:single-react
+```
+
+**Why `node-linker=hoisted` is required on Windows:** pnpm's default virtual-store linker
+creates hardlinks into `.pnpm/` which can silently fail on Windows (AV interference, NTFS
+restrictions). The `hoisted` linker copies packages directly to `node_modules/`, identical to
+how npm/yarn work, and avoids this class of issue entirely.
+
 ## Questions?
 
 Open a [Discussion](https://github.com/openqhse/openqhse/discussions) for general questions, or an [Issue](https://github.com/openqhse/openqhse/issues) for bug reports and feature requests.

@@ -31,6 +31,7 @@
     "docker:down": "docker compose down",
     "docker:dev": "docker compose up --build",
     "docker:prod": "docker compose -f docker-compose.yml -f docker/docker-compose.prod.yml up --build -d",
+    "check:single-react": "node -e \"const {execSync}=require('child_process');const o=execSync('pnpm -r why react',{encoding:'utf8'});const matches=(o.match(/react@/g)||[]);if(matches.length>1){console.error('ERROR: multiple React instances detected:\\n'+o);process.exit(1)}console.log('OK: single react instance');\"",
     "prepare": "husky"
   },
   "devDependencies": {
@@ -53,6 +54,12 @@
       "ruff check --fix",
       "ruff format"
     ]
+  },
+  "pnpm": {
+    "overrides": {
+      "react": "19.2.4",
+      "react-dom": "19.2.4"
+    }
   },
   "engines": {
     "node": ">=20.0.0",

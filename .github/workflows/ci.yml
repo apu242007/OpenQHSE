@@ -35,6 +35,8 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+      - name: Check single React instance
+        run: pnpm check:single-react
       - run: npx turbo run lint --filter=@openqhse/web
       - run: npx tsc --project apps/web/tsconfig.json --noEmit
 
