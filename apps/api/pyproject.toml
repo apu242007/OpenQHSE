@@ -67,11 +67,21 @@ dev = [
 
 [tool.ruff]
 target-version = "py312"
-line-length = 100
+line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM", "TCH"]
-ignore = ["ANN101", "ANN102", "ANN401"]
+ignore = [
+    "ANN401",
+    # FastAPI intentionally uses Query(), Depends(), Body() as default args
+    "B008",
+    # Line length enforced by formatter, not linter
+    "E501",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Migration files are auto-generated — long lines are unavoidable
+"alembic/versions/*.py" = ["E501"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
