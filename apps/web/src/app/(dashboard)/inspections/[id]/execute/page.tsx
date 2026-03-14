@@ -93,7 +93,7 @@ export default function ExecuteInspectionPage() {
   };
 
   // Map QuestionResponse records → flat values for PDF
-  const handleDownloadPDF = useCallback(async () => {
+  const handleDownloadPDF = async () => {
     setPdfLoading(true);
     try {
       const [{ createElement }, { pdf }, { InspectionPDFDocument }] = await Promise.all([
@@ -150,7 +150,7 @@ export default function ExecuteInspectionPage() {
     } finally {
       setPdfLoading(false);
     }
-  }, [inspection, sections, responses]);
+  };
 
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);

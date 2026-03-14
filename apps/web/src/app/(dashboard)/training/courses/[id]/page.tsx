@@ -417,7 +417,7 @@ export default function CourseDetailPage() {
                   Evaluación final
                 </h3>
                 <p className="mb-3 text-xs text-muted-foreground">
-                  {assessment.questions?.length ?? 0} preguntas • {QUIZ_TIME_MINUTES} minutos
+                  {assessment?.questions?.length ?? 0} preguntas • {QUIZ_TIME_MINUTES} minutos
                 </p>
                 <button
                   type="button"

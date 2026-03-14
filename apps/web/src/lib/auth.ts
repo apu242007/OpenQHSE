@@ -17,6 +17,7 @@
 
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import type {} from "next-auth/jwt"; // required for module augmentation below
 
 const API_BASE = process.env.API_URL ?? "http://localhost:8000/api/v1";
 
@@ -55,6 +56,7 @@ declare module "next-auth" {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   interface User extends FastAPILoginResponse {}
 }
 

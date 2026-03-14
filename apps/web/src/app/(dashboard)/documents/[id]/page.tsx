@@ -307,14 +307,14 @@ export default function DocumentDetailPage() {
           </Collapsible>
 
           {/* Distribution List */}
-          {doc.distribution_list && (doc.distribution_list as unknown as Array<Record<string, unknown>>).length > 0 && (
+          {doc.distribution_list && (doc.distribution_list as unknown as Array<{user_id?: string; role?: string; required?: boolean}>).length > 0 && (
             <div className="rounded-xl border border-border bg-card p-4">
               <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold">
                 <Users className="h-4 w-4 text-muted-foreground" />
                 Lista de distribución
               </h2>
               <div className="space-y-2">
-                {(doc.distribution_list as unknown as Array<Record<string, unknown>>).map((entry, idx) => (
+                {(doc.distribution_list as unknown as Array<{user_id?: string; role?: string; required?: boolean}>).map((entry, idx) => (
                   <div key={idx} className="flex items-center justify-between rounded-lg border border-border p-2">
                     <span className="font-mono text-xs">{String(entry.user_id ?? '—')}</span>
                     <div className="flex items-center gap-2">

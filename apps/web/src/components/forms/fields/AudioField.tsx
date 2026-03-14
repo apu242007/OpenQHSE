@@ -13,7 +13,7 @@ export function AudioField({ field, value, onChange, error, disabled, readOnly }
   const [playing, setPlaying] = useState(false);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
-  const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const startRecording = useCallback(async () => {

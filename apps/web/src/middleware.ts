@@ -40,7 +40,7 @@ function resolveLocale(req: NextRequest): Locale {
   }
   const acceptLang = req.headers.get("accept-language") ?? "";
   for (const segment of acceptLang.split(",")) {
-    const lang = segment.split(";")[0].trim().slice(0, 2).toLowerCase();
+    const lang = (segment.split(";")[0] ?? "").trim().slice(0, 2).toLowerCase();
     if ((locales as readonly string[]).includes(lang)) return lang as Locale;
   }
   return defaultLocale;

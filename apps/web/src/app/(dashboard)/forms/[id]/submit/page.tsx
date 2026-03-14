@@ -26,7 +26,7 @@ export default function FormSubmitPage() {
   const [submitting, setSubmitting] = useState(false);
   const [autoSaved, setAutoSaved] = useState<Date | null>(null);
   const [isOnline, setIsOnline] = useState(true);
-  const autoSaveRef = useRef<ReturnType<typeof setInterval>>();
+  const autoSaveRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   const sections = template?.schema_def?.sections ?? [];
   const settings = template?.schema_def?.settings;

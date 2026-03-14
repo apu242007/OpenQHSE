@@ -425,7 +425,7 @@ export default function DashboardPage() {
   // ── TRIR LineChart data merge ────────────────────────
   const trirData = useMemo(() => {
     if (!incidentsTrend) return [];
-    return incidentsTrend.trir_current_year.map((cur, i) => ({
+    return incidentsTrend.trir_current_year.map((cur: { month: string; value: number }, i: number) => ({
       month: cur.month,
       current: cur.value,
       previous: incidentsTrend.trir_previous_year[i]?.value ?? 0,
@@ -571,7 +571,7 @@ export default function DashboardPage() {
                     dataKey="count"
                     nameKey="label"
                   >
-                    {incidentsTrend.by_type.map((entry) => (
+                    {incidentsTrend.by_type.map((entry: IncidentsByType) => (
                       <Cell key={entry.type} fill={entry.color} />
                     ))}
                   </Pie>
@@ -579,7 +579,7 @@ export default function DashboardPage() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="mt-3 space-y-1.5">
-                {incidentsTrend.by_type.map((item) => (
+                {incidentsTrend.by_type.map((item: IncidentsByType) => (
                   <div key={item.type} className="flex items-center gap-2 text-xs">
                     <span
                       className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
@@ -698,7 +698,7 @@ export default function DashboardPage() {
                 <p className="text-sm text-muted-foreground">Sin acciones vencidas</p>
               </div>
             ) : (
-              widgets.overdue_actions.slice(0, 5).map((action) => (
+              widgets.overdue_actions.slice(0, 5).map((action: OverdueAction) => (
                 <Link
                   key={action.id}
                   href={`/actions/${action.id}`}
@@ -737,7 +737,7 @@ export default function DashboardPage() {
                 <p className="text-sm text-muted-foreground">Sin inspecciones programadas</p>
               </div>
             ) : (
-              widgets.upcoming_inspections.map((insp) => (
+              widgets.upcoming_inspections.map((insp: UpcomingInspection) => (
                 <Link
                   key={insp.id}
                   href={`/inspections/${insp.id}`}
@@ -776,7 +776,7 @@ export default function DashboardPage() {
                 <p className="text-sm text-muted-foreground">Sin incidentes recientes</p>
               </div>
             ) : (
-              widgets.recent_incidents.map((inc) => (
+              widgets.recent_incidents.map((inc: RecentIncident) => (
                 <Link
                   key={inc.id}
                   href={`/incidents/${inc.id}`}
@@ -816,7 +816,7 @@ export default function DashboardPage() {
                 <p className="text-sm text-muted-foreground">Sin permisos activos</p>
               </div>
             ) : (
-              widgets.active_permits.map((p) => (
+              widgets.active_permits.map((p: ActivePermit) => (
                 <Link
                   key={p.id}
                   href={`/permits/${p.id}`}
@@ -853,7 +853,7 @@ export default function DashboardPage() {
                 <p className="text-sm text-muted-foreground">Sin capacitaciones por vencer</p>
               </div>
             ) : (
-              widgets.expiring_training.map((tr) => (
+              widgets.expiring_training.map((tr: TrainingExpiring) => (
                 <div
                   key={tr.id}
                   className="flex items-center justify-between p-3"
@@ -978,7 +978,7 @@ function KPIAlertWidget() {
 
   const { data: alerts, isLoading } = useQuery<KPIAlert[]>({
     queryKey: ['kpi-alerts', 'TRIGGERED'],
-    queryFn: () => api.analytics.kpiAlerts.list('status=TRIGGERED') as Promise<KPIAlert[]>,
+    queryFn: () => api.analytics.kpiAlerts.list('status=TRIGGERED') as unknown as Promise<KPIAlert[]>,
     refetchInterval: 5 * 60 * 1000, // refresh every 5 minutes
   });
 

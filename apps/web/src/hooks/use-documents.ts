@@ -122,8 +122,9 @@ export function useAcknowledgeDocument() {
 export function useDownloadDocumentReport() {
   return useMutation({
     mutationFn: async (params?: string) => {
-      const { getTokens } = await import('@/lib/api-client');
-      const { accessToken } = getTokens();
+      const { getSession } = await import('next-auth/react');
+      const session = await getSession();
+      const accessToken = session?.accessToken ?? '';
       const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
       const res = await fetch(
         `${API_BASE}/documents/report${params ? `?${params}` : ''}`,

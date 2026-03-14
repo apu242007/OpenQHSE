@@ -81,7 +81,7 @@ async function request<T>(
   let response: Response;
   try {
     response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
-  } catch (networkError) {
+  } catch {
     // Network-level failure (backend down, CORS preflight blocked, etc.)
     throw new ApiError(0, `Network error — cannot reach API at ${API_BASE}${endpoint}. Is the backend running?`);
   }

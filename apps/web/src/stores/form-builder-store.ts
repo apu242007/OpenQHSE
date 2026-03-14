@@ -11,8 +11,6 @@ import type {
   FieldType,
   ScoringConfig,
   FormSettings,
-  FieldOption,
-  ConditionalRule,
 } from '@/types/forms';
 
 // ── Helpers ────────────────────────────────────────────────
