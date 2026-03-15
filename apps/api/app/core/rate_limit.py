@@ -14,31 +14,9 @@ The limiter is registered on the FastAPI app in main.py:
     app.add_middleware(SlowAPIMiddleware)
 """
 
-"""Centralised slowapi rate limiter singleton.
-
-Import this module in routers to apply per-endpoint limits:
-
-    from app.core.rate_limit import limiter
-
-    @router.post("/login")
-    @limiter.limit("10/minute")
-    async def login(request: Request, ...):
-        ...
-
-The limiter is registered on the FastAPI app in main.py:
-    app.state.limiter = limiter
-    app.add_middleware(SlowAPIMiddleware)
-
-KEY STRATEGY:
-- Authenticated endpoints: keyed by organization_id (from JWT) to prevent
-  one noisy tenant from rate-limiting others behind the same proxy IP.
-- Public / unauthenticated endpoints: keyed by X-Forwarded-For or remote addr.
-"""
-
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from starlette.requests import Request
-
-from slowapi import Limiter  # noqa: E402
-from slowapi.util import get_remote_address  # noqa: E402
 
 
 def _get_rate_limit_key(request: Request) -> str:

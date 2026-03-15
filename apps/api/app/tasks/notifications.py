@@ -7,13 +7,15 @@ can be dispatched reliably from any part of the application.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncGenerator, Coroutine
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
-_T = TypeVar("_T")
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator, Coroutine
 
 from app.celery_app import celery_app
 from app.core.logging import get_logger
+
+_T = TypeVar("_T")
 
 logger = get_logger("tasks.notifications")
 
