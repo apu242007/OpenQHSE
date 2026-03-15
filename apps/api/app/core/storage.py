@@ -154,11 +154,13 @@ def get_presigned_url(
     """
     bucket = bucket or settings.effective_bucket
     client = _get_client()
-    return str(client.generate_presigned_url(
-        ClientMethod=method,
-        Params={"Bucket": bucket, "Key": path},
-        ExpiresIn=expiry,
-    ))
+    return str(
+        client.generate_presigned_url(
+            ClientMethod=method,
+            Params={"Bucket": bucket, "Key": path},
+            ExpiresIn=expiry,
+        )
+    )
 
 
 def list_objects(prefix: str = "", *, bucket: str | None = None) -> list[dict[str, Any]]:

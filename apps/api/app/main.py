@@ -195,7 +195,7 @@ def create_app() -> FastAPI:
         try:
             from app.core.redis import redis_client
 
-            await redis_client.ping()
+            await redis_client.ping()  # type: ignore[misc]
         except Exception as exc:
             redis_status = f"error: {type(exc).__name__}"
 
