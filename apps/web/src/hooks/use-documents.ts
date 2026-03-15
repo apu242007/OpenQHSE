@@ -119,9 +119,14 @@ export function useAcknowledgeDocument() {
 
 // ── Report ─────────────────────────────────────────────────
 
+const AUTH_DISABLED = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
+
 export function useDownloadDocumentReport() {
   return useMutation({
     mutationFn: async (params?: string) => {
+      if (AUTH_DISABLED) {
+        throw new Error('Descarga de reportes no disponible en modo demo. Requiere backend.');
+      }
       const { getSession } = await import('next-auth/react');
       const session = await getSession();
       const accessToken = session?.accessToken ?? '';

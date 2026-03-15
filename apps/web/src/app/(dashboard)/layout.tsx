@@ -9,16 +9,29 @@ import { Header } from '@/components/layout/Header';
 import { MobileDrawer } from '@/components/layout/MobileDrawer';
 import { cn } from '@/lib/utils';
 
+const AUTH_DISABLED = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
+
 /**
- * Dashboard layout — wraps all authenticated pages.
- * Provides: collapsible sidebar, top header, mobile drawer, offline indicator.
+ * Demo layout (AUTH_DISABLED=true / GitHub Pages).
+ * Never calls useSession — SessionProvider is not mounted in this mode.
+ * Immediately redirects to /marketplace since dashboard requires auth.
  */
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+function DashboardLayoutDemo({ children: _children }: { children: React.ReactNode }) {
   const router = useRouter();
+  useEffect(() => {
+    router.replace('/marketplace');
+  }, [router]);
+  return null;
+}
+
+/**
+ * Full authenticated layout.
+ * Requires SessionProvider — only used when AUTH_DISABLED=false.
+ */
+function DashboardLayoutFull({ children }: { children: React.ReactNode }) {
   const { status } = useSession();
   const { sidebarOpen } = useUIStore();
 
-  // Show loading spinner while checking auth
   if (status === 'loading') {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -58,3 +71,5 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </div>
   );
 }
+
+export default AUTH_DISABLED ? DashboardLayoutDemo : DashboardLayoutFull;

@@ -153,9 +153,14 @@ export function useSubmitAssessment() {
 
 // ── Certificates ───────────────────────────────────────────
 
+const AUTH_DISABLED_TRAINING = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
+
 export function useDownloadCertificate() {
   return useMutation({
     mutationFn: async (enrollmentId: string) => {
+      if (AUTH_DISABLED_TRAINING) {
+        throw new Error('Descarga de certificados no disponible en modo demo. Requiere backend.');
+      }
       const { getSession } = await import('next-auth/react');
       const session = await getSession();
       const accessToken = session?.accessToken ?? '';
