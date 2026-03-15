@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import enum
-import uuid
-from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean,
@@ -20,8 +19,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
 
+if TYPE_CHECKING:
+    import uuid
+    from datetime import datetime
 
-class ContractorStatus(str, enum.Enum):
+
+class ContractorStatus(enum.StrEnum):
     PENDING = "PENDING"
     APPROVED = "APPROVED"
     SUSPENDED = "SUSPENDED"
@@ -64,28 +67,26 @@ class Contractor(BaseModel):
     )
 
     # ── Seguros ──────────────────────────────────────────────
-    insurance_expiry: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    insurance_expiry: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     insurance_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     # ── Documentación y certificaciones (flexible JSONB) ─────
     certifications: Mapped[dict] = mapped_column(
-        JSONB, nullable=False, default=dict,
+        JSONB,
+        nullable=False,
+        default=dict,
         doc="Lista de certificaciones ISO, OHSAS, etc. [{name, issuer, expiry, url}]",
     )
     documents: Mapped[dict] = mapped_column(
-        JSONB, nullable=False, default=dict,
+        JSONB,
+        nullable=False,
+        default=dict,
         doc="Documentos requeridos: RUT, cédula jurídica, pólizas, etc.",
     )
 
     # ── Aprobación ───────────────────────────────────────────
-    approved_by: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
-    )
-    approved_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    approved_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     suspension_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # ── Relaciones ───────────────────────────────────────────
@@ -117,31 +118,29 @@ class ContractorWorker(BaseModel):
     # ── Datos personales ──────────────────────────────────────
     first_name: Mapped[str] = mapped_column(String(100), nullable=False)
     last_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    id_number: Mapped[str] = mapped_column(
-        String(50), nullable=False, doc="RUT, cédula, pasaporte, etc."
-    )
+    id_number: Mapped[str] = mapped_column(String(50), nullable=False, doc="RUT, cédula, pasaporte, etc.")
     position: Mapped[str | None] = mapped_column(String(150), nullable=True)
     photo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     # ── Certificaciones del trabajador ────────────────────────
     certifications: Mapped[dict] = mapped_column(
-        JSONB, nullable=False, default=dict,
+        JSONB,
+        nullable=False,
+        default=dict,
         doc="Licencias, cursos, vencimientos [{name, issuer, expiry, url}]",
     )
 
     # ── Control de acceso ────────────────────────────────────
     induction_completed: Mapped[bool] = mapped_column(Boolean, default=False)
-    induction_date: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    induction_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     access_sites: Mapped[list[str]] = mapped_column(
-        ARRAY(String), nullable=False, default=list,
+        ARRAY(String),
+        nullable=False,
+        default=list,
         doc="IDs de sitios donde está autorizado",
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     deactivation_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # ── Relaciones ───────────────────────────────────────────
-    contractor: Mapped[Contractor] = relationship(
-        "Contractor", back_populates="workers"
-    )
+    contractor: Mapped[Contractor] = relationship("Contractor", back_populates="workers")

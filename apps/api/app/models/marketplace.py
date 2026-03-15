@@ -6,13 +6,11 @@ contribute checklist templates across industries and standards.
 
 from __future__ import annotations
 
-import uuid
-from datetime import datetime
 from enum import StrEnum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean,
-    DateTime,
     Float,
     ForeignKey,
     Integer,
@@ -25,6 +23,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
 
+if TYPE_CHECKING:
+    import uuid
 
 # ── Enums ─────────────────────────────────────────────────────
 
@@ -68,24 +68,33 @@ class MarketplaceTemplate(BaseModel):
     version: Mapped[str] = mapped_column(String(20), nullable=False, default="1.0.0")
     language: Mapped[str] = mapped_column(String(10), nullable=False, default="es", index=True)
     status: Mapped[TemplateStatus] = mapped_column(
-        String(20), default=TemplateStatus.PUBLISHED, nullable=False, index=True,
+        String(20),
+        default=TemplateStatus.PUBLISHED,
+        nullable=False,
+        index=True,
     )
     is_featured: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
 
     # ── Classification ────────────────────────────────────
     category: Mapped[MarketplaceCategory] = mapped_column(
-        String(50), nullable=False, index=True,
+        String(50),
+        nullable=False,
+        index=True,
     )
     industry: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     standards: Mapped[list[str]] = mapped_column(
-        ARRAY(String), nullable=False, default=list,
+        ARRAY(String),
+        nullable=False,
+        default=list,
         doc="Applicable standards: ISO 45001, OSHA 1926, API RP 75 …",
     )
     tags: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
 
     # ── Template data (full JSON form schema) ─────────────
     schema_json: Mapped[dict] = mapped_column(  # type: ignore[type-arg]
-        JSONB, nullable=False, default=dict,
+        JSONB,
+        nullable=False,
+        default=dict,
         doc=(
             "{sections: [{title, order, questions: "
             "[{id, text, type, required, options, weight, "
@@ -98,7 +107,8 @@ class MarketplaceTemplate(BaseModel):
 
     # ── Scoring ───────────────────────────────────────────
     scoring_config: Mapped[dict | None] = mapped_column(  # type: ignore[type-arg]
-        JSONB, nullable=True,
+        JSONB,
+        nullable=True,
         doc="Scoring rules: {method, max_score, pass_threshold, weights}",
     )
 
@@ -112,7 +122,9 @@ class MarketplaceTemplate(BaseModel):
     contributor_name: Mapped[str] = mapped_column(String(255), nullable=False, default="OpenQHSE Team")
     contributor_org: Mapped[str | None] = mapped_column(String(255), nullable=True)
     contributor_user_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True,
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=True,
     )
 
     # ── Preview image ─────────────────────────────────────
@@ -120,7 +132,9 @@ class MarketplaceTemplate(BaseModel):
 
     # Relationships
     ratings: Mapped[list[MarketplaceRating]] = relationship(
-        "MarketplaceRating", back_populates="template", lazy="selectin",
+        "MarketplaceRating",
+        back_populates="template",
+        lazy="selectin",
     )
 
 
@@ -128,19 +142,24 @@ class MarketplaceRating(BaseModel):
     """User rating and optional review for a marketplace template."""
 
     __tablename__ = "marketplace_ratings"
-    __table_args__ = (
-        UniqueConstraint("template_id", "user_id", name="uq_marketplace_rating_template_user"),
-    )
+    __table_args__ = (UniqueConstraint("template_id", "user_id", name="uq_marketplace_rating_template_user"),)
 
     template_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("marketplace_templates.id"), nullable=False, index=True,
+        UUID(as_uuid=True),
+        ForeignKey("marketplace_templates.id"),
+        nullable=False,
+        index=True,
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True,
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True,
     )
     score: Mapped[int] = mapped_column(Integer, nullable=False, doc="1-5 stars")
     review: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     template: Mapped[MarketplaceTemplate] = relationship(
-        "MarketplaceTemplate", back_populates="ratings",
+        "MarketplaceTemplate",
+        back_populates="ratings",
     )

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import enum
-import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean,
@@ -14,29 +14,32 @@ from sqlalchemy import (
     Text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseModel
 
+if TYPE_CHECKING:
+    import uuid
 
-class ObservationType(str, enum.Enum):
-    SAFE = "SAFE"                        # Comportamiento seguro — reforzar positivamente
-    UNSAFE = "UNSAFE"                    # Comportamiento inseguro — requiere intervención
+
+class ObservationType(enum.StrEnum):
+    SAFE = "SAFE"  # Comportamiento seguro — reforzar positivamente
+    UNSAFE = "UNSAFE"  # Comportamiento inseguro — requiere intervención
     NEAR_MISS_BEHAVIOR = "NEAR_MISS_BEHAVIOR"  # Cuasi-accidente de comportamiento
 
 
-class ObservationCategory(str, enum.Enum):
-    PPE = "PPE"                          # Equipo de Protección Personal
-    PROCEDURE = "PROCEDURE"              # Cumplimiento de procedimientos
-    HOUSEKEEPING = "HOUSEKEEPING"        # Orden y limpieza
-    TOOL_USE = "TOOL_USE"               # Uso correcto de herramientas/equipos
-    COMMUNICATION = "COMMUNICATION"     # Comunicación de riesgos
-    ERGONOMICS = "ERGONOMICS"           # Ergonomía y posturas
+class ObservationCategory(enum.StrEnum):
+    PPE = "PPE"  # Equipo de Protección Personal
+    PROCEDURE = "PROCEDURE"  # Cumplimiento de procedimientos
+    HOUSEKEEPING = "HOUSEKEEPING"  # Orden y limpieza
+    TOOL_USE = "TOOL_USE"  # Uso correcto de herramientas/equipos
+    COMMUNICATION = "COMMUNICATION"  # Comunicación de riesgos
+    ERGONOMICS = "ERGONOMICS"  # Ergonomía y posturas
     ENERGY_ISOLATION = "ENERGY_ISOLATION"  # Aislamiento de energías (LOTO)
     OTHER = "OTHER"
 
 
-class ObservationStatus(str, enum.Enum):
+class ObservationStatus(enum.StrEnum):
     OPEN = "OPEN"
     IN_REVIEW = "IN_REVIEW"
     ACTION_ASSIGNED = "ACTION_ASSIGNED"
@@ -87,7 +90,8 @@ class BehaviorObservation(BaseModel):
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
     )
     is_anonymous: Mapped[bool] = mapped_column(
-        Boolean, default=False,
+        Boolean,
+        default=False,
         doc="Si True, no se muestra el nombre del observado en reportes públicos",
     )
 
@@ -96,23 +100,29 @@ class BehaviorObservation(BaseModel):
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )
     observed_contractor_worker_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("contractor_workers.id"), nullable=True,
+        UUID(as_uuid=True),
+        ForeignKey("contractor_workers.id"),
+        nullable=True,
         doc="Si el observado es personal contratista, no usuario interno",
     )
 
     # ── Retroalimentación ────────────────────────────────────
     positive_feedback: Mapped[str | None] = mapped_column(
-        Text, nullable=True,
+        Text,
+        nullable=True,
         doc="Para observaciones SAFE: qué hizo bien el trabajador",
     )
     improvement_feedback: Mapped[str | None] = mapped_column(
-        Text, nullable=True,
+        Text,
+        nullable=True,
         doc="Para observaciones UNSAFE: qué debe mejorar",
     )
 
     # ── Evidencia ────────────────────────────────────────────
     photos: Mapped[list[str]] = mapped_column(
-        ARRAY(String), nullable=False, default=list,
+        ARRAY(String),
+        nullable=False,
+        default=list,
         doc="Paths de fotos en MinIO/S3",
     )
 
@@ -124,7 +134,9 @@ class BehaviorObservation(BaseModel):
         index=True,
     )
     action_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("corrective_actions.id"), nullable=True,
+        UUID(as_uuid=True),
+        ForeignKey("corrective_actions.id"),
+        nullable=True,
         doc="Acción correctiva generada a partir de esta observación",
     )
 

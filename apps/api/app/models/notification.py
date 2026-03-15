@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import uuid
-from datetime import datetime
 from enum import StrEnum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
@@ -12,6 +11,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
 
+if TYPE_CHECKING:
+    import uuid
+    from datetime import datetime
 
 # ── Enums ─────────────────────────────────────────────────────
 
@@ -97,22 +99,25 @@ class Notification(BaseModel):
     organization_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False, index=True
     )
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
-    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
 
     event_type: Mapped[NotificationEvent] = mapped_column(
-        String(50), nullable=False, index=True,
+        String(50),
+        nullable=False,
+        index=True,
         doc="The platform event that originated this notification.",
     )
     notification_type: Mapped[str] = mapped_column(
-        String(50), nullable=False, index=True,
+        String(50),
+        nullable=False,
+        index=True,
         doc="Human-readable type, e.g. 'inspection_assigned'.",
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
     data: Mapped[dict | None] = mapped_column(  # type: ignore[type-arg]
-        JSONB, nullable=True,
+        JSONB,
+        nullable=True,
         doc="Payload: {entity_type, entity_id, action_url, extra}",
     )
     channel: Mapped[NotificationChannel] = mapped_column(
@@ -125,24 +130,21 @@ class Notification(BaseModel):
         String(10), default=NotificationPriority.NORMAL, nullable=False, index=True
     )
     entity_id: Mapped[str | None] = mapped_column(
-        String(36), nullable=True, index=True,
+        String(36),
+        nullable=True,
+        index=True,
         doc="UUID of the related entity (incident, action, etc.)",
     )
     entity_type: Mapped[str | None] = mapped_column(
-        String(50), nullable=True,
+        String(50),
+        nullable=True,
         doc="Type of the related entity: incident, action, inspection …",
     )
     retry_count: Mapped[int] = mapped_column(Integer, default=0)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
-    sent_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    delivered_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    read_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationship back to logs
     delivery_logs: Mapped[list[NotificationDeliveryLog]] = relationship(
@@ -162,13 +164,9 @@ class NotificationDeliveryLog(BaseModel):
     status: Mapped[NotificationStatus] = mapped_column(String(20), nullable=False)
     provider_response: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
-    attempted_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    attempted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    notification: Mapped[Notification] = relationship(
-        "Notification", back_populates="delivery_logs"
-    )
+    notification: Mapped[Notification] = relationship("Notification", back_populates="delivery_logs")
 
 
 class UserNotificationPreference(BaseModel):
@@ -176,12 +174,12 @@ class UserNotificationPreference(BaseModel):
 
     __tablename__ = "user_notification_preferences"
 
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
-    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     event_type: Mapped[NotificationEvent] = mapped_column(String(50), nullable=False)
     channels: Mapped[list[str]] = mapped_column(
-        ARRAY(String), nullable=False, default=["in_app"],
+        ARRAY(String),
+        nullable=False,
+        default=["in_app"],
         doc="List of channel strings the user has enabled for this event.",
     )
     is_enabled: Mapped[bool] = mapped_column(Boolean, default=True)

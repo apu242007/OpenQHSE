@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from uuid import UUID
+from typing import TYPE_CHECKING
 
-from app.models.observation import ObservationCategory, ObservationStatus, ObservationType
 from app.schemas.common import BaseSchema, IDSchema, PaginatedResponse, TimestampSchema
 
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from app.models.observation import ObservationCategory, ObservationStatus, ObservationType
 
 # ── Create / Update ────────────────────────────────────────────────────────
 
@@ -81,8 +83,8 @@ class ObservationCategoryCount(BaseSchema):
 
 
 class ObservationMonthlyTrend(BaseSchema):
-    month: str          # "YYYY-MM"
-    label: str          # "Ene 2025"
+    month: str  # "YYYY-MM"
+    label: str  # "Ene 2025"
     safe: int
     unsafe: int
     near_miss: int

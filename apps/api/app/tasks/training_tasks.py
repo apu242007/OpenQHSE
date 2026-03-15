@@ -16,7 +16,6 @@ def check_expiring_certifications() -> dict:  # type: ignore[type-arg]
         Summary dict with count of notified enrollments.
     """
     import asyncio
-
     from datetime import UTC, datetime, timedelta
 
     from sqlalchemy import select
@@ -82,7 +81,6 @@ def auto_expire_certifications() -> dict:  # type: ignore[type-arg]
         Count of updated enrollments.
     """
     import asyncio
-
     from datetime import UTC, datetime
 
     from sqlalchemy import select

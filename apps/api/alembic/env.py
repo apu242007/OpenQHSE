@@ -4,18 +4,16 @@ Uses psycopg2 (sync) for migrations to avoid asyncpg/Python 3.13 Windows
 compatibility issues. The application runtime still uses asyncpg via SQLAlchemy.
 """
 
-import asyncio
 from logging.config import fileConfig
 
-from alembic import context
-from sqlalchemy import engine_from_config, pool
-
-from app.core.config import get_settings
-from app.core.database import Base
+from sqlalchemy import pool
 
 # Import the models package so every model is registered with Base.metadata.
 # The __init__.py re-exports all models across all domains.
 import app.models  # noqa: F401
+from alembic import context
+from app.core.config import get_settings
+from app.core.database import Base
 
 config = context.config
 settings = get_settings()
@@ -26,9 +24,7 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 # Use psycopg2 (sync) URL for Alembic — swap asyncpg driver
-_db_url = settings.effective_database_url.replace(
-    "postgresql+asyncpg://", "postgresql+psycopg2://"
-)
+_db_url = settings.effective_database_url.replace("postgresql+asyncpg://", "postgresql+psycopg2://")
 config.set_main_option("sqlalchemy.url", _db_url)
 
 
@@ -47,7 +43,7 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode (sync psycopg2)."""
-    from sqlalchemy import create_engine, text
+    from sqlalchemy import create_engine
 
     connectable = create_engine(
         _db_url,

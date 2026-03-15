@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import uuid
-from datetime import datetime
 from enum import StrEnum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    Boolean,
     DateTime,
     Float,
     ForeignKey,
@@ -19,6 +17,10 @@ from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
+
+if TYPE_CHECKING:
+    import uuid
+    from datetime import datetime
 
 
 class IncidentType(StrEnum):
@@ -55,29 +57,19 @@ class Incident(BaseModel):
 
     __tablename__ = "incidents"
 
-    reference_number: Mapped[str] = mapped_column(
-        String(50), unique=True, nullable=False, index=True
-    )
+    reference_number: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    incident_type: Mapped[IncidentType] = mapped_column(
-        String(30), nullable=False, index=True
-    )
-    severity: Mapped[IncidentSeverity] = mapped_column(
-        String(20), nullable=False, index=True
-    )
+    incident_type: Mapped[IncidentType] = mapped_column(String(30), nullable=False, index=True)
+    severity: Mapped[IncidentSeverity] = mapped_column(String(20), nullable=False, index=True)
     status: Mapped[IncidentStatus] = mapped_column(
         String(30),
         default=IncidentStatus.REPORTED,
         nullable=False,
         index=True,
     )
-    occurred_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    reported_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    reported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     location_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     gps_latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     gps_longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -136,19 +128,11 @@ class CorrectiveAction(BaseModel):
 
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    action_type: Mapped[str] = mapped_column(
-        String(20), nullable=False, default="corrective"
-    )
+    action_type: Mapped[str] = mapped_column(String(20), nullable=False, default="corrective")
     priority: Mapped[str] = mapped_column(String(20), nullable=False, default="medium")
-    status: Mapped[str] = mapped_column(
-        String(20), nullable=False, default="open", index=True
-    )
-    due_date: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="open", index=True)
+    due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     verification_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     evidence_urls: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
 
@@ -178,12 +162,8 @@ class CorrectiveAction(BaseModel):
     )
 
     # Relationships
-    incident: Mapped[Incident | None] = relationship(
-        "Incident", back_populates="corrective_actions", lazy="selectin"
-    )
-    updates: Mapped[list[ActionUpdate]] = relationship(
-        "ActionUpdate", back_populates="action", lazy="selectin"
-    )
+    incident: Mapped[Incident | None] = relationship("Incident", back_populates="corrective_actions", lazy="selectin")
+    updates: Mapped[list[ActionUpdate]] = relationship("ActionUpdate", back_populates="action", lazy="selectin")
 
 
 class ActionUpdate(BaseModel):
@@ -194,16 +174,12 @@ class ActionUpdate(BaseModel):
     action_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("corrective_actions.id"), nullable=False, index=True
     )
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
-    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     comment: Mapped[str] = mapped_column(Text, nullable=False)
     status_change: Mapped[str | None] = mapped_column(String(30), nullable=True)
     attachments: Mapped[dict | None] = mapped_column(JSONB, nullable=True)  # type: ignore[type-arg]
 
-    action: Mapped[CorrectiveAction] = relationship(
-        "CorrectiveAction", back_populates="updates", lazy="selectin"
-    )
+    action: Mapped[CorrectiveAction] = relationship("CorrectiveAction", back_populates="updates", lazy="selectin")
 
 
 class IncidentWitness(BaseModel):
@@ -218,9 +194,7 @@ class IncidentWitness(BaseModel):
     statement: Mapped[str | None] = mapped_column(Text, nullable=True)
     contact: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
-    incident: Mapped[Incident] = relationship(
-        "Incident", back_populates="witnesses", lazy="selectin"
-    )
+    incident: Mapped[Incident] = relationship("Incident", back_populates="witnesses", lazy="selectin")
 
 
 class IncidentAttachment(BaseModel):
@@ -234,10 +208,6 @@ class IncidentAttachment(BaseModel):
     file_url: Mapped[str] = mapped_column(String(1024), nullable=False)
     file_type: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    uploaded_by: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
-    )
+    uploaded_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
 
-    incident: Mapped[Incident] = relationship(
-        "Incident", back_populates="incident_attachments", lazy="selectin"
-    )
+    incident: Mapped[Incident] = relationship("Incident", back_populates="incident_attachments", lazy="selectin")

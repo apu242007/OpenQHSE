@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 # Resolve .env: look for it in apps/api/, then walk up to the monorepo root
 def _find_env_file() -> str:
     candidate = Path(__file__).parent

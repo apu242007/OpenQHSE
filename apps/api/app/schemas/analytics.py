@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from pydantic import Field
 
 from app.schemas.common import BaseSchema
 
+if TYPE_CHECKING:
+    from datetime import date, datetime
+    from uuid import UUID
 
 # ── KPI Response ────────────────────────────────────────────
 
@@ -18,12 +20,8 @@ class KPIVariation(BaseSchema):
 
     value: float
     previous: float
-    variation_pct: float = Field(
-        ..., description="Percentage change vs previous period"
-    )
-    trend: str = Field(
-        ..., description="'up', 'down', or 'stable'"
-    )
+    variation_pct: float = Field(..., description="Percentage change vs previous period")
+    trend: str = Field(..., description="'up', 'down', or 'stable'")
 
 
 class KPIsSummary(BaseSchema):

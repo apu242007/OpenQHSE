@@ -93,7 +93,7 @@ def dispatch_notification_event(
             error=str(exc),
             retry=self.request.retries,
         )
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -210,7 +210,7 @@ def send_whatsapp_message_task(
         return _run_async(_send())
     except Exception as exc:
         logger.error("WhatsApp task failed", phone=phone, error=str(exc))
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 @celery_app.task(
@@ -241,7 +241,7 @@ def send_telegram_message_task(
         return _run_async(_send())
     except Exception as exc:
         logger.error("Telegram task failed", chat_id=chat_id, error=str(exc))
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 @celery_app.task(
@@ -271,7 +271,7 @@ def send_teams_message_task(
         return _run_async(_send())
     except Exception as exc:
         logger.error("Teams task failed", error=str(exc))
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -452,8 +452,11 @@ def send_kpi_alert_notification(
         channels: Dict with keys email, slack, whatsapp, in_app (bool values).
     """
     condition_labels = {
-        "GREATER_THAN": ">", "GREATER_THAN_OR_EQUAL": "≥",
-        "LESS_THAN": "<", "LESS_THAN_OR_EQUAL": "≤", "EQUALS": "=",
+        "GREATER_THAN": ">",
+        "GREATER_THAN_OR_EQUAL": "≥",
+        "LESS_THAN": "<",
+        "LESS_THAN_OR_EQUAL": "≤",
+        "EQUALS": "=",
     }
     cond_label = condition_labels.get(condition, condition)
     subject = f"⚠️ Alerta KPI — {kpi_name} {cond_label} {threshold}"

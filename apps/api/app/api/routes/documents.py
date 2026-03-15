@@ -59,9 +59,7 @@ async def list_documents(
     if category:
         query = query.where(Document.category == category)
     if search:
-        query = query.where(
-            Document.title.ilike(f"%{search}%") | Document.code.ilike(f"%{search}%")
-        )
+        query = query.where(Document.title.ilike(f"%{search}%") | Document.code.ilike(f"%{search}%"))
     if days_to_expiry is not None:
         cutoff = datetime.now(UTC) + timedelta(days=days_to_expiry)
         query = query.where(
@@ -71,9 +69,7 @@ async def list_documents(
         )
 
     result = await db.execute(
-        query.order_by(Document.created_at.desc())
-        .offset(pagination.offset)
-        .limit(pagination.page_size)
+        query.order_by(Document.created_at.desc()).offset(pagination.offset).limit(pagination.page_size)
     )
     docs = result.scalars().all()
     return [DocumentList.model_validate(d) for d in docs]
@@ -128,14 +124,16 @@ async def get_expiring_documents(
 ) -> list[DocumentList]:
     cutoff = datetime.now(UTC) + timedelta(days=days)
     result = await db.execute(
-        select(Document).where(
+        select(Document)
+        .where(
             Document.organization_id == current_user.organization_id,
             Document.is_deleted == False,  # noqa: E712
             Document.expiry_date.is_not(None),
             Document.expiry_date <= cutoff,
             Document.expiry_date >= datetime.now(UTC),
             Document.status == DocumentStatus.APPROVED,
-        ).order_by(Document.expiry_date.asc())
+        )
+        .order_by(Document.expiry_date.asc())
     )
     docs = result.scalars().all()
     return [DocumentList.model_validate(d) for d in docs]
@@ -218,10 +216,12 @@ async def update_document(
         doc.effective_date = datetime.now(UTC)
         # Auto-archive superseded versions asynchronously
         from app.services.document_service import auto_archive_superseded_versions
+
         await auto_archive_superseded_versions(document_id, db)
     elif new_status == DocumentStatus.UNDER_REVIEW:
         # Notify reviewers
         from app.services.document_service import notify_reviewers_for_approval
+
         await notify_reviewers_for_approval(document_id, db)
 
     for field, value in update_data.items():
@@ -263,6 +263,7 @@ async def submit_for_approval(
     await db.flush()
 
     from app.services.document_service import notify_reviewers_for_approval
+
     await notify_reviewers_for_approval(document_id, db)
 
     await db.refresh(doc)
@@ -300,6 +301,7 @@ async def approve_document(
     doc.updated_by = str(manager.id)
 
     from app.services.document_service import auto_archive_superseded_versions
+
     await auto_archive_superseded_versions(document_id, db)
 
     await db.flush()

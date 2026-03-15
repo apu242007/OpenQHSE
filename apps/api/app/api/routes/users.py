@@ -56,20 +56,14 @@ async def list_users(
     if search:
         pattern = f"%{search}%"
         base_query = base_query.where(
-            (User.first_name.ilike(pattern))
-            | (User.last_name.ilike(pattern))
-            | (User.email.ilike(pattern))
+            (User.first_name.ilike(pattern)) | (User.last_name.ilike(pattern)) | (User.email.ilike(pattern))
         )
 
-    count_result = await db.execute(
-        select(func.count()).select_from(base_query.subquery())
-    )
+    count_result = await db.execute(select(func.count()).select_from(base_query.subquery()))
     total = count_result.scalar() or 0
 
     result = await db.execute(
-        base_query.order_by(User.created_at.desc())
-        .offset(pagination.offset)
-        .limit(pagination.page_size)
+        base_query.order_by(User.created_at.desc()).offset(pagination.offset).limit(pagination.page_size)
     )
     users = result.scalars().all()
 
@@ -136,7 +130,7 @@ async def create_user(
             user_name=user.first_name,
             organization_name=admin.organization.name if admin.organization else "OpenQHSE",
             temp_password=body.password,
-            login_url=f"http://localhost:3000/login",
+            login_url="http://localhost:3000/login",
         )
     except Exception:
         pass  # Don't fail user creation if email fails

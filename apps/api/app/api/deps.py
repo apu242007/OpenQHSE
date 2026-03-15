@@ -54,8 +54,8 @@ async def get_current_user(
         if user_id_str is None:
             raise credentials_exception
         user_id = UUID(user_id_str)
-    except (JoseError, ValueError):
-        raise credentials_exception
+    except (JoseError, ValueError) as err:
+        raise credentials_exception from err
 
     # ── jti blacklist check ───────────────────────────────────
     # If the user has logged out (or their token was explicitly revoked), the jti
@@ -65,6 +65,7 @@ async def get_current_user(
     if jti:
         try:
             from app.core.redis import redis_client
+
             is_blacklisted = await redis_client.get(f"{JTI_BLACKLIST_PREFIX}{jti}")
             if is_blacklisted:
                 raise HTTPException(
@@ -80,9 +81,7 @@ async def get_current_user(
             pass
 
     # ── DB verification — ALWAYS verify in DB, never trust JWT alone ──────────
-    result = await db.execute(
-        select(User).where(User.id == user_id, User.is_deleted.is_(False))
-    )
+    result = await db.execute(select(User).where(User.id == user_id, User.is_deleted.is_(False)))
     user = result.scalar_one_or_none()
 
     if user is None:
@@ -101,7 +100,6 @@ async def get_current_user(
     # ── Expose org_id in request.state for rate limiting ─────────────────────
     # This allows the limiter key function to key by org, not by IP, so that
     # organisations behind the same reverse-proxy don't share a rate limit bucket.
-    from fastapi import Request  # local import avoids circular deps
     # request is not directly available here — the org_id is set via ContextVar;
     # the rate_limit key function reads it from there via current_org_id.get().
 
@@ -111,9 +109,7 @@ async def get_current_user(
     #   1. org_id is a UUID sourced from the DB (not user input)
     #   2. We validate it as UUID above, so there is no SQL-injection risk.
     org_id_str = str(user.organization_id)
-    await db.execute(
-        text(f"SET LOCAL app.current_org_id = '{org_id_str}'")
-    )
+    await db.execute(text(f"SET LOCAL app.current_org_id = '{org_id_str}'"))
 
     return user
 
@@ -161,7 +157,6 @@ def require_site_access(site_id_param: str = "site_id"):  # noqa: ANN201
             current_user: Annotated[User, require_site_access()],
         ):
     """
-    from uuid import UUID as _UUID
 
     async def _check(
         current_user: CurrentUser,
@@ -176,7 +171,6 @@ def require_site_access(site_id_param: str = "site_id"):  # noqa: ANN201
         if not assigned:
             # Si no tiene restricción de sitios, acceso completo dentro de la org
             return current_user
-        from fastapi import Request as _Request  # avoid circular at module level
         # site_id viene como path param — se lee del user's assigned_sites
         # La validación real se hace a nivel de query (RLS cubre la org, esto cubre el site)
         return current_user

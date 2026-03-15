@@ -6,16 +6,19 @@ NOTA: python-jose fue reemplazado por joserfc debido a CVEs activos.
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
+import bcrypt as _bcrypt
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import HTTPBearer
 from joserfc import jwt
 from joserfc.errors import JoseError
 from joserfc.jwk import OctKey
-import bcrypt as _bcrypt
 
 from app.core.config import get_settings
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 settings = get_settings()
 
@@ -192,6 +195,7 @@ def verify_token_type(payload: dict[str, Any], expected_type: str) -> bool:
 
 # ── Role-based access helpers ─────────────────────────────────
 
+
 def check_role_level(user_role: str, min_role: str) -> bool:
     """Return True if user_role meets or exceeds min_role in hierarchy."""
     return ROLE_HIERARCHY.get(user_role, -1) >= ROLE_HIERARCHY.get(min_role, 999)
@@ -216,10 +220,8 @@ def require_permission(module: str, action: str):  # noqa: ANN201
         @router.post("/inspections", dependencies=[Depends(require_permission("inspections", "create"))])
         async def create_inspection(user: CurrentUser): ...
     """
-    from fastapi import Depends
 
     from app.api.deps import get_current_user
-    from app.models.user import User
 
     async def _permission_checker(
         current_user: User = Depends(get_current_user),

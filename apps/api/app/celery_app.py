@@ -29,10 +29,10 @@ celery_app.conf.update(
     enable_utc=True,
     # ── Comportamiento ────────────────────────────────────
     task_track_started=True,
-    task_time_limit=600,          # 10 min hard limit
-    task_soft_time_limit=540,     # 9 min soft limit
+    task_time_limit=600,  # 10 min hard limit
+    task_soft_time_limit=540,  # 9 min soft limit
     worker_prefetch_multiplier=1,
-    task_acks_late=True,          # Acknowledge después de completar (más seguro)
+    task_acks_late=True,  # Acknowledge después de completar (más seguro)
     # ── Routing por queues ────────────────────────────────
     task_routes={
         "app.tasks.notifications.*": {"queue": "notifications"},

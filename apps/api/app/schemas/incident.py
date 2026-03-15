@@ -73,6 +73,7 @@ class IncidentListResponse(BaseSchema):
 
 # ── Corrective Actions ────────────────────────────────────────
 
+
 class CorrectiveActionCreate(BaseSchema):
     title: str = Field(min_length=1, max_length=255)
     description: str
@@ -112,6 +113,7 @@ class CorrectiveActionResponse(IDSchema, TimestampSchema):
 
 # ── Witness ───────────────────────────────────────────────────
 
+
 class WitnessCreate(BaseSchema):
     name: str = Field(min_length=1, max_length=255)
     statement: str | None = None
@@ -126,6 +128,7 @@ class WitnessResponse(IDSchema, TimestampSchema):
 
 
 # ── Attachment ────────────────────────────────────────────────
+
 
 class AttachmentCreate(BaseSchema):
     file_url: str
@@ -142,6 +145,7 @@ class AttachmentResponse(IDSchema, TimestampSchema):
 
 
 # ── Timeline ──────────────────────────────────────────────────
+
 
 class TimelineEventCreate(BaseSchema):
     event_type: str = "comment"

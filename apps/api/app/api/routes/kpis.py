@@ -34,9 +34,7 @@ async def list_kpis(
         query = query.where(KPISnapshot.period == period)
 
     result = await db.execute(
-        query.order_by(KPISnapshot.period.desc())
-        .offset(pagination.offset)
-        .limit(pagination.page_size)
+        query.order_by(KPISnapshot.period.desc()).offset(pagination.offset).limit(pagination.page_size)
     )
     snapshots = result.scalars().all()
     return [KPISnapshotList.model_validate(s) for s in snapshots]

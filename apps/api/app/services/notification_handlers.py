@@ -10,10 +10,9 @@ application services when an event occurs.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
 from app.models.notification import (
@@ -23,6 +22,9 @@ from app.models.notification import (
 )
 from app.models.user import User, UserRole
 from app.services.notification_service import NotificationService
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = get_logger("notification_handlers")
 
@@ -54,9 +56,7 @@ async def _user_supervisor(
     organization_id: str,
 ) -> list[str]:
     """Return supervisor + manager user-ids for the organization."""
-    return await _users_by_roles(
-        db, organization_id, [UserRole.SUPERVISOR, UserRole.MANAGER]
-    )
+    return await _users_by_roles(db, organization_id, [UserRole.SUPERVISOR, UserRole.MANAGER])
 
 
 async def _hse_managers(
@@ -64,9 +64,7 @@ async def _hse_managers(
     organization_id: str,
 ) -> list[str]:
     """Return HSE manager / org admin user-ids."""
-    return await _users_by_roles(
-        db, organization_id, [UserRole.MANAGER, UserRole.ORG_ADMIN]
-    )
+    return await _users_by_roles(db, organization_id, [UserRole.MANAGER, UserRole.ORG_ADMIN])
 
 
 async def _senior_management(
@@ -74,9 +72,7 @@ async def _senior_management(
     organization_id: str,
 ) -> list[str]:
     """Return senior management (org_admin + super_admin)."""
-    return await _users_by_roles(
-        db, organization_id, [UserRole.ORG_ADMIN, UserRole.SUPER_ADMIN]
-    )
+    return await _users_by_roles(db, organization_id, [UserRole.ORG_ADMIN, UserRole.SUPER_ADMIN])
 
 
 # ═══════════════════════════════════════════════════════════════

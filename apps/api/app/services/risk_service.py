@@ -2,24 +2,23 @@
 
 from __future__ import annotations
 
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.risk import (
     BowTie,
-    HazopNode,
     HazopStudy,
     RiskRegister,
-    RiskStatus,
-    RiskType,
 )
 
+if TYPE_CHECKING:
+    from uuid import UUID
 
-async def get_risk_matrix(
-    db: AsyncSession, organization_id: UUID
-) -> dict[str, object]:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+
+async def get_risk_matrix(db: AsyncSession, organization_id: UUID) -> dict[str, object]:
     """Build 5×5 risk matrix data with counts per cell."""
     result = await db.execute(
         select(
@@ -53,20 +52,20 @@ async def get_risk_matrix(
     cells = []
     for li in range(5):
         for si in range(5):
-            cells.append({
-                "likelihood": li + 1,
-                "severity": si + 1,
-                "rating": (li + 1) * (si + 1),
-                "count": matrix[li][si],
-                "level": risk_levels[li][si],
-            })
+            cells.append(
+                {
+                    "likelihood": li + 1,
+                    "severity": si + 1,
+                    "rating": (li + 1) * (si + 1),
+                    "count": matrix[li][si],
+                    "level": risk_levels[li][si],
+                }
+            )
 
     return {"cells": cells, "total_risks": sum(c["count"] for c in cells)}
 
 
-async def get_risk_statistics(
-    db: AsyncSession, organization_id: UUID
-) -> dict[str, object]:
+async def get_risk_statistics(db: AsyncSession, organization_id: UUID) -> dict[str, object]:
     """Compute risk register statistics."""
     result = await db.execute(
         select(RiskRegister).where(
@@ -95,12 +94,8 @@ async def get_risk_statistics(
         else:
             by_level["extreme"] += 1
 
-    avg_inherent = (
-        sum(r.inherent_rating for r in risks) / total if total else 0
-    )
-    avg_residual = (
-        sum(r.residual_rating for r in risks) / total if total else 0
-    )
+    avg_inherent = sum(r.inherent_rating for r in risks) / total if total else 0
+    avg_residual = sum(r.residual_rating for r in risks) / total if total else 0
 
     return {
         "total": total,
@@ -112,9 +107,7 @@ async def get_risk_statistics(
     }
 
 
-async def get_hazop_detail(
-    db: AsyncSession, study_id: UUID, organization_id: UUID
-) -> HazopStudy | None:
+async def get_hazop_detail(db: AsyncSession, study_id: UUID, organization_id: UUID) -> HazopStudy | None:
     """Get HAZOP study with nodes eagerly loaded."""
     result = await db.execute(
         select(HazopStudy).where(
@@ -125,9 +118,7 @@ async def get_hazop_detail(
     return result.scalar_one_or_none()
 
 
-async def get_bowtie_detail(
-    db: AsyncSession, bowtie_id: UUID, organization_id: UUID
-) -> BowTie | None:
+async def get_bowtie_detail(db: AsyncSession, bowtie_id: UUID, organization_id: UUID) -> BowTie | None:
     """Get BowTie analysis by ID."""
     result = await db.execute(
         select(BowTie).where(

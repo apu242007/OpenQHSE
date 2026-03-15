@@ -3,7 +3,6 @@
 import asyncio
 import uuid
 from collections.abc import AsyncGenerator, Generator
-from typing import Any
 
 import pytest
 import pytest_asyncio

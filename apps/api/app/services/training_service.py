@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import io
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.core.logging import get_logger
 from app.models.training import (
@@ -16,6 +16,9 @@ from app.models.training import (
     TrainingCourse,
     TrainingEnrollment,
 )
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = get_logger("services.training")
 
@@ -38,15 +41,20 @@ async def generate_certificate(
         from reportlab.lib.pagesizes import A4, landscape
         from reportlab.lib.styles import getSampleStyleSheet
         from reportlab.lib.units import cm
-        from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+        from reportlab.platypus import (
+            Image,
+            Paragraph,
+            SimpleDocTemplate,
+            Spacer,
+            Table,
+            TableStyle,
+        )
     except ImportError:
         logger.error("reportlab or qrcode not installed — cannot generate certificate")
         return b""
 
     # Fetch enrollment + course
-    result = await db.execute(
-        select(TrainingEnrollment).where(TrainingEnrollment.id == enrollment_id)
-    )
+    result = await db.execute(select(TrainingEnrollment).where(TrainingEnrollment.id == enrollment_id))
     enrollment = result.scalar_one_or_none()
     if not enrollment or enrollment.status != EnrollmentStatus.COMPLETED:
         logger.warning(
@@ -55,9 +63,7 @@ async def generate_certificate(
         )
         return b""
 
-    course_result = await db.execute(
-        select(TrainingCourse).where(TrainingCourse.id == enrollment.course_id)
-    )
+    course_result = await db.execute(select(TrainingCourse).where(TrainingCourse.id == enrollment.course_id))
     course = course_result.scalar_one_or_none()
     if not course:
         return b""
@@ -113,15 +119,19 @@ async def generate_certificate(
         else datetime.now(UTC).strftime("%d de %B de %Y")
     )
 
-    story.append(Paragraph(
-        f"Se certifica que el participante con ID <b>{enrollment.user_id}</b>",
-        body_style,
-    ))
+    story.append(
+        Paragraph(
+            f"Se certifica que el participante con ID <b>{enrollment.user_id}</b>",
+            body_style,
+        )
+    )
     story.append(Spacer(1, 0.3 * cm))
-    story.append(Paragraph(
-        f"ha completado satisfactoriamente el curso:",
-        body_style,
-    ))
+    story.append(
+        Paragraph(
+            "ha completado satisfactoriamente el curso:",
+            body_style,
+        )
+    )
     story.append(Spacer(1, 0.5 * cm))
 
     course_style = styles["Heading2"]
@@ -131,33 +141,44 @@ async def generate_certificate(
     story.append(Spacer(1, 0.5 * cm))
 
     score_text = f"Calificación: {enrollment.score:.1f}%" if enrollment.score else ""
-    story.append(Paragraph(
-        f"Fecha de aprobación: <b>{completed_str}</b>    {score_text}",
-        body_style,
-    ))
+    story.append(
+        Paragraph(
+            f"Fecha de aprobación: <b>{completed_str}</b>    {score_text}",
+            body_style,
+        )
+    )
 
     if enrollment.expiry_date:
-        story.append(Paragraph(
-            f"Válido hasta: <b>{enrollment.expiry_date.strftime('%d/%m/%Y')}</b>",
-            body_style,
-        ))
+        story.append(
+            Paragraph(
+                f"Válido hasta: <b>{enrollment.expiry_date.strftime('%d/%m/%Y')}</b>",
+                body_style,
+            )
+        )
 
     story.append(Spacer(1, 1 * cm))
 
     # QR code + table layout
     qr_image = Image(qr_buffer, width=3 * cm, height=3 * cm)
     table_data = [
-        [qr_image, Paragraph(
-            f"ID verificación: {enrollment_id}\n{verification_url}",
-            styles["Small"],
-        )],
+        [
+            qr_image,
+            Paragraph(
+                f"ID verificación: {enrollment_id}\n{verification_url}",
+                styles["Small"],
+            ),
+        ],
     ]
     table = Table(table_data, colWidths=[3.5 * cm, 14 * cm])
-    table.setStyle(TableStyle([
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("FONTSIZE", (1, 0), (1, 0), 8),
-        ("TEXTCOLOR", (1, 0), (1, 0), colors.grey),
-    ]))
+    table.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("FONTSIZE", (1, 0), (1, 0), 8),
+                ("TEXTCOLOR", (1, 0), (1, 0), colors.grey),
+            ]
+        )
+    )
     story.append(table)
 
     doc.build(story)
@@ -208,9 +229,7 @@ async def calculate_compliance_matrix(
         return {"roles": [m.role for m in matrices], "courses": [], "matrix": {}, "overall_pct": 0.0}
 
     # Fetch course titles
-    courses_result = await db.execute(
-        select(TrainingCourse).where(TrainingCourse.id.in_(list(course_ids)))
-    )
+    courses_result = await db.execute(select(TrainingCourse).where(TrainingCourse.id.in_(list(course_ids))))
     courses_map = {c.id: c.title for c in courses_result.scalars().all()}
 
     # Fetch all enrollments for these courses
@@ -237,12 +256,14 @@ async def calculate_compliance_matrix(
             enrollments = enrolled_by_course.get(cid, [])
             enrolled_count = len(enrollments)
             completed_count = sum(
-                1 for e in enrollments
+                1
+                for e in enrollments
                 if e.status == EnrollmentStatus.COMPLETED
                 and (e.expiry_date is None or e.expiry_date > datetime.now(UTC))
             )
             expired_count = sum(
-                1 for e in enrollments
+                1
+                for e in enrollments
                 if e.status == EnrollmentStatus.COMPLETED
                 and e.expiry_date is not None
                 and e.expiry_date <= datetime.now(UTC)

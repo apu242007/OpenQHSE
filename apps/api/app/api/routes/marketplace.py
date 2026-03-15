@@ -8,18 +8,14 @@ from __future__ import annotations
 
 import re
 import uuid
-from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, HTTPException, Query, Request, status
 from sqlalchemy import func, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import CurrentUser, DBSession, Pagination
-from app.core.database import get_db
+from app.api.deps import CurrentUser, DBSession
 from app.core.rate_limit import limiter
 from app.models.form import FormTemplate
 from app.models.marketplace import (
-    MarketplaceCategory,
     MarketplaceRating,
     MarketplaceTemplate,
     TemplateStatus,
@@ -148,11 +144,7 @@ async def search_templates(
         query = query.where(MarketplaceTemplate.standards.any(standard))
 
     offset = (page - 1) * page_size
-    result = await db.execute(
-        query.order_by(MarketplaceTemplate.rating_average.desc())
-        .offset(offset)
-        .limit(page_size)
-    )
+    result = await db.execute(query.order_by(MarketplaceTemplate.rating_average.desc()).offset(offset).limit(page_size))
     rows = result.scalars().all()
     return [MarketplaceTemplateList.model_validate(r) for r in rows]
 
@@ -331,9 +323,7 @@ async def submit_template(
 ) -> MarketplaceTemplateList:
     slug = _slugify(body.name)
     # Ensure unique slug
-    existing = await db.execute(
-        select(MarketplaceTemplate.id).where(MarketplaceTemplate.slug == slug)
-    )
+    existing = await db.execute(select(MarketplaceTemplate.id).where(MarketplaceTemplate.slug == slug))
     if existing.scalar_one_or_none():
         slug = f"{slug}-{uuid.uuid4().hex[:6]}"
 

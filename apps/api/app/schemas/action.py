@@ -8,7 +8,6 @@ from pydantic import Field
 
 from app.schemas.common import BaseSchema, IDSchema, TimestampSchema
 
-
 # ── Corrective Action ───────────────────────────────────────
 
 

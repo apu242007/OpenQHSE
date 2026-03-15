@@ -4,13 +4,17 @@ from __future__ import annotations
 
 import io
 from datetime import UTC, datetime, timedelta
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
 from app.models.document import Document, DocumentStatus
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = get_logger("services.document")
 
@@ -30,10 +34,7 @@ async def notify_reviewers_for_approval(
         return
 
     distribution = doc.distribution_list or []
-    reviewers = [
-        entry for entry in distribution
-        if isinstance(entry, dict) and entry.get("required")
-    ]
+    reviewers = [entry for entry in distribution if isinstance(entry, dict) and entry.get("required")]
 
     from app.tasks.notifications import send_email_task
 
@@ -147,9 +148,17 @@ async def generate_document_report(
     header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
 
     headers = [
-        "Código", "Título", "Tipo", "Versión", "Estado",
-        "Categoría", "Propietario", "Fecha Efectiva", "Fecha Revisión",
-        "Fecha Vencimiento", "Creado",
+        "Código",
+        "Título",
+        "Tipo",
+        "Versión",
+        "Estado",
+        "Categoría",
+        "Propietario",
+        "Fecha Efectiva",
+        "Fecha Revisión",
+        "Fecha Vencimiento",
+        "Creado",
     ]
 
     for col_idx, header in enumerate(headers, 1):

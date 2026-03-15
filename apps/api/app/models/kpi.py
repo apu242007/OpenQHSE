@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-import uuid
-from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseModel
+
+if TYPE_CHECKING:
+    import uuid
+    from datetime import datetime
 
 
 class KPISnapshot(BaseModel):
@@ -29,23 +32,17 @@ class KPISnapshot(BaseModel):
     )
 
     period: Mapped[str] = mapped_column(
-        String(7), nullable=False, index=True,
+        String(7),
+        nullable=False,
+        index=True,
         doc="YYYY-MM format",
     )
 
     # ── Lagging indicators (OSHA rates) ───────────────────────
-    trir: Mapped[float | None] = mapped_column(
-        Float, nullable=True, doc="Total Recordable Incident Rate"
-    )
-    ltif: Mapped[float | None] = mapped_column(
-        Float, nullable=True, doc="Lost Time Injury Frequency"
-    )
-    dart: Mapped[float | None] = mapped_column(
-        Float, nullable=True, doc="Days Away, Restricted or Transferred"
-    )
-    far: Mapped[float | None] = mapped_column(
-        Float, nullable=True, doc="Fatal Accident Rate"
-    )
+    trir: Mapped[float | None] = mapped_column(Float, nullable=True, doc="Total Recordable Incident Rate")
+    ltif: Mapped[float | None] = mapped_column(Float, nullable=True, doc="Lost Time Injury Frequency")
+    dart: Mapped[float | None] = mapped_column(Float, nullable=True, doc="Days Away, Restricted or Transferred")
+    far: Mapped[float | None] = mapped_column(Float, nullable=True, doc="Fatal Accident Rate")
     severity_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     # ── Exposure data ─────────────────────────────────────────
@@ -62,6 +59,4 @@ class KPISnapshot(BaseModel):
     training_compliance_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
     permit_compliance_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
 
-    calculated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    calculated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

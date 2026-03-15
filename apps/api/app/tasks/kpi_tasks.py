@@ -9,10 +9,9 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, date, datetime, timedelta
-from uuid import UUID
 
 from celery import shared_task  # pyright: ignore[reportMissingTypeStubs]
-from sqlalchemy import func, select, text
+from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
@@ -51,8 +50,6 @@ def compute_monthly_snapshots(self) -> dict:  # type: ignore[no-untyped-def]
 
     Called on the 1st of each month at 02:00 UTC (covers the previous month).
     """
-    from app.models.kpi import KPISnapshot
-    from app.models.user import Organization
 
     today = date.today()
     # Compute for the previous month
@@ -65,9 +62,7 @@ def compute_monthly_snapshots(self) -> dict:  # type: ignore[no-untyped-def]
 
     with _sync_session() as session:
         # Get all active organization IDs
-        orgs = session.execute(
-            text("SELECT id FROM organizations WHERE is_deleted = false")
-        ).fetchall()
+        orgs = session.execute(text("SELECT id FROM organizations WHERE is_deleted = false")).fetchall()
 
         for (org_id,) in orgs:
             try:
@@ -85,15 +80,11 @@ def compute_monthly_snapshots(self) -> dict:  # type: ignore[no-untyped-def]
 
 def _compute_org_kpi(session, org_id: str, period: str) -> None:  # type: ignore[no-untyped-def]
     """Compute and upsert KPI snapshot for one org + period."""
-    from app.models.kpi import KPISnapshot
 
     year, month = map(int, period.split("-"))
 
     period_start = datetime(year, month, 1, tzinfo=UTC)
-    if month == 12:
-        period_end = datetime(year + 1, 1, 1, tzinfo=UTC)
-    else:
-        period_end = datetime(year, month + 1, 1, tzinfo=UTC)
+    period_end = datetime(year + 1, 1, 1, tzinfo=UTC) if month == 12 else datetime(year, month + 1, 1, tzinfo=UTC)
 
     # ── Exposure hours ─────────────────────────────────────────────────────
     hours_row = session.execute(
@@ -185,10 +176,18 @@ def _compute_org_kpi(session, org_id: str, period: str) -> None:  # type: ignore
                 WHERE id = :id
             """),
             {
-                "id": str(existing[0]), "trir": trir, "ltif": ltif, "dart": dart,
-                "hours": total_hours, "incidents": recordable, "lti": lti_count,
-                "insp_c": insp_completed, "insp_o": insp_overdue,
-                "act_o": actions_open, "act_c": actions_closed, "act_ov": actions_overdue,
+                "id": str(existing[0]),
+                "trir": trir,
+                "ltif": ltif,
+                "dart": dart,
+                "hours": total_hours,
+                "incidents": recordable,
+                "lti": lti_count,
+                "insp_c": insp_completed,
+                "insp_o": insp_overdue,
+                "act_o": actions_open,
+                "act_c": actions_closed,
+                "act_ov": actions_overdue,
                 "now": now_utc,
             },
         )
@@ -214,11 +213,19 @@ def _compute_org_kpi(session, org_id: str, period: str) -> None:  # type: ignore
                 )
             """),
             {
-                "org": org_id, "p": period,
-                "trir": trir, "ltif": ltif, "dart": dart,
-                "hours": total_hours, "incidents": recordable, "lti": lti_count,
-                "insp_c": insp_completed, "insp_o": insp_overdue,
-                "act_o": actions_open, "act_c": actions_closed, "act_ov": actions_overdue,
+                "org": org_id,
+                "p": period,
+                "trir": trir,
+                "ltif": ltif,
+                "dart": dart,
+                "hours": total_hours,
+                "incidents": recordable,
+                "lti": lti_count,
+                "insp_c": insp_completed,
+                "insp_o": insp_overdue,
+                "act_o": actions_open,
+                "act_c": actions_closed,
+                "act_ov": actions_overdue,
                 "now": now_utc,
             },
         )
@@ -259,9 +266,16 @@ def check_kpi_alerts(self) -> dict:  # type: ignore[no-untyped-def]
             # Map KPI name to snapshot column (lowercase)
             kpi_col = kpi_name.lower()
             allowed_cols = {
-                "trir", "ltif", "dart", "far", "severity_rate",
-                "actions_overdue", "actions_open", "inspections_overdue",
-                "training_compliance_rate", "permit_compliance_rate",
+                "trir",
+                "ltif",
+                "dart",
+                "far",
+                "severity_rate",
+                "actions_overdue",
+                "actions_open",
+                "inspections_overdue",
+                "training_compliance_rate",
+                "permit_compliance_rate",
             }
             if kpi_col not in allowed_cols:
                 logger.warning("Unknown KPI column: %s — skipping rule %s", kpi_col, rule_id)
@@ -277,8 +291,12 @@ def check_kpi_alerts(self) -> dict:  # type: ignore[no-untyped-def]
                     ORDER BY period DESC
                     LIMIT 1
                 """),
-                {"org": str(org_id), "cur": current_period, "prev": previous_period,
-                 **({"site_id": str(site_id)} if site_id else {})},
+                {
+                    "org": str(org_id),
+                    "cur": current_period,
+                    "prev": previous_period,
+                    **({"site_id": str(site_id)} if site_id else {}),
+                },
             ).fetchone()
 
             if not row or row[0] is None:
@@ -314,7 +332,11 @@ def check_kpi_alerts(self) -> dict:  # type: ignore[no-untyped-def]
             now_utc = datetime.now(UTC)
             logger.warning(
                 "KPI alert rule fired: org=%s kpi=%s value=%.2f %s %.2f",
-                org_id, kpi_name, current_value, condition, threshold,
+                org_id,
+                kpi_name,
+                current_value,
+                condition,
+                threshold,
             )
             alerts_fired += 1
 
@@ -334,15 +356,23 @@ def check_kpi_alerts(self) -> dict:  # type: ignore[no-untyped-def]
                     )
                 """),
                 {
-                    "org": str(org_id), "site": str(site_id) if site_id else None,
-                    "rule": str(rule_id), "kpi": kpi_name, "cond": condition,
-                    "thresh": threshold, "val": current_value, "period": current_period,
-                    "now": now_utc, "channels": channels or {}, "escalation": escalation or {},
+                    "org": str(org_id),
+                    "site": str(site_id) if site_id else None,
+                    "rule": str(rule_id),
+                    "kpi": kpi_name,
+                    "cond": condition,
+                    "thresh": threshold,
+                    "val": current_value,
+                    "period": current_period,
+                    "now": now_utc,
+                    "channels": channels or {},
+                    "escalation": escalation or {},
                 },
             )
 
             # Queue notification task (fire-and-forget)
             from app.tasks.notifications import send_kpi_alert_notification
+
             send_kpi_alert_notification.delay(  # pyright: ignore[reportFunctionMemberAccess]
                 str(org_id),
                 kpi_name,

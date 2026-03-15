@@ -3,15 +3,17 @@
 from __future__ import annotations
 
 import hashlib
-import uuid as uuid_mod
 from datetime import UTC, datetime
-from uuid import UUID
+from typing import TYPE_CHECKING
 
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
-from app.models.permit import PermitExtension, PermitStatus, PermitType, WorkPermit
+from app.models.permit import PermitStatus, PermitType, WorkPermit
 
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 # ── Type-specific safety checklists ─────────────────────────
 
@@ -92,9 +94,7 @@ async def generate_qr_data(permit: WorkPermit) -> dict[str, str]:
     }
 
 
-async def validate_qr_token(
-    db: AsyncSession, reference_number: str, token: str
-) -> WorkPermit | None:
+async def validate_qr_token(db: AsyncSession, reference_number: str, token: str) -> WorkPermit | None:
     """Validate a QR token and return the permit if valid."""
     result = await db.execute(
         select(WorkPermit).where(
@@ -125,10 +125,12 @@ async def check_conflicts(
     query = select(WorkPermit).where(
         WorkPermit.organization_id == organization_id,
         WorkPermit.site_id == site_id,
-        WorkPermit.status.in_([
-            PermitStatus.APPROVED,
-            PermitStatus.ACTIVE,
-        ]),
+        WorkPermit.status.in_(
+            [
+                PermitStatus.APPROVED,
+                PermitStatus.ACTIVE,
+            ]
+        ),
         WorkPermit.valid_from < valid_until,
         WorkPermit.valid_until > valid_from,
         WorkPermit.is_deleted == False,  # noqa: E712
@@ -161,10 +163,7 @@ async def transition_status(
 
     allowed = valid_transitions.get(permit.status, [])
     if new_status not in allowed:
-        raise ValueError(
-            f"Cannot transition from {permit.status} to {new_status}. "
-            f"Allowed: {allowed}"
-        )
+        raise ValueError(f"Cannot transition from {permit.status} to {new_status}. Allowed: {allowed}")
 
     now = datetime.now(UTC)
     permit.status = new_status
@@ -181,9 +180,7 @@ async def transition_status(
     return permit
 
 
-async def get_permit_statistics(
-    db: AsyncSession, organization_id: UUID
-) -> dict[str, object]:
+async def get_permit_statistics(db: AsyncSession, organization_id: UUID) -> dict[str, object]:
     """Compute permit statistics."""
     result = await db.execute(
         select(WorkPermit).where(
@@ -205,9 +202,7 @@ async def get_permit_statistics(
         by_type[p.permit_type] = by_type.get(p.permit_type, 0) + 1
         if p.status in (PermitStatus.ACTIVE, PermitStatus.APPROVED):
             active_count += 1
-        if p.valid_until < now and p.status not in (
-            PermitStatus.CLOSED, PermitStatus.EXPIRED
-        ):
+        if p.valid_until < now and p.status not in (PermitStatus.CLOSED, PermitStatus.EXPIRED):
             expired_count += 1
 
     return {
@@ -243,13 +238,15 @@ def validate_gas_readings(
         limits = GAS_LIMITS.get(gas)
         if limits:
             is_safe = float(limits["min"]) <= value <= float(limits["max"])
-            results.append({
-                **reading,
-                "is_safe": is_safe,
-                "limit_min": limits["min"],
-                "limit_max": limits["max"],
-                "unit": limits["unit"],
-            })
+            results.append(
+                {
+                    **reading,
+                    "is_safe": is_safe,
+                    "limit_min": limits["min"],
+                    "limit_max": limits["max"],
+                    "unit": limits["unit"],
+                }
+            )
         else:
             results.append({**reading, "is_safe": True})
     return results

@@ -16,7 +16,6 @@ from app.models.notification import (
     NotificationChannel,
     NotificationDeliveryLog,
     NotificationEvent,
-    NotificationPriority,
     NotificationStatus,
     UserNotificationPreference,
 )
@@ -32,7 +31,6 @@ from app.schemas.notification import (
     UserNotificationPreferenceRead,
     UserNotificationPreferenceUpdate,
 )
-from app.services.notification_service import NotificationService
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
@@ -70,9 +68,7 @@ async def list_notifications(
         query = query.where(Notification.priority == priority)
 
     result = await db.execute(
-        query.order_by(Notification.created_at.desc())
-        .offset(pagination.offset)
-        .limit(pagination.page_size)
+        query.order_by(Notification.created_at.desc()).offset(pagination.offset).limit(pagination.page_size)
     )
     notifs = result.scalars().all()
     return [NotificationList.model_validate(n) for n in notifs]
@@ -350,21 +346,21 @@ async def upsert_preference(
     # Validate event type
     try:
         NotificationEvent(event_type)
-    except ValueError:
+    except ValueError as err:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid event type: {event_type}",
-        )
+        ) from err
 
     # Validate channels
     for ch in body.channels:
         try:
             NotificationChannel(ch)
-        except ValueError:
+        except ValueError as err:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid channel: {ch}",
-            )
+            ) from err
 
     result = await db.execute(
         select(UserNotificationPreference).where(

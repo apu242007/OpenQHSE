@@ -10,7 +10,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-
 # ═══════════════════════════════════════════════════════════════
 # WhatsApp Business API Templates
 # ═══════════════════════════════════════════════════════════════
@@ -221,10 +220,7 @@ WHATSAPP_TEMPLATES: dict[str, WhatsAppTemplate] = {
 NOTIFICATION_COPY: dict[str, dict[str, str]] = {
     "incident_reported": {
         "title": "🚨 Incidente reportado: {incident_title}",
-        "body": (
-            "Nuevo incidente ({severity}) reportado por {reporter_name} "
-            "en {site_name}. Ref: {reference_number}."
-        ),
+        "body": ("Nuevo incidente ({severity}) reportado por {reporter_name} en {site_name}. Ref: {reference_number}."),
     },
     "incident_critical": {
         "title": "🔴 INCIDENTE CRÍTICO: {incident_title}",
@@ -237,15 +233,13 @@ NOTIFICATION_COPY: dict[str, dict[str, str]] = {
     "action_assigned": {
         "title": "📋 Acción asignada: {action_title}",
         "body": (
-            "Se te ha asignado la acción correctiva «{action_title}». "
-            "Prioridad: {priority}. Fecha límite: {due_date}."
+            "Se te ha asignado la acción correctiva «{action_title}». Prioridad: {priority}. Fecha límite: {due_date}."
         ),
     },
     "action_overdue": {
         "title": "⏰ Acción vencida: {action_title}",
         "body": (
-            "La acción «{action_title}» está vencida por {days_overdue} día(s). "
-            "Fecha límite original: {due_date}."
+            "La acción «{action_title}» está vencida por {days_overdue} día(s). Fecha límite original: {due_date}."
         ),
     },
     "action_escalated": {
@@ -258,8 +252,7 @@ NOTIFICATION_COPY: dict[str, dict[str, str]] = {
     "inspection_overdue": {
         "title": "📅 Inspección vencida: {inspection_title}",
         "body": (
-            "La inspección «{inspection_title}» programada para {scheduled_date} "
-            "en {site_name} no se ha completado."
+            "La inspección «{inspection_title}» programada para {scheduled_date} en {site_name} no se ha completado."
         ),
     },
     "permit_pending_approval": {
@@ -278,17 +271,11 @@ NOTIFICATION_COPY: dict[str, dict[str, str]] = {
     },
     "document_review_due": {
         "title": "📄 Documento requiere revisión: {document_title}",
-        "body": (
-            "El documento «{document_title}» requiere revisión antes del "
-            "{review_due_date}."
-        ),
+        "body": ("El documento «{document_title}» requiere revisión antes del {review_due_date}."),
     },
     "training_expiring": {
         "title": "🎓 Certificación por expirar: {course_name}",
-        "body": (
-            "La certificación del curso «{course_name}» expira el {expiry_date}. "
-            "Programa la recertificación."
-        ),
+        "body": ("La certificación del curso «{course_name}» expira el {expiry_date}. Programa la recertificación."),
     },
     "high_risk_detected": {
         "title": "🔺 Riesgo alto detectado: {risk_title}",
@@ -483,7 +470,7 @@ _EMAIL_WRAPPER = """
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background-color:#0f172a;font-family:'Segoe UI',Roboto,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:40px auto;background:#1e293b;border-radius:12px;overflow:hidden;">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:40px auto;background:#1e293b;border-radius:12px;overflow:hidden;">  # noqa: E501
   <tr>
     <td style="background:linear-gradient(135deg,{header_bg_start},{header_bg_end});padding:32px;text-align:center;">
       <h1 style="color:#fff;margin:0;font-size:28px;">{header_icon} {header_title}</h1>
@@ -558,7 +545,7 @@ def build_notification_email(
         button_html = (
             '<table cellpadding="0" cellspacing="0" width="100%"><tr><td align="center">'
             f'<a href="{action_url}" style="display:inline-block;background:#0066FF;'
-            'color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;'
+            "color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;"
             'font-weight:600;font-size:16px;">Ver en OpenQHSE</a>'
             "</td></tr></table>"
         )

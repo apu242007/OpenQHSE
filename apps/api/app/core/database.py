@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator
+from typing import TYPE_CHECKING
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.ext.asyncio import (
@@ -13,6 +13,9 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from app.core.config import get_settings
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 settings = get_settings()
 
@@ -33,9 +36,7 @@ async_session_factory = async_sessionmaker(
 )
 
 # ── Sync engine (Celery tasks) ────────────────────────────────
-_sync_url = settings.effective_database_url.replace(
-    "postgresql+asyncpg", "postgresql+psycopg2"
-)
+_sync_url = settings.effective_database_url.replace("postgresql+asyncpg", "postgresql+psycopg2")
 sync_engine = create_engine(
     _sync_url,
     echo=settings.debug,
@@ -48,6 +49,7 @@ sync_session_factory = sessionmaker(bind=sync_engine, expire_on_commit=False)
 
 class Base(DeclarativeBase):
     """SQLAlchemy declarative base para todos los modelos."""
+
     pass
 
 

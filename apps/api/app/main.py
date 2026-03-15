@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 import uuid
 from contextlib import asynccontextmanager
-from collections.abc import AsyncGenerator
+from typing import TYPE_CHECKING
 
 import structlog
 from fastapi import FastAPI, Request, status
@@ -40,6 +40,9 @@ from app.core.config import get_settings
 from app.core.logging import setup_logging
 from app.core.rate_limit import limiter
 
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
 settings = get_settings()
 logger = structlog.get_logger("openqhse.api")
 
@@ -63,6 +66,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     if settings.sentry_dsn:
         import sentry_sdk
+
         sentry_sdk.init(
             dsn=settings.sentry_dsn,
             environment=settings.environment,
@@ -143,9 +147,7 @@ def create_app() -> FastAPI:
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(self)"
 
         if settings.is_production:
-            response.headers["Strict-Transport-Security"] = (
-                "max-age=31536000; includeSubDomains; preload"
-            )
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
 
         # Log estructurado JSON de cada request
         logger.info(
@@ -163,6 +165,7 @@ def create_app() -> FastAPI:
     if settings.prometheus_enabled:
         try:
             from prometheus_fastapi_instrumentator import Instrumentator
+
             Instrumentator().instrument(app).expose(app, endpoint="/metrics")
         except ImportError:
             logger.warning("prometheus_fastapi_instrumentator not installed, /metrics disabled")
@@ -181,7 +184,9 @@ def create_app() -> FastAPI:
 
         try:
             from sqlalchemy import text as sa_text
+
             from app.core.database import engine
+
             async with engine.connect() as conn:
                 await conn.execute(sa_text("SELECT 1"))
         except Exception as exc:
@@ -189,6 +194,7 @@ def create_app() -> FastAPI:
 
         try:
             from app.core.redis import redis_client
+
             await redis_client.ping()
         except Exception as exc:
             redis_status = f"error: {type(exc).__name__}"
@@ -226,9 +232,7 @@ def create_app() -> FastAPI:
     # ── Manejadores de Excepciones ────────────────────────────
 
     @app.exception_handler(ValidationError)
-    async def validation_error_handler(
-        request: Request, exc: ValidationError
-    ) -> ORJSONResponse:
+    async def validation_error_handler(request: Request, exc: ValidationError) -> ORJSONResponse:
         logger.warning(
             "pydantic_validation_error",
             request_id=getattr(request.state, "request_id", "unknown"),
@@ -241,9 +245,7 @@ def create_app() -> FastAPI:
         )
 
     @app.exception_handler(Exception)
-    async def global_exception_handler(
-        request: Request, exc: Exception
-    ) -> ORJSONResponse:
+    async def global_exception_handler(request: Request, exc: Exception) -> ORJSONResponse:
         request_id = getattr(request.state, "request_id", "unknown")
         logger.error(
             "unhandled_exception",

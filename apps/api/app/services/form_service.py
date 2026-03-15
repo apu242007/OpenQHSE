@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import io
-import math
-from datetime import UTC, datetime
 from typing import Any
 
 from reportlab.lib import colors
@@ -18,7 +16,6 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
-
 
 # ── Scoring ─────────────────────────────────────────────────
 
@@ -61,33 +58,35 @@ def calculate_score(
                 max_score += field_max
 
                 if answer_value is not None:
-                    matched = next(
-                        (o for o in options if o.get("value") == answer_value), None
-                    )
+                    matched = next((o for o in options if o.get("value") == answer_value), None)
                     if matched:
                         earned = float(matched.get("score", 0)) * weight
                         total_score += earned
                         if earned < field_max:
-                            failed_items.append({
-                                "field_id": fid,
-                                "label": field.get("label", field.get("text", "")),
-                                "expected_score": field_max,
-                                "actual_score": earned,
-                                "answer": answer_value,
-                            })
+                            failed_items.append(
+                                {
+                                    "field_id": fid,
+                                    "label": field.get("label", field.get("text", "")),
+                                    "expected_score": field_max,
+                                    "actual_score": earned,
+                                    "answer": answer_value,
+                                }
+                            )
 
             elif scoring_type == "boolean":
                 max_score += 10 * weight
                 if answer_value is True:
                     total_score += 10 * weight
                 else:
-                    failed_items.append({
-                        "field_id": fid,
-                        "label": field.get("label", field.get("text", "")),
-                        "expected_score": 10 * weight,
-                        "actual_score": 0,
-                        "answer": answer_value,
-                    })
+                    failed_items.append(
+                        {
+                            "field_id": fid,
+                            "label": field.get("label", field.get("text", "")),
+                            "expected_score": 10 * weight,
+                            "actual_score": 0,
+                            "answer": answer_value,
+                        }
+                    )
 
             elif scoring_type == "risk_matrix":
                 max_score += 25 * weight  # 5×5 matrix, best = 1×1 = 1
@@ -99,12 +98,14 @@ def calculate_score(
                     earned = max(0, (25 - risk_score + 1)) * weight
                     total_score += earned
                     if risk_score >= 15:
-                        failed_items.append({
-                            "field_id": fid,
-                            "label": field.get("label", field.get("text", "")),
-                            "risk_score": risk_score,
-                            "answer": answer_value,
-                        })
+                        failed_items.append(
+                            {
+                                "field_id": fid,
+                                "label": field.get("label", field.get("text", "")),
+                                "risk_score": risk_score,
+                                "answer": answer_value,
+                            }
+                        )
 
             elif scoring_type == "checklist":
                 items_list: list[Any] = field.get("items", [])
@@ -129,11 +130,7 @@ def calculate_score(
         "max_score": round(max_score, 2),
         "percentage": round(percentage, 2),
         "passed": percentage >= pass_threshold,
-        "grade": (
-            "pass" if percentage >= pass_threshold
-            else "warning" if percentage >= fail_threshold
-            else "fail"
-        ),
+        "grade": ("pass" if percentage >= pass_threshold else "warning" if percentage >= fail_threshold else "fail"),
         "failed_items": failed_items,
     }
 
@@ -228,9 +225,7 @@ def _is_empty(value: Any) -> bool:
         return True
     if isinstance(value, list) and len(value) == 0:
         return True
-    if isinstance(value, dict) and len(value) == 0:
-        return True
-    return False
+    return bool(isinstance(value, dict) and len(value) == 0)
 
 
 def _evaluate_condition(condition: dict[str, Any], data: dict[str, Any]) -> bool:
@@ -287,30 +282,40 @@ def generate_pdf_report(
 
     # Title
     title_style = ParagraphStyle(
-        "FormTitle", parent=styles["Heading1"], fontSize=18,
-        textColor=colors.HexColor("#0066FF"), spaceAfter=8,
+        "FormTitle",
+        parent=styles["Heading1"],
+        fontSize=18,
+        textColor=colors.HexColor("#0066FF"),
+        spaceAfter=8,
     )
     elements.append(Paragraph(template_data.get("name", "Formulario"), title_style))
 
     # Metadata table
     submitted_at = submission_data.get("submitted_at", "")
     meta = [
-        ["Enviado por", submission_data.get("submitted_by_name", "N/A"),
-         "Fecha", str(submitted_at)[:16] if submitted_at else "N/A"],
-        ["Sitio", submission_data.get("site_name", "N/A"),
-         "Estado", submission_data.get("status", "N/A").upper()],
+        [
+            "Enviado por",
+            submission_data.get("submitted_by_name", "N/A"),
+            "Fecha",
+            str(submitted_at)[:16] if submitted_at else "N/A",
+        ],
+        ["Sitio", submission_data.get("site_name", "N/A"), "Estado", submission_data.get("status", "N/A").upper()],
     ]
     meta_table = Table(meta, colWidths=[3.5 * cm, 5.5 * cm, 3 * cm, 5.5 * cm])
-    meta_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#F3F4F6")),
-        ("BACKGROUND", (2, 0), (2, -1), colors.HexColor("#F3F4F6")),
-        ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
-        ("FONTNAME", (2, 0), (2, -1), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, -1), 9),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#E5E7EB")),
-        ("TOPPADDING", (0, 0), (-1, -1), 5),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-    ]))
+    meta_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#F3F4F6")),
+                ("BACKGROUND", (2, 0), (2, -1), colors.HexColor("#F3F4F6")),
+                ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+                ("FONTNAME", (2, 0), (2, -1), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#E5E7EB")),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ]
+        )
+    )
     elements.append(meta_table)
     elements.append(Spacer(1, 15))
 
@@ -319,8 +324,10 @@ def generate_pdf_report(
         pct = score_result.get("percentage", 0)
         grade = score_result.get("grade", "unknown")
         grade_color = (
-            colors.HexColor("#00E5A0") if grade == "pass"
-            else colors.HexColor("#FFAA00") if grade == "warning"
+            colors.HexColor("#00E5A0")
+            if grade == "pass"
+            else colors.HexColor("#FFAA00")
+            if grade == "warning"
             else colors.HexColor("#FF4444")
         )
         score_text = (
@@ -336,10 +343,19 @@ def generate_pdf_report(
 
     for section in sections:
         sec_title = section.get("title", "Sección")
-        elements.append(Paragraph(sec_title, ParagraphStyle(
-            "SectionTitle", parent=styles["Heading2"],
-            fontSize=13, textColor=colors.HexColor("#1F2937"), spaceBefore=12, spaceAfter=6,
-        )))
+        elements.append(
+            Paragraph(
+                sec_title,
+                ParagraphStyle(
+                    "SectionTitle",
+                    parent=styles["Heading2"],
+                    fontSize=13,
+                    textColor=colors.HexColor("#1F2937"),
+                    spaceBefore=12,
+                    spaceAfter=6,
+                ),
+            )
+        )
 
         fields = section.get("fields", section.get("questions", []))
         for field in fields:
@@ -352,9 +368,7 @@ def generate_pdf_report(
             flagged = answer.get("flagged", False) if isinstance(answer, dict) else False
 
             if ftype in ("section", "instruction"):
-                elements.append(Paragraph(
-                    f"<i>{label}</i>", styles["Normal"]
-                ))
+                elements.append(Paragraph(f"<i>{label}</i>", styles["Normal"]))
                 continue
 
             display_value = _format_answer(value, field)
@@ -362,44 +376,65 @@ def generate_pdf_report(
 
             row_data = [[label + flag_marker, display_value]]
             row_table = Table(row_data, colWidths=[7 * cm, 10 * cm])
-            row_table.setStyle(TableStyle([
-                ("FONTSIZE", (0, 0), (-1, -1), 9),
-                ("FONTNAME", (0, 0), (0, 0), "Helvetica-Bold"),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("TOPPADDING", (0, 0), (-1, -1), 3),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-                ("LINEBELOW", (0, 0), (-1, 0), 0.3, colors.HexColor("#E5E7EB")),
-            ]))
+            row_table.setStyle(
+                TableStyle(
+                    [
+                        ("FONTSIZE", (0, 0), (-1, -1), 9),
+                        ("FONTNAME", (0, 0), (0, 0), "Helvetica-Bold"),
+                        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                        ("TOPPADDING", (0, 0), (-1, -1), 3),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                        ("LINEBELOW", (0, 0), (-1, 0), 0.3, colors.HexColor("#E5E7EB")),
+                    ]
+                )
+            )
             if flagged:
-                row_table.setStyle(TableStyle([
-                    ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FEF2F2")),
-                ]))
+                row_table.setStyle(
+                    TableStyle(
+                        [
+                            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FEF2F2")),
+                        ]
+                    )
+                )
             elements.append(row_table)
 
             if notes:
-                elements.append(Paragraph(
-                    f"<i>Notas: {notes}</i>",
-                    ParagraphStyle("Notes", parent=styles["Normal"], fontSize=8, textColor=colors.grey),
-                ))
+                elements.append(
+                    Paragraph(
+                        f"<i>Notas: {notes}</i>",
+                        ParagraphStyle("Notes", parent=styles["Normal"], fontSize=8, textColor=colors.grey),
+                    )
+                )
 
     # Failed items summary
     if score_result and score_result.get("failed_items"):
         elements.append(Spacer(1, 15))
-        elements.append(Paragraph("Ítems con desvío", ParagraphStyle(
-            "FailedTitle", parent=styles["Heading3"], textColor=colors.HexColor("#FF4444"),
-        )))
+        elements.append(
+            Paragraph(
+                "Ítems con desvío",
+                ParagraphStyle(
+                    "FailedTitle",
+                    parent=styles["Heading3"],
+                    textColor=colors.HexColor("#FF4444"),
+                ),
+            )
+        )
         for item in score_result["failed_items"]:
-            elements.append(Paragraph(
-                f"• {item.get('label', 'N/A')} — Respuesta: {item.get('answer', 'N/A')}",
-                styles["Normal"],
-            ))
+            elements.append(
+                Paragraph(
+                    f"• {item.get('label', 'N/A')} — Respuesta: {item.get('answer', 'N/A')}",
+                    styles["Normal"],
+                )
+            )
 
     # Footer
     elements.append(Spacer(1, 20))
-    elements.append(Paragraph(
-        "Generado por OpenQHSE Platform",
-        ParagraphStyle("Footer", parent=styles["Normal"], fontSize=8, textColor=colors.grey),
-    ))
+    elements.append(
+        Paragraph(
+            "Generado por OpenQHSE Platform",
+            ParagraphStyle("Footer", parent=styles["Normal"], fontSize=8, textColor=colors.grey),
+        )
+    )
 
     doc.build(elements)
     buffer.seek(0)
@@ -425,7 +460,7 @@ def _format_answer(value: Any, field: dict[str, Any]) -> str:
     if ftype == "risk_matrix" and isinstance(value, dict):
         lik = value.get("likelihood", "?")
         con = value.get("consequence", "?")
-        return f"Probabilidad: {lik}, Consecuencia: {con} (Riesgo: {int(lik)*int(con)})"
+        return f"Probabilidad: {lik}, Consecuencia: {con} (Riesgo: {int(lik) * int(con)})"
 
     if ftype == "photo" and isinstance(value, list):
         return f"{len(value)} foto(s) adjuntada(s)"

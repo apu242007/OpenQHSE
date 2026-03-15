@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import Integer, and_, func, select
 
-from app.api.deps import AdminUser, CurrentUser, DBSession, ManagerUser, Pagination
 from app.models.contractor import Contractor, ContractorStatus, ContractorWorker
 from app.schemas.contractor import (
     ContractorComplianceReport,
@@ -20,6 +19,11 @@ from app.schemas.contractor import (
     ContractorWorkerResponse,
     ContractorWorkerUpdate,
 )
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from app.api.deps import AdminUser, CurrentUser, DBSession, ManagerUser, Pagination
 
 router = APIRouter(prefix="/contractors", tags=["Contractors"])
 
@@ -80,34 +84,40 @@ async def list_contractors(
     if search:
         filters.append(Contractor.name.ilike(f"%{search}%"))
 
-    total = (await db.execute(
-        select(func.count()).select_from(Contractor).where(and_(*filters))
-    )).scalar() or 0
+    total = (await db.execute(select(func.count()).select_from(Contractor).where(and_(*filters)))).scalar() or 0
 
-    rows = (await db.execute(
-        select(Contractor)
-        .where(and_(*filters))
-        .order_by(Contractor.name)
-        .offset(pagination.offset)
-        .limit(pagination.page_size)
-    )).scalars().all()
+    rows = (
+        (
+            await db.execute(
+                select(Contractor)
+                .where(and_(*filters))
+                .order_by(Contractor.name)
+                .offset(pagination.offset)
+                .limit(pagination.page_size)
+            )
+        )
+        .scalars()
+        .all()
+    )
 
     # Count workers per contractor
     contractor_ids = [c.id for c in rows]
     worker_counts: dict[UUID, dict] = {}
     if contractor_ids:
-        wc_rows = (await db.execute(
-            select(
-                ContractorWorker.contractor_id,
-                func.count().label("total"),
-                func.sum(func.cast(ContractorWorker.is_active, Integer)).label("active"),
+        wc_rows = (
+            await db.execute(
+                select(
+                    ContractorWorker.contractor_id,
+                    func.count().label("total"),
+                    func.sum(func.cast(ContractorWorker.is_active, Integer)).label("active"),
+                )
+                .where(
+                    ContractorWorker.contractor_id.in_(contractor_ids),
+                    ContractorWorker.is_deleted == False,  # noqa: E712
+                )
+                .group_by(ContractorWorker.contractor_id)
             )
-            .where(
-                ContractorWorker.contractor_id.in_(contractor_ids),
-                ContractorWorker.is_deleted == False,  # noqa: E712
-            )
-            .group_by(ContractorWorker.contractor_id)
-        )).all()
+        ).all()
         for contractor_id, total_w, active_w in wc_rows:
             worker_counts[contractor_id] = {
                 "total": total_w or 0,
@@ -180,13 +190,23 @@ async def create_contractor(
     await db.flush()
     await db.refresh(c)
     return ContractorResponse(
-        id=c.id, created_at=c.created_at, updated_at=c.updated_at,
-        organization_id=c.organization_id, name=c.name, rut_tax_id=c.rut_tax_id,
-        country=c.country, contact_name=c.contact_name, contact_email=c.contact_email,
-        contact_phone=c.contact_phone, status=c.status, insurance_expiry=c.insurance_expiry,
-        insurance_url=c.insurance_url, certifications=c.certifications if isinstance(c.certifications, list) else [],
+        id=c.id,
+        created_at=c.created_at,
+        updated_at=c.updated_at,
+        organization_id=c.organization_id,
+        name=c.name,
+        rut_tax_id=c.rut_tax_id,
+        country=c.country,
+        contact_name=c.contact_name,
+        contact_email=c.contact_email,
+        contact_phone=c.contact_phone,
+        status=c.status,
+        insurance_expiry=c.insurance_expiry,
+        insurance_url=c.insurance_url,
+        certifications=c.certifications if isinstance(c.certifications, list) else [],
         documents=c.documents if isinstance(c.documents, list) else [],
-        approved_by=c.approved_by, approved_at=c.approved_at,
+        approved_by=c.approved_by,
+        approved_at=c.approved_at,
         suspension_reason=c.suspension_reason,
     )
 
@@ -306,14 +326,21 @@ async def list_workers(
     if is_active is not None:
         filters.append(ContractorWorker.is_active == is_active)
 
-    rows = (await db.execute(
-        select(ContractorWorker).where(and_(*filters)).order_by(ContractorWorker.last_name)
-    )).scalars().all()
+    rows = (
+        (await db.execute(select(ContractorWorker).where(and_(*filters)).order_by(ContractorWorker.last_name)))
+        .scalars()
+        .all()
+    )
 
     return [_worker_to_response(w) for w in rows]
 
 
-@router.post("/{contractor_id}/workers", response_model=ContractorWorkerResponse, status_code=status.HTTP_201_CREATED, summary="Add worker")
+@router.post(
+    "/{contractor_id}/workers",
+    response_model=ContractorWorkerResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Add worker",
+)
 async def add_worker(
     contractor_id: UUID,
     body: ContractorWorkerCreate,
@@ -357,7 +384,11 @@ async def update_worker(
     return _worker_to_response(w)
 
 
-@router.post("/{contractor_id}/workers/{worker_id}/induction", response_model=ContractorWorkerResponse, summary="Record worker induction")
+@router.post(
+    "/{contractor_id}/workers/{worker_id}/induction",
+    response_model=ContractorWorkerResponse,
+    summary="Record worker induction",
+)
 async def record_induction(
     contractor_id: UUID,
     worker_id: UUID,
@@ -377,7 +408,11 @@ async def record_induction(
 # ── Compliance Report ────────────────────────────────────────────────────────
 
 
-@router.get("/{contractor_id}/compliance-report", response_model=ContractorComplianceReport, summary="Contractor compliance report")
+@router.get(
+    "/{contractor_id}/compliance-report",
+    response_model=ContractorComplianceReport,
+    summary="Contractor compliance report",
+)
 async def contractor_compliance_report(
     contractor_id: UUID,
     db: DBSession,
@@ -386,12 +421,18 @@ async def contractor_compliance_report(
     """Return a full compliance report for a contractor."""
     c = await _get_or_404(db, contractor_id, current_user.organization_id)
 
-    workers = (await db.execute(
-        select(ContractorWorker).where(
-            ContractorWorker.contractor_id == contractor_id,
-            ContractorWorker.is_deleted == False,  # noqa: E712
+    workers = (
+        (
+            await db.execute(
+                select(ContractorWorker).where(
+                    ContractorWorker.contractor_id == contractor_id,
+                    ContractorWorker.is_deleted == False,  # noqa: E712
+                )
+            )
         )
-    )).scalars().all()
+        .scalars()
+        .all()
+    )
 
     total_workers = len(workers)
     active_workers = sum(1 for w in workers if w.is_active)
@@ -411,9 +452,7 @@ async def contractor_compliance_report(
                     exp = datetime.fromisoformat(expiry_str)
                     if not exp.tzinfo:
                         exp = exp.replace(tzinfo=UTC)
-                    if exp < now:
-                        certs_expiring += 1
-                    elif exp <= cutoff_expiring:
+                    if exp < now or exp <= cutoff_expiring:
                         certs_expiring += 1
                     else:
                         certs_valid += 1
@@ -450,15 +489,23 @@ async def expiring_documents(
     org_id = current_user.organization_id
     cutoff = datetime.now(UTC) + timedelta(days=days)
 
-    rows = (await db.execute(
-        select(Contractor).where(
-            Contractor.organization_id == org_id,
-            Contractor.is_deleted == False,  # noqa: E712
-            Contractor.status == ContractorStatus.APPROVED,
-            Contractor.insurance_expiry.isnot(None),
-            Contractor.insurance_expiry <= cutoff,
-        ).order_by(Contractor.insurance_expiry)
-    )).scalars().all()
+    rows = (
+        (
+            await db.execute(
+                select(Contractor)
+                .where(
+                    Contractor.organization_id == org_id,
+                    Contractor.is_deleted == False,  # noqa: E712
+                    Contractor.status == ContractorStatus.APPROVED,
+                    Contractor.insurance_expiry.isnot(None),
+                    Contractor.insurance_expiry <= cutoff,
+                )
+                .order_by(Contractor.insurance_expiry)
+            )
+        )
+        .scalars()
+        .all()
+    )
 
     now = datetime.now(UTC)
     return [
@@ -468,7 +515,9 @@ async def expiring_documents(
             "insurance_expiry": c.insurance_expiry.isoformat() if c.insurance_expiry else None,
             "days_remaining": (
                 (c.insurance_expiry.replace(tzinfo=UTC) if not c.insurance_expiry.tzinfo else c.insurance_expiry) - now
-            ).days if c.insurance_expiry else None,
+            ).days
+            if c.insurance_expiry
+            else None,
             "contact_email": c.contact_email,
         }
         for c in rows
@@ -508,26 +557,43 @@ async def _get_worker_or_404(db: DBSession, worker_id: UUID, contractor_id: UUID
 
 def _to_response(c: Contractor) -> ContractorResponse:
     return ContractorResponse(
-        id=c.id, created_at=c.created_at, updated_at=c.updated_at,
-        organization_id=c.organization_id, name=c.name, rut_tax_id=c.rut_tax_id,
-        country=c.country, contact_name=c.contact_name, contact_email=c.contact_email,
-        contact_phone=c.contact_phone, status=c.status, insurance_expiry=c.insurance_expiry,
+        id=c.id,
+        created_at=c.created_at,
+        updated_at=c.updated_at,
+        organization_id=c.organization_id,
+        name=c.name,
+        rut_tax_id=c.rut_tax_id,
+        country=c.country,
+        contact_name=c.contact_name,
+        contact_email=c.contact_email,
+        contact_phone=c.contact_phone,
+        status=c.status,
+        insurance_expiry=c.insurance_expiry,
         insurance_url=c.insurance_url,
         certifications=c.certifications if isinstance(c.certifications, list) else [],
         documents=c.documents if isinstance(c.documents, list) else [],
-        approved_by=c.approved_by, approved_at=c.approved_at,
+        approved_by=c.approved_by,
+        approved_at=c.approved_at,
         suspension_reason=c.suspension_reason,
     )
 
 
 def _worker_to_response(w: ContractorWorker) -> ContractorWorkerResponse:
     return ContractorWorkerResponse(
-        id=w.id, created_at=w.created_at, updated_at=w.updated_at,
-        contractor_id=w.contractor_id, organization_id=w.organization_id,
-        first_name=w.first_name, last_name=w.last_name, id_number=w.id_number,
-        position=w.position, photo_url=w.photo_url,
+        id=w.id,
+        created_at=w.created_at,
+        updated_at=w.updated_at,
+        contractor_id=w.contractor_id,
+        organization_id=w.organization_id,
+        first_name=w.first_name,
+        last_name=w.last_name,
+        id_number=w.id_number,
+        position=w.position,
+        photo_url=w.photo_url,
         certifications=w.certifications if isinstance(w.certifications, list) else [],
-        induction_completed=w.induction_completed, induction_date=w.induction_date,
+        induction_completed=w.induction_completed,
+        induction_date=w.induction_date,
         access_sites=w.access_sites if isinstance(w.access_sites, list) else [],
-        is_active=w.is_active, deactivation_reason=w.deactivation_reason,
+        is_active=w.is_active,
+        deactivation_reason=w.deactivation_reason,
     )

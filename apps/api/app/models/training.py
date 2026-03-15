@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import uuid
-from datetime import datetime
 from enum import StrEnum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean,
@@ -19,6 +18,10 @@ from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
+
+if TYPE_CHECKING:
+    import uuid
+    from datetime import datetime
 
 
 class CourseType(StrEnum):
@@ -49,24 +52,19 @@ class TrainingCourse(BaseModel):
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     category: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
-    course_type: Mapped[CourseType] = mapped_column(
-        String(20), nullable=False, index=True
-    )
+    course_type: Mapped[CourseType] = mapped_column(String(20), nullable=False, index=True)
     duration_hours: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
 
     content: Mapped[dict | None] = mapped_column(  # type: ignore[type-arg]
-        JSONB, nullable=True,
+        JSONB,
+        nullable=True,
         doc="[{module_title, slides: [{title, content_type, content_url}]}]",
     )
     passing_score: Mapped[float] = mapped_column(Float, nullable=False, default=70.0)
     validity_months: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    certificate_template_url: Mapped[str | None] = mapped_column(
-        String(1024), nullable=True
-    )
+    certificate_template_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     is_mandatory: Mapped[bool] = mapped_column(Boolean, default=False)
-    applicable_roles: Mapped[list[str] | None] = mapped_column(
-        ARRAY(String), nullable=True
-    )
+    applicable_roles: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
 
     # Relationships
     enrollments: Mapped[list[TrainingEnrollment]] = relationship(
@@ -85,39 +83,23 @@ class TrainingEnrollment(BaseModel):
     course_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("training_courses.id"), nullable=False, index=True
     )
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
-    )
-    site_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("sites.id"), nullable=True
-    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    site_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("sites.id"), nullable=True)
 
     status: Mapped[EnrollmentStatus] = mapped_column(
         String(20), default=EnrollmentStatus.ENROLLED, nullable=False, index=True
     )
-    enrolled_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    started_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    expiry_date: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    enrolled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    expiry_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     score: Mapped[float | None] = mapped_column(Float, nullable=True)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     certificate_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
-    assigned_by: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
-    )
+    assigned_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
     # Relationships
-    course: Mapped[TrainingCourse] = relationship(
-        "TrainingCourse", back_populates="enrollments", lazy="selectin"
-    )
+    course: Mapped[TrainingCourse] = relationship("TrainingCourse", back_populates="enrollments", lazy="selectin")
 
 
 class TrainingAssessment(BaseModel):
@@ -130,16 +112,13 @@ class TrainingAssessment(BaseModel):
     )
 
     questions: Mapped[dict] = mapped_column(  # type: ignore[type-arg]
-        JSONB, nullable=False, default=list,
-        doc=(
-            "[{id, text, type: 'multiple_choice'|'true_false'|'open', "
-            "options: [{text, is_correct}], points}]"
-        ),
+        JSONB,
+        nullable=False,
+        default=list,
+        doc=("[{id, text, type: 'multiple_choice'|'true_false'|'open', options: [{text, is_correct}], points}]"),
     )
 
-    course: Mapped[TrainingCourse] = relationship(
-        "TrainingCourse", back_populates="assessments", lazy="selectin"
-    )
+    course: Mapped[TrainingCourse] = relationship("TrainingCourse", back_populates="assessments", lazy="selectin")
 
 
 class CompetencyMatrix(BaseModel):

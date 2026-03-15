@@ -16,14 +16,13 @@ def check_expiring_documents() -> dict:  # type: ignore[type-arg]
         Summary dict with counts of notified documents.
     """
     import asyncio
+    from datetime import UTC, datetime, timedelta
 
     from sqlalchemy import select
 
     from app.core.database import get_db_context
     from app.models.document import Document, DocumentStatus
     from app.tasks.notifications import send_email_task
-
-    from datetime import UTC, datetime, timedelta
 
     async def _check() -> dict:  # type: ignore[type-arg]
         async with get_db_context() as db:

@@ -9,9 +9,10 @@ Adds:
   - marketplace_ratings table
 """
 
-from alembic import op  # type: ignore[attr-defined]
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op  # type: ignore[attr-defined]
 
 revision = "0010_marketplace"
 down_revision = "0009_multichannel_notif"

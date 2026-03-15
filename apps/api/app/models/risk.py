@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import uuid
-from datetime import datetime
 from enum import StrEnum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     DateTime,
-    Float,
     ForeignKey,
     Integer,
     String,
@@ -18,6 +16,10 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
+
+if TYPE_CHECKING:
+    import uuid
+    from datetime import datetime
 
 
 class RiskType(StrEnum):
@@ -52,28 +54,18 @@ class RiskRegister(BaseModel):
     organization_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False, index=True
     )
-    site_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("sites.id"), nullable=False, index=True
-    )
+    site_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sites.id"), nullable=False, index=True)
 
     area: Mapped[str | None] = mapped_column(String(255), nullable=True)
     process: Mapped[str | None] = mapped_column(String(255), nullable=True)
     hazard_description: Mapped[str] = mapped_column(Text, nullable=False)
     hazard_category: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    risk_type: Mapped[RiskType] = mapped_column(
-        String(20), nullable=False, index=True
-    )
+    risk_type: Mapped[RiskType] = mapped_column(String(20), nullable=False, index=True)
 
     # Inherent risk (before controls)
-    inherent_likelihood: Mapped[int] = mapped_column(
-        Integer, nullable=False, doc="1-5 scale"
-    )
-    inherent_severity: Mapped[int] = mapped_column(
-        Integer, nullable=False, doc="1-5 scale"
-    )
-    inherent_rating: Mapped[int] = mapped_column(
-        Integer, nullable=False, doc="likelihood × severity"
-    )
+    inherent_likelihood: Mapped[int] = mapped_column(Integer, nullable=False, doc="1-5 scale")
+    inherent_severity: Mapped[int] = mapped_column(Integer, nullable=False, doc="1-5 scale")
+    inherent_rating: Mapped[int] = mapped_column(Integer, nullable=False, doc="likelihood × severity")
 
     # Controls (hierarchical: elimination → PPE)
     controls: Mapped[dict] = mapped_column(  # type: ignore[type-arg]
@@ -91,15 +83,9 @@ class RiskRegister(BaseModel):
     residual_severity: Mapped[int] = mapped_column(Integer, nullable=False)
     residual_rating: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    risk_owner: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
-    )
-    review_date: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    status: Mapped[RiskStatus] = mapped_column(
-        String(20), default=RiskStatus.IDENTIFIED, nullable=False, index=True
-    )
+    risk_owner: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    review_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    status: Mapped[RiskStatus] = mapped_column(String(20), default=RiskStatus.IDENTIFIED, nullable=False, index=True)
 
     legal_requirement: Mapped[str | None] = mapped_column(Text, nullable=True)
     applicable_standard: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -113,27 +99,19 @@ class HazopStudy(BaseModel):
     organization_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False, index=True
     )
-    site_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("sites.id"), nullable=False, index=True
-    )
+    site_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sites.id"), nullable=False, index=True)
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     system_description: Mapped[str] = mapped_column(Text, nullable=False)
     p_and_id_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
-    status: Mapped[HazopStatus] = mapped_column(
-        String(20), default=HazopStatus.DRAFT, nullable=False, index=True
-    )
+    status: Mapped[HazopStatus] = mapped_column(String(20), default=HazopStatus.DRAFT, nullable=False, index=True)
     team_members: Mapped[dict | None] = mapped_column(  # type: ignore[type-arg]
         JSONB, nullable=True, doc="[{user_id, name, role_in_study}]"
     )
-    facilitator_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
-    )
+    facilitator_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
     # Relationships
-    nodes: Mapped[list[HazopNode]] = relationship(
-        "HazopNode", back_populates="study", lazy="selectin"
-    )
+    nodes: Mapped[list[HazopNode]] = relationship("HazopNode", back_populates="study", lazy="selectin")
 
 
 class HazopNode(BaseModel):
@@ -157,9 +135,7 @@ class HazopNode(BaseModel):
     recommendations: Mapped[dict | None] = mapped_column(JSONB, nullable=True)  # type: ignore[type-arg]
 
     # Relationships
-    study: Mapped[HazopStudy] = relationship(
-        "HazopStudy", back_populates="nodes", lazy="selectin"
-    )
+    study: Mapped[HazopStudy] = relationship("HazopStudy", back_populates="nodes", lazy="selectin")
 
 
 class BowTie(BaseModel):
@@ -170,30 +146,37 @@ class BowTie(BaseModel):
     organization_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False, index=True
     )
-    site_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("sites.id"), nullable=False, index=True
-    )
+    site_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sites.id"), nullable=False, index=True)
 
     top_event: Mapped[str] = mapped_column(String(500), nullable=False)
     hazard: Mapped[str] = mapped_column(String(500), nullable=False)
 
     threats: Mapped[dict] = mapped_column(  # type: ignore[type-arg]
-        JSONB, nullable=False, default=list,
+        JSONB,
+        nullable=False,
+        default=list,
         doc="[{id, description, likelihood}]",
     )
     consequences: Mapped[dict] = mapped_column(  # type: ignore[type-arg]
-        JSONB, nullable=False, default=list,
+        JSONB,
+        nullable=False,
+        default=list,
         doc="[{id, description, severity}]",
     )
     prevention_barriers: Mapped[dict] = mapped_column(  # type: ignore[type-arg]
-        JSONB, nullable=False, default=list,
+        JSONB,
+        nullable=False,
+        default=list,
         doc="[{id, description, type, threat_id, effectiveness}]",
     )
     mitigation_barriers: Mapped[dict] = mapped_column(  # type: ignore[type-arg]
-        JSONB, nullable=False, default=list,
+        JSONB,
+        nullable=False,
+        default=list,
         doc="[{id, description, type, consequence_id, effectiveness}]",
     )
     critical_controls: Mapped[dict | None] = mapped_column(  # type: ignore[type-arg]
-        JSONB, nullable=True,
+        JSONB,
+        nullable=True,
         doc="[{id, barrier_id, description, verification_method, frequency}]",
     )

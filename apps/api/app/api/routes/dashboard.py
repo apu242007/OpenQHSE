@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from app.api.deps import CurrentUser, DBSession
 from app.models.incident import Incident, IncidentStatus
 from app.models.inspection import Finding, FindingStatus, Inspection, InspectionStatus
-from app.models.permit import WorkPermit, PermitStatus
+from app.models.permit import PermitStatus, WorkPermit
 from app.schemas.common import BaseSchema
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
@@ -138,10 +138,12 @@ async def get_dashboard(
     open_incidents_q = await db.execute(
         select(func.count(Incident.id)).where(
             Incident.organization_id == org_id,
-            Incident.status.in_([
-                IncidentStatus.REPORTED,
-                IncidentStatus.UNDER_INVESTIGATION,
-            ]),
+            Incident.status.in_(
+                [
+                    IncidentStatus.REPORTED,
+                    IncidentStatus.UNDER_INVESTIGATION,
+                ]
+            ),
             Incident.is_deleted == False,  # noqa: E712
         )
     )
@@ -180,16 +182,10 @@ async def get_dashboard(
     pending_permits = pending_permits_q.scalar() or 0
 
     # ── Computed ───────────────────────────────────────────
-    completion_rate = (
-        (completed_inspections / total_inspections * 100)
-        if total_inspections > 0
-        else 0.0
-    )
+    completion_rate = (completed_inspections / total_inspections * 100) if total_inspections > 0 else 0.0
 
     resolved_findings = total_findings - open_findings - overdue_findings
-    safety_score = (
-        (resolved_findings / total_findings * 100) if total_findings > 0 else 100.0
-    )
+    safety_score = (resolved_findings / total_findings * 100) if total_findings > 0 else 100.0
 
     # ── Recent Activity ────────────────────────────────────
     recent_insp_q = await db.execute(

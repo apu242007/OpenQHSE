@@ -1,6 +1,5 @@
 """Equipment / asset management endpoints."""
 
-from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
@@ -45,14 +44,10 @@ async def list_equipment(
     if equip_status:
         query = query.where(Equipment.status == equip_status)
     if search:
-        query = query.where(
-            Equipment.name.ilike(f"%{search}%") | Equipment.code.ilike(f"%{search}%")
-        )
+        query = query.where(Equipment.name.ilike(f"%{search}%") | Equipment.code.ilike(f"%{search}%"))
 
     result = await db.execute(
-        query.order_by(Equipment.created_at.desc())
-        .offset(pagination.offset)
-        .limit(pagination.page_size)
+        query.order_by(Equipment.created_at.desc()).offset(pagination.offset).limit(pagination.page_size)
     )
     items = result.scalars().all()
     return [EquipmentList.model_validate(e) for e in items]
@@ -275,6 +270,7 @@ async def create_inspection(
 
     # Auto-update status based on result
     from app.models.equipment import InspectionResult
+
     if body.result == InspectionResult.FAIL:
         equip.status = EquipmentStatus.OUT_OF_SERVICE
     elif body.result == InspectionResult.PASS and equip.status == EquipmentStatus.OUT_OF_SERVICE:

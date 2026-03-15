@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-import uuid
 from enum import StrEnum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, ForeignKey, Index, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
+
+if TYPE_CHECKING:
+    import uuid
 
 
 class UserRole(StrEnum):
@@ -51,9 +54,7 @@ class User(BaseModel):
     """Platform user with role-based access."""
 
     __tablename__ = "users"
-    __table_args__ = (
-        Index("ix_users_email_org", "email", "organization_id", unique=True),
-    )
+    __table_args__ = (Index("ix_users_email_org", "email", "organization_id", unique=True),)
 
     email: Mapped[str] = mapped_column(String(320), nullable=False, index=True)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -83,9 +84,7 @@ class User(BaseModel):
     )
 
     # Relationships
-    organization: Mapped[Organization] = relationship(
-        "Organization", back_populates="users", lazy="selectin"
-    )
+    organization: Mapped[Organization] = relationship("Organization", back_populates="users", lazy="selectin")
 
     @property
     def full_name(self) -> str:
@@ -113,9 +112,7 @@ class Site(BaseModel):
         index=True,
     )
 
-    organization: Mapped[Organization] = relationship(
-        "Organization", back_populates="sites", lazy="selectin"
-    )
+    organization: Mapped[Organization] = relationship("Organization", back_populates="sites", lazy="selectin")
     areas: Mapped[list[Area]] = relationship("Area", back_populates="site", lazy="selectin")
 
 

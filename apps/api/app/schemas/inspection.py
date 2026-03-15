@@ -9,8 +9,8 @@ from pydantic import Field
 from app.models.inspection import FindingSeverity, FindingStatus, InspectionStatus
 from app.schemas.common import BaseSchema, IDSchema, TimestampSchema
 
-
 # ── Template ──────────────────────────────────────────────────
+
 
 class TemplateQuestionSchema(BaseSchema):
     id: str
@@ -64,6 +64,7 @@ class InspectionTemplateResponse(IDSchema, TimestampSchema):
 
 # ── Inspection ────────────────────────────────────────────────
 
+
 class InspectionCreate(BaseSchema):
     title: str = Field(min_length=1, max_length=255)
     template_id: UUID
@@ -113,6 +114,7 @@ class InspectionListResponse(BaseSchema):
 
 # ── Bulk Schedule ─────────────────────────────────────────────
 
+
 class BulkScheduleRequest(BaseSchema):
     template_id: UUID
     site_id: UUID
@@ -126,6 +128,7 @@ class BulkScheduleRequest(BaseSchema):
 
 
 # ── Finding ───────────────────────────────────────────────────
+
 
 class FindingCreate(BaseSchema):
     title: str = Field(min_length=1, max_length=255)

@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import io
-import math
 from datetime import UTC, datetime, timedelta
-from typing import Any
-from uuid import UUID, uuid4
+from typing import TYPE_CHECKING, Any
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -19,18 +17,17 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
-from sqlalchemy import and_, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import func, select
 
 from app.models.incident import (
-    CorrectiveAction,
     Incident,
-    IncidentAttachment,
-    IncidentStatus,
     IncidentType,
-    IncidentWitness,
 )
 
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 # ── Safety Metrics ──────────────────────────────────────────
 
@@ -50,7 +47,11 @@ async def calculate_trir(
     TRIR = (recordable incidents × 200,000) / total hours worked
     """
     recordable = await _count_incidents(
-        db, organization_id, site_id, start_date, end_date,
+        db,
+        organization_id,
+        site_id,
+        start_date,
+        end_date,
         types=[
             IncidentType.FIRST_AID,
             IncidentType.MEDICAL_TREATMENT,
@@ -76,7 +77,11 @@ async def calculate_ltif(
     LTIF = (LTI count × 1,000,000) / total hours worked
     """
     lti = await _count_incidents(
-        db, organization_id, site_id, start_date, end_date,
+        db,
+        organization_id,
+        site_id,
+        start_date,
+        end_date,
         types=[IncidentType.LOST_TIME, IncidentType.FATALITY],
     )
     if total_hours_worked == 0:
@@ -97,7 +102,11 @@ async def calculate_dart(
     DART = (DART cases × 200,000) / total hours worked
     """
     dart_count = await _count_incidents(
-        db, organization_id, site_id, start_date, end_date,
+        db,
+        organization_id,
+        site_id,
+        start_date,
+        end_date,
         types=[IncidentType.LOST_TIME, IncidentType.MEDICAL_TREATMENT],
     )
     if total_hours_worked == 0:
@@ -115,7 +124,11 @@ async def calculate_far(
 ) -> float:
     """Fatal Accident Rate = (fatalities × 100,000,000) / hours worked."""
     fatal = await _count_incidents(
-        db, organization_id, site_id, start_date, end_date,
+        db,
+        organization_id,
+        site_id,
+        start_date,
+        end_date,
         types=[IncidentType.FATALITY],
     )
     if total_hours_worked == 0:
@@ -132,12 +145,14 @@ async def get_days_without_accident(
     base = select(Incident.occurred_at).where(
         Incident.organization_id == organization_id,
         Incident.is_deleted == False,  # noqa: E712
-        Incident.incident_type.in_([
-            IncidentType.FIRST_AID,
-            IncidentType.MEDICAL_TREATMENT,
-            IncidentType.LOST_TIME,
-            IncidentType.FATALITY,
-        ]),
+        Incident.incident_type.in_(
+            [
+                IncidentType.FIRST_AID,
+                IncidentType.MEDICAL_TREATMENT,
+                IncidentType.LOST_TIME,
+                IncidentType.FATALITY,
+            ]
+        ),
     )
     if site_id:
         base = base.where(Incident.site_id == site_id)
@@ -251,11 +266,13 @@ async def get_incident_statistics(
         m_lti = m_base.where(Incident.incident_type.in_([IncidentType.LOST_TIME, IncidentType.FATALITY]))
         ml = await db.execute(select(func.count()).select_from(m_lti.subquery()))
 
-        monthly_trend.append({
-            "month": m_start.strftime("%b"),
-            "count": mc.scalar() or 0,
-            "lti": ml.scalar() or 0,
-        })
+        monthly_trend.append(
+            {
+                "month": m_start.strftime("%b"),
+                "count": mc.scalar() or 0,
+                "lti": ml.scalar() or 0,
+            }
+        )
 
     # By type
     result_all = await db.execute(base)
@@ -293,14 +310,20 @@ def generate_incident_report(
     """Generate comprehensive incident investigation PDF report."""
     buf = io.BytesIO()
     doc = SimpleDocTemplate(
-        buf, pagesize=A4,
-        leftMargin=2 * cm, rightMargin=2 * cm,
-        topMargin=2 * cm, bottomMargin=2 * cm,
+        buf,
+        pagesize=A4,
+        leftMargin=2 * cm,
+        rightMargin=2 * cm,
+        topMargin=2 * cm,
+        bottomMargin=2 * cm,
     )
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle("IncTitle", parent=styles["Title"], fontSize=18, spaceAfter=12)
     heading_style = ParagraphStyle(
-        "IncHeading", parent=styles["Heading2"], fontSize=13, spaceAfter=8,
+        "IncHeading",
+        parent=styles["Heading2"],
+        fontSize=13,
+        spaceAfter=8,
         textColor=colors.HexColor("#0f172a"),
     )
     body_style = styles["BodyText"]
@@ -327,15 +350,19 @@ def generate_incident_report(
         ["Fatalidades", str(incident.get("fatalities_count", 0))],
     ]
     info_table = Table(info_data, colWidths=[4 * cm, 12 * cm])
-    info_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#fef2f2")),
-        ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, -1), 9),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#fecaca")),
-        ("TOPPADDING", (0, 0), (-1, -1), 4),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-        ("LEFTPADDING", (0, 0), (-1, -1), 6),
-    ]))
+    info_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#fef2f2")),
+                ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#fecaca")),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+            ]
+        )
+    )
     elements.append(info_table)
     elements.append(Spacer(1, 14))
 
@@ -361,21 +388,27 @@ def generate_incident_report(
         elements.append(Paragraph("Testigos", heading_style))
         w_data = [["Nombre", "Contacto", "Declaración"]]
         for w in witnesses:
-            w_data.append([
-                w.get("name", "—"),
-                w.get("contact", "—") or "—",
-                (w.get("statement", "—") or "—")[:100],
-            ])
+            w_data.append(
+                [
+                    w.get("name", "—"),
+                    w.get("contact", "—") or "—",
+                    (w.get("statement", "—") or "—")[:100],
+                ]
+            )
         w_table = Table(w_data, colWidths=[4 * cm, 3 * cm, 9 * cm])
-        w_table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONTSIZE", (0, 0), (-1, -1), 8),
-            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-            ("TOPPADDING", (0, 0), (-1, -1), 3),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-        ]))
+        w_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 8),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                    ("TOPPADDING", (0, 0), (-1, -1), 3),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ]
+            )
+        )
         elements.append(w_table)
         elements.append(Spacer(1, 10))
 
@@ -384,23 +417,29 @@ def generate_incident_report(
         elements.append(Paragraph("Acciones Correctivas / Preventivas", heading_style))
         a_data = [["Título", "Tipo", "Prioridad", "Estado", "Fecha límite"]]
         for a in actions:
-            a_data.append([
-                a.get("title", "—"),
-                a.get("action_type", "—").title(),
-                a.get("priority", "—").title(),
-                a.get("status", "—").replace("_", " ").title(),
-                str(a.get("due_date", "—"))[:10],
-            ])
+            a_data.append(
+                [
+                    a.get("title", "—"),
+                    a.get("action_type", "—").title(),
+                    a.get("priority", "—").title(),
+                    a.get("status", "—").replace("_", " ").title(),
+                    str(a.get("due_date", "—"))[:10],
+                ]
+            )
         a_table = Table(a_data, colWidths=[5 * cm, 2.5 * cm, 2.5 * cm, 2.5 * cm, 3.5 * cm])
-        a_table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONTSIZE", (0, 0), (-1, -1), 8),
-            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-            ("TOPPADDING", (0, 0), (-1, -1), 3),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-        ]))
+        a_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 8),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                    ("TOPPADDING", (0, 0), (-1, -1), 3),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ]
+            )
+        )
         elements.append(a_table)
 
     # Footer
@@ -456,11 +495,15 @@ async def _count_incidents(
     if not end_date:
         end_date = datetime.now(UTC)
 
-    base = select(func.count()).select_from(Incident).where(
-        Incident.organization_id == organization_id,
-        Incident.is_deleted == False,  # noqa: E712
-        Incident.occurred_at >= start_date,
-        Incident.occurred_at <= end_date,
+    base = (
+        select(func.count())
+        .select_from(Incident)
+        .where(
+            Incident.organization_id == organization_id,
+            Incident.is_deleted == False,  # noqa: E712
+            Incident.occurred_at >= start_date,
+            Incident.occurred_at <= end_date,
+        )
     )
     if site_id:
         base = base.where(Incident.site_id == site_id)

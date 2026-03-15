@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from pydantic import EmailStr, Field
 
-from app.models.contractor import ContractorStatus
 from app.schemas.common import BaseSchema, IDSchema, PaginatedResponse, TimestampSchema
 
+if TYPE_CHECKING:
+    from datetime import datetime
+    from uuid import UUID
+
+    from app.models.contractor import ContractorStatus
 
 # ── Contractor ──────────────────────────────────────────────────────────────
 

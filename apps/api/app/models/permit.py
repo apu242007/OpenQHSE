@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
-import uuid
-from datetime import datetime
 from enum import StrEnum
+from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
+
+if TYPE_CHECKING:
+    import uuid
+    from datetime import datetime
 
 
 class PermitStatus(StrEnum):
@@ -40,13 +43,9 @@ class WorkPermit(BaseModel):
 
     __tablename__ = "work_permits"
 
-    reference_number: Mapped[str] = mapped_column(
-        String(50), unique=True, nullable=False, index=True
-    )
+    reference_number: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    permit_type: Mapped[PermitType] = mapped_column(
-        String(30), nullable=False, index=True
-    )
+    permit_type: Mapped[PermitType] = mapped_column(String(30), nullable=False, index=True)
     status: Mapped[PermitStatus] = mapped_column(
         String(20),
         default=PermitStatus.DRAFT,
@@ -72,18 +71,10 @@ class WorkPermit(BaseModel):
     organization_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False, index=True
     )
-    site_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("sites.id"), nullable=False, index=True
-    )
-    area_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("areas.id"), nullable=True
-    )
-    requested_by_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
-    )
-    approved_by_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
-    )
+    site_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sites.id"), nullable=False, index=True)
+    area_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("areas.id"), nullable=True)
+    requested_by_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    approved_by_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
     # Relationships
     extensions: Mapped[list[PermitExtension]] = relationship(
@@ -99,17 +90,9 @@ class PermitExtension(BaseModel):
     permit_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("work_permits.id"), nullable=False, index=True
     )
-    new_end_datetime: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    new_end_datetime: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     reason: Mapped[str] = mapped_column(Text, nullable=False)
-    approved_by: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
-    )
-    approved_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    approved_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    permit: Mapped[WorkPermit] = relationship(
-        "WorkPermit", back_populates="extensions", lazy="selectin"
-    )
+    permit: Mapped[WorkPermit] = relationship("WorkPermit", back_populates="extensions", lazy="selectin")

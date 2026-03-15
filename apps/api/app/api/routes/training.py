@@ -61,9 +61,7 @@ async def list_courses(
         query = query.where(TrainingCourse.title.ilike(f"%{search}%"))
 
     result = await db.execute(
-        query.order_by(TrainingCourse.created_at.desc())
-        .offset(pagination.offset)
-        .limit(pagination.page_size)
+        query.order_by(TrainingCourse.created_at.desc()).offset(pagination.offset).limit(pagination.page_size)
     )
     courses = result.scalars().all()
     return [TrainingCourseList.model_validate(c) for c in courses]
@@ -210,9 +208,7 @@ async def list_enrollments(
         query = query.where(TrainingEnrollment.status == enrollment_status)
 
     result = await db.execute(
-        query.order_by(TrainingEnrollment.enrolled_at.desc())
-        .offset(pagination.offset)
-        .limit(pagination.page_size)
+        query.order_by(TrainingEnrollment.enrolled_at.desc()).offset(pagination.offset).limit(pagination.page_size)
     )
     enrollments = result.scalars().all()
     return [TrainingEnrollmentList.model_validate(e) for e in enrollments]
@@ -380,17 +376,13 @@ async def complete_enrollment(
     current_user: CurrentUser,
     score: float = Query(..., ge=0, le=100),
 ) -> TrainingEnrollmentRead:
-    result = await db.execute(
-        select(TrainingEnrollment).where(TrainingEnrollment.id == enrollment_id)
-    )
+    result = await db.execute(select(TrainingEnrollment).where(TrainingEnrollment.id == enrollment_id))
     enrollment = result.scalar_one_or_none()
     if not enrollment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Enrollment not found")
 
     # Fetch course to determine passing score and validity
-    course_result = await db.execute(
-        select(TrainingCourse).where(TrainingCourse.id == enrollment.course_id)
-    )
+    course_result = await db.execute(select(TrainingCourse).where(TrainingCourse.id == enrollment.course_id))
     course = course_result.scalar_one_or_none()
 
     now = datetime.now(UTC)
@@ -401,6 +393,7 @@ async def complete_enrollment(
         enrollment.status = EnrollmentStatus.COMPLETED
         if course.validity_months:
             from datetime import timedelta
+
             enrollment.expiry_date = now + timedelta(days=course.validity_months * 30)
     else:
         enrollment.status = EnrollmentStatus.FAILED
@@ -422,9 +415,7 @@ async def update_enrollment(
     db: DBSession,
     current_user: CurrentUser,
 ) -> TrainingEnrollmentRead:
-    result = await db.execute(
-        select(TrainingEnrollment).where(TrainingEnrollment.id == enrollment_id)
-    )
+    result = await db.execute(select(TrainingEnrollment).where(TrainingEnrollment.id == enrollment_id))
     enrollment = result.scalar_one_or_none()
     if not enrollment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Enrollment not found")
@@ -458,9 +449,7 @@ async def get_assessments(
     db: DBSession,
     current_user: CurrentUser,
 ) -> list[TrainingAssessmentRead]:
-    result = await db.execute(
-        select(TrainingAssessment).where(TrainingAssessment.course_id == course_id)
-    )
+    result = await db.execute(select(TrainingAssessment).where(TrainingAssessment.course_id == course_id))
     assessments = result.scalars().all()
     return [TrainingAssessmentRead.model_validate(a) for a in assessments]
 
@@ -477,9 +466,7 @@ async def submit_assessment(
     enrollment_id: UUID | None = Query(None),
 ) -> dict:  # type: ignore[type-arg]
     """Evaluate submitted answers against correct answers and return the score."""
-    result = await db.execute(
-        select(TrainingAssessment).where(TrainingAssessment.course_id == course_id)
-    )
+    result = await db.execute(select(TrainingAssessment).where(TrainingAssessment.course_id == course_id))
     assessment = result.scalar_one_or_none()
     if not assessment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assessment not found")
@@ -504,30 +491,26 @@ async def submit_assessment(
         options = q.get("options", [])
         correct_options = [o for o in options if o.get("is_correct")]
         submitted_text = str(submitted.get("answer", "")).lower()
-        is_correct = any(
-            submitted_text == str(o.get("text", "")).lower() for o in correct_options
-        )
+        is_correct = any(submitted_text == str(o.get("text", "")).lower() for o in correct_options)
 
         if is_correct:
             earned_points += points
-        results.append({
-            "question_id": q_id,
-            "correct": is_correct,
-            "points_earned": points if is_correct else 0,
-        })
+        results.append(
+            {
+                "question_id": q_id,
+                "correct": is_correct,
+                "points_earned": points if is_correct else 0,
+            }
+        )
 
     score_pct = (earned_points / total_points * 100) if total_points else 0.0
 
     # Auto-complete enrollment if enrollment_id provided
     if enrollment_id:
-        enroll_result = await db.execute(
-            select(TrainingEnrollment).where(TrainingEnrollment.id == enrollment_id)
-        )
+        enroll_result = await db.execute(select(TrainingEnrollment).where(TrainingEnrollment.id == enrollment_id))
         enrollment = enroll_result.scalar_one_or_none()
         if enrollment:
-            course_result = await db.execute(
-                select(TrainingCourse).where(TrainingCourse.id == course_id)
-            )
+            course_result = await db.execute(select(TrainingCourse).where(TrainingCourse.id == course_id))
             course = course_result.scalar_one_or_none()
             now = datetime.now(UTC)
             enrollment.score = score_pct
@@ -538,6 +521,7 @@ async def submit_assessment(
                 enrollment.status = EnrollmentStatus.COMPLETED
                 if course.validity_months:
                     from datetime import timedelta
+
                     enrollment.expiry_date = now + timedelta(days=course.validity_months * 30)
             else:
                 enrollment.status = EnrollmentStatus.FAILED
@@ -586,9 +570,7 @@ async def list_assessments(
     db: DBSession,
     current_user: CurrentUser,
 ) -> list[TrainingAssessmentRead]:
-    result = await db.execute(
-        select(TrainingAssessment).where(TrainingAssessment.course_id == course_id)
-    )
+    result = await db.execute(select(TrainingAssessment).where(TrainingAssessment.course_id == course_id))
     assessments = result.scalars().all()
     return [TrainingAssessmentRead.model_validate(a) for a in assessments]
 

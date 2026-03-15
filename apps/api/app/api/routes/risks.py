@@ -10,7 +10,6 @@ from app.models.risk import (
     BowTie,
     HazopNode,
     HazopStudy,
-    HazopStatus,
     RiskRegister,
     RiskStatus,
     RiskType,
@@ -87,9 +86,7 @@ async def list_risks(
         query = query.where(RiskRegister.status == risk_status)
 
     result = await db.execute(
-        query.order_by(RiskRegister.inherent_rating.desc())
-        .offset(pagination.offset)
-        .limit(pagination.page_size)
+        query.order_by(RiskRegister.inherent_rating.desc()).offset(pagination.offset).limit(pagination.page_size)
     )
     risks = result.scalars().all()
     return [RiskRegisterList.model_validate(r) for r in risks]

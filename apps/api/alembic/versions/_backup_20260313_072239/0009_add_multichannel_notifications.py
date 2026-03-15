@@ -1,7 +1,7 @@
 """add multichannel notification tables
 
 Revision ID: 0009_multichannel_notif
-Revises: 
+Revises:
 Create Date: 2026-03-09
 
 Adds:
@@ -10,9 +10,10 @@ Adds:
   - user_notification_preferences table
 """
 
-from alembic import op  # type: ignore[attr-defined]
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op  # type: ignore[attr-defined]
 
 revision = "0009_multichannel_notif"
 down_revision = None
@@ -58,7 +59,13 @@ def upgrade() -> None:
     op.create_table(
         "notification_delivery_logs",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("notification_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("notifications.id"), nullable=False, index=True),
+        sa.Column(
+            "notification_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("notifications.id"),
+            nullable=False,
+            index=True,
+        ),
         sa.Column("channel", sa.String(20), nullable=False),
         sa.Column("status", sa.String(20), nullable=False),
         sa.Column("provider_response", postgresql.JSONB(), nullable=True),

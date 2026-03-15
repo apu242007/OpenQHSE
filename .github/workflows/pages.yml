@@ -53,6 +53,9 @@ jobs:
       - name: Remove API routes incompatible with static export
         run: rm -rf apps/web/src/app/api
 
+      - name: Remove dynamic detail routes (require live backend)
+        run: find apps/web/src/app -type d -name '\[*\]' -exec rm -rf {} + 2>/dev/null || true
+
       - name: Build static export
         working-directory: apps/web
         env:
@@ -65,6 +68,9 @@ jobs:
 
       - name: Disable Jekyll (allow _next/ directory)
         run: touch apps/web/out/.nojekyll
+
+      - name: Create 404.html for SPA client-side routing
+        run: cp apps/web/out/index.html apps/web/out/404.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

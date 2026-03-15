@@ -4,16 +4,13 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
-from sqlalchemy import select
 
 from app.api.deps import CurrentUser, DBSession, ManagerUser, Pagination
-from app.models.incident import ActionUpdate, CorrectiveAction
 from app.schemas.action import (
     ActionCreate,
     ActionListItem,
     ActionResponse,
     ActionStatistics,
-    ActionUpdate as ActionUpdateSchema,
     ActionUpdateCreate,
     ActionUpdateResponse,
     BulkAssignRequest,
@@ -21,6 +18,9 @@ from app.schemas.action import (
     EscalationRequest,
     KanbanBoard,
     VerificationRequest,
+)
+from app.schemas.action import (
+    ActionUpdate as ActionUpdateSchema,
 )
 from app.services import action_service
 
@@ -172,13 +172,9 @@ async def get_action(
     db: DBSession,
     current_user: CurrentUser,
 ) -> ActionResponse:
-    action = await action_service.get_action(
-        db, action_id, current_user.organization_id
-    )
+    action = await action_service.get_action(db, action_id, current_user.organization_id)
     if not action:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Action not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Action not found")
     return ActionResponse.model_validate(action)
 
 
@@ -193,17 +189,11 @@ async def update_action(
     db: DBSession,
     current_user: CurrentUser,
 ) -> ActionResponse:
-    action = await action_service.get_action(
-        db, action_id, current_user.organization_id
-    )
+    action = await action_service.get_action(db, action_id, current_user.organization_id)
     if not action:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Action not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Action not found")
     update_data = body.model_dump(exclude_unset=True)
-    updated = await action_service.update_action(
-        db, action, current_user.id, update_data
-    )
+    updated = await action_service.update_action(db, action, current_user.id, update_data)
     return ActionResponse.model_validate(updated)
 
 
@@ -221,17 +211,17 @@ async def assign_action(
     db: DBSession,
     manager: ManagerUser,
 ) -> ActionResponse:
-    action = await action_service.get_action(
-        db, action_id, manager.organization_id
-    )
+    action = await action_service.get_action(db, action_id, manager.organization_id)
     if not action:
         raise HTTPException(status_code=404, detail="Action not found")
     updated = await action_service.update_action(
         db, action, manager.id, {"assigned_to_id": assigned_to_id, "status": "in_progress"}
     )
     await action_service.add_action_update(
-        db, action_id, manager.id,
-        f"Action assigned. Status → in_progress",
+        db,
+        action_id,
+        manager.id,
+        "Action assigned. Status → in_progress",
         status_change="in_progress",
     )
     return ActionResponse.model_validate(updated)
@@ -248,18 +238,18 @@ async def add_progress(
     db: DBSession,
     current_user: CurrentUser,
 ) -> ActionUpdateResponse:
-    action = await action_service.get_action(
-        db, action_id, current_user.organization_id
-    )
+    action = await action_service.get_action(db, action_id, current_user.organization_id)
     if not action:
         raise HTTPException(status_code=404, detail="Action not found")
     if body.status_change:
-        await action_service.update_action(
-            db, action, current_user.id, {"status": body.status_change}
-        )
+        await action_service.update_action(db, action, current_user.id, {"status": body.status_change})
     entry = await action_service.add_action_update(
-        db, action_id, current_user.id,
-        body.comment, body.status_change, body.attachments,
+        db,
+        action_id,
+        current_user.id,
+        body.comment,
+        body.status_change,
+        body.attachments,
     )
     return ActionUpdateResponse.model_validate(entry)
 
@@ -274,17 +264,19 @@ async def request_verification(
     db: DBSession,
     current_user: CurrentUser,
 ) -> ActionResponse:
-    action = await action_service.get_action(
-        db, action_id, current_user.organization_id
-    )
+    action = await action_service.get_action(db, action_id, current_user.organization_id)
     if not action:
         raise HTTPException(status_code=404, detail="Action not found")
     updated = await action_service.update_action(
-        db, action, current_user.id,
+        db,
+        action,
+        current_user.id,
         {"status": "completed", "completed_at": datetime.now(UTC)},
     )
     await action_service.add_action_update(
-        db, action_id, current_user.id,
+        db,
+        action_id,
+        current_user.id,
         "Action completed — verification requested",
         status_change="completed",
     )
@@ -302,18 +294,16 @@ async def verify_action(
     db: DBSession,
     manager: ManagerUser,
 ) -> ActionResponse:
-    action = await action_service.get_action(
-        db, action_id, manager.organization_id
-    )
+    action = await action_service.get_action(db, action_id, manager.organization_id)
     if not action:
         raise HTTPException(status_code=404, detail="Action not found")
     if action.status != "completed":
-        raise HTTPException(
-            status_code=400, detail="Action must be completed before verification"
-        )
+        raise HTTPException(status_code=400, detail="Action must be completed before verification")
     new_status = "verified" if body.is_effective else "in_progress"
     updated = await action_service.update_action(
-        db, action, manager.id,
+        db,
+        action,
+        manager.id,
         {
             "status": new_status,
             "verification_notes": body.notes,
@@ -321,7 +311,9 @@ async def verify_action(
         },
     )
     await action_service.add_action_update(
-        db, action_id, manager.id,
+        db,
+        action_id,
+        manager.id,
         f"Verification: {'effective' if body.is_effective else 'not effective — reopened'}",
         status_change=new_status,
     )
@@ -339,19 +331,17 @@ async def escalate_action(
     db: DBSession,
     current_user: CurrentUser,
 ) -> ActionResponse:
-    action = await action_service.get_action(
-        db, action_id, current_user.organization_id
-    )
+    action = await action_service.get_action(db, action_id, current_user.organization_id)
     if not action:
         raise HTTPException(status_code=404, detail="Action not found")
     update_data: dict[str, object] = {"priority": "critical"}
     if body.escalate_to_id:
         update_data["assigned_to_id"] = body.escalate_to_id
-    updated = await action_service.update_action(
-        db, action, current_user.id, update_data
-    )
+    updated = await action_service.update_action(db, action, current_user.id, update_data)
     await action_service.add_action_update(
-        db, action_id, current_user.id,
+        db,
+        action_id,
+        current_user.id,
         f"Escalated: {body.reason}",
         status_change=None,
     )
@@ -369,17 +359,15 @@ async def effectiveness_check(
     db: DBSession,
     manager: ManagerUser,
 ) -> ActionResponse:
-    action = await action_service.get_action(
-        db, action_id, manager.organization_id
-    )
+    action = await action_service.get_action(db, action_id, manager.organization_id)
     if not action:
         raise HTTPException(status_code=404, detail="Action not found")
     new_status = "verified" if body.is_effective else ("open" if body.re_open else "in_progress")
-    updated = await action_service.update_action(
-        db, action, manager.id, {"status": new_status}
-    )
+    updated = await action_service.update_action(db, action, manager.id, {"status": new_status})
     await action_service.add_action_update(
-        db, action_id, manager.id,
+        db,
+        action_id,
+        manager.id,
         f"Effectiveness check: {'effective' if body.is_effective else 'not effective'}. {body.notes}",
         status_change=new_status,
     )
@@ -418,12 +406,12 @@ async def bulk_assign(
 ) -> list[ActionResponse]:
     results = []
     for aid in body.action_ids:
-        action = await action_service.get_action(
-            db, aid, manager.organization_id
-        )
+        action = await action_service.get_action(db, aid, manager.organization_id)
         if action:
             updated = await action_service.update_action(
-                db, action, manager.id,
+                db,
+                action,
+                manager.id,
                 {"assigned_to_id": body.assigned_to_id},
             )
             results.append(ActionResponse.model_validate(updated))

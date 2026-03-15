@@ -8,8 +8,8 @@ from pydantic import EmailStr, Field, field_validator
 from app.models.user import UserRole, UserStatus
 from app.schemas.common import BaseSchema, IDSchema, TimestampSchema
 
-
 # ── Auth ─────────────────────────────────────────────────────
+
 
 class LoginRequest(BaseSchema):
     """Credentials for login."""
@@ -133,6 +133,7 @@ class LogoutRequest(BaseSchema):
 
 # ── User ─────────────────────────────────────────────────────
 
+
 class UserBase(BaseSchema):
     """Shared user fields."""
 
@@ -224,6 +225,7 @@ class ActivityLogResponse(BaseSchema):
 
 # ── Organization ─────────────────────────────────────────────
 
+
 class OrganizationBase(BaseSchema):
     """Shared org fields."""
 
@@ -252,6 +254,7 @@ class OrganizationResponse(OrganizationBase, IDSchema, TimestampSchema):
 
 
 # ── Site ─────────────────────────────────────────────────────
+
 
 class SiteBase(BaseSchema):
     name: str = Field(min_length=1, max_length=255)

@@ -8,11 +8,10 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import httpx  # type: ignore[import-untyped]
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
@@ -33,6 +32,9 @@ from app.services.notification_templates import (
     build_notification_email,
     build_teams_card,
 )
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = get_logger("notification_service")
 settings = get_settings()
@@ -74,9 +76,7 @@ class NotificationService:
                 logger.warning("Recipient not found, skipping", user_id=user_id_str)
                 continue
 
-            target_channels = channels or await self._resolve_channels(
-                user_id_str, event_type
-            )
+            target_channels = channels or await self._resolve_channels(user_id_str, event_type)
 
             # Build copy from templates
             copy = self._build_copy(event_type, data)
@@ -148,10 +148,7 @@ class NotificationService:
             logger.warning("WhatsApp template not found", template=template)
             return {"status": "failed", "error": "template_not_found"}
 
-        url = (
-            f"{settings.whatsapp_api_url}/"
-            f"{settings.whatsapp_phone_number_id}/messages"
-        )
+        url = f"{settings.whatsapp_api_url}/{settings.whatsapp_phone_number_id}/messages"
         payload = {
             "messaging_product": "whatsapp",
             "to": phone.replace("+", "").replace(" ", ""),
@@ -191,9 +188,7 @@ class NotificationService:
             logger.warning("Telegram not configured, skipping")
             return {"status": "skipped", "reason": "not_configured"}
 
-        url = (
-            f"{settings.telegram_api_url}/bot{settings.telegram_bot_token}/sendMessage"
-        )
+        url = f"{settings.telegram_api_url}/bot{settings.telegram_bot_token}/sendMessage"
         payload = {
             "chat_id": chat_id,
             "text": message,
@@ -262,9 +257,7 @@ class NotificationService:
 
         try:
             async with httpx.AsyncClient(timeout=15) as client:
-                resp = await client.post(
-                    settings.expo_push_url, json=payload, headers=headers
-                )
+                resp = await client.post(settings.expo_push_url, json=payload, headers=headers)
                 resp.raise_for_status()
                 return {"status": "sent", "response": resp.json()}
         except Exception as exc:
@@ -307,9 +300,7 @@ class NotificationService:
                 case NotificationChannel.WHATSAPP:
                     phone = await self._get_whatsapp_phone(str(user.id), notif.event_type) or user.phone
                     if phone:
-                        result = await self.send_whatsapp(
-                            phone, notif.body, notif.event_type, data
-                        )
+                        result = await self.send_whatsapp(phone, notif.body, notif.event_type, data)
                     else:
                         result = {"status": "skipped", "reason": "no_phone"}
 
@@ -331,9 +322,7 @@ class NotificationService:
                         result = {"status": "skipped", "reason": "no_webhook"}
 
                 case NotificationChannel.PUSH:
-                    result = await self.send_push(
-                        str(user.id), notif.title, notif.body, data
-                    )
+                    result = await self.send_push(str(user.id), notif.title, notif.body, data)
 
             # Update notification status
             status_str = result.get("status", "failed")
@@ -397,9 +386,7 @@ class NotificationService:
     # ── Contact-info helpers ──────────────────────────────
 
     async def _get_user(self, user_id: str) -> User | None:
-        result = await self.db.execute(
-            select(User).where(User.id == uuid.UUID(user_id))
-        )
+        result = await self.db.execute(select(User).where(User.id == uuid.UUID(user_id)))
         return result.scalar_one_or_none()
 
     async def _get_push_token(self, user_id: str) -> str | None:
@@ -415,9 +402,7 @@ class NotificationService:
         except Exception:
             return None
 
-    async def _get_whatsapp_phone(
-        self, user_id: str, event_type: str
-    ) -> str | None:
+    async def _get_whatsapp_phone(self, user_id: str, event_type: str) -> str | None:
         result = await self.db.execute(
             select(UserNotificationPreference.whatsapp_phone).where(
                 UserNotificationPreference.user_id == uuid.UUID(user_id),
@@ -426,9 +411,7 @@ class NotificationService:
         )
         return result.scalar_one_or_none()
 
-    async def _get_telegram_chat_id(
-        self, user_id: str, event_type: str
-    ) -> str | None:
+    async def _get_telegram_chat_id(self, user_id: str, event_type: str) -> str | None:
         result = await self.db.execute(
             select(UserNotificationPreference.telegram_chat_id).where(
                 UserNotificationPreference.user_id == uuid.UUID(user_id),
@@ -437,9 +420,7 @@ class NotificationService:
         )
         return result.scalar_one_or_none()
 
-    async def _get_teams_webhook(
-        self, user_id: str, event_type: str
-    ) -> str | None:
+    async def _get_teams_webhook(self, user_id: str, event_type: str) -> str | None:
         result = await self.db.execute(
             select(UserNotificationPreference.teams_webhook_url).where(
                 UserNotificationPreference.user_id == uuid.UUID(user_id),
@@ -454,9 +435,7 @@ class NotificationService:
     @staticmethod
     def _build_copy(event_type: str, data: dict[str, Any]) -> dict[str, str]:
         """Render title / body from NOTIFICATION_COPY templates."""
-        templates = NOTIFICATION_COPY.get(
-            event_type, NOTIFICATION_COPY["system_announcement"]
-        )
+        templates = NOTIFICATION_COPY.get(event_type, NOTIFICATION_COPY["system_announcement"])
         try:
             return {
                 "title": templates["title"].format(**data),

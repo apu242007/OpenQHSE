@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseModel
+
+if TYPE_CHECKING:
+    import uuid
 
 
 class AuditLog(BaseModel):
@@ -28,18 +31,23 @@ class AuditLog(BaseModel):
     )
 
     action: Mapped[str] = mapped_column(
-        String(50), nullable=False, index=True,
+        String(50),
+        nullable=False,
+        index=True,
         doc="create | update | delete | approve | login | export | etc.",
     )
     module: Mapped[str] = mapped_column(
-        String(50), nullable=False, index=True,
+        String(50),
+        nullable=False,
+        index=True,
         doc="inspections | incidents | permits | users | documents | etc.",
     )
     entity_type: Mapped[str] = mapped_column(String(100), nullable=False)
     entity_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
 
     changes: Mapped[dict | None] = mapped_column(  # type: ignore[type-arg]
-        JSONB, nullable=True,
+        JSONB,
+        nullable=True,
         doc="{field: {old: ..., new: ...}}",
     )
 

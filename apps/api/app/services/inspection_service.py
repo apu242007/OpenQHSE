@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import io
-import math
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
 from reportlab.lib import colors
@@ -13,25 +12,23 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.platypus import (
-    Image,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
     Table,
     TableStyle,
 )
-from sqlalchemy import and_, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import func, select
 
 from app.models.inspection import (
     Finding,
     FindingSeverity,
-    FindingStatus,
     Inspection,
     InspectionStatus,
-    InspectionTemplate,
 )
 
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 # ── Scheduling ──────────────────────────────────────────────
 
@@ -127,9 +124,7 @@ async def calculate_compliance_rate(
     if site_id:
         base = base.where(Inspection.site_id == site_id)
 
-    total_result = await db.execute(
-        select(func.count()).select_from(base.subquery())
-    )
+    total_result = await db.execute(select(func.count()).select_from(base.subquery()))
     total = total_result.scalar() or 0
     if total == 0:
         return 100.0
@@ -137,9 +132,7 @@ async def calculate_compliance_rate(
     completed_base = base.where(
         Inspection.status.in_([InspectionStatus.COMPLETED, InspectionStatus.REVIEWED]),
     )
-    completed_result = await db.execute(
-        select(func.count()).select_from(completed_base.subquery())
-    )
+    completed_result = await db.execute(select(func.count()).select_from(completed_base.subquery()))
     completed = completed_result.scalar() or 0
 
     return round((completed / total) * 100, 1)
@@ -154,12 +147,14 @@ async def get_overdue_inspections(
 ) -> list[Inspection]:
     """Return inspections that are past their scheduled date and not completed."""
     result = await db.execute(
-        select(Inspection).where(
+        select(Inspection)
+        .where(
             Inspection.organization_id == organization_id,
             Inspection.is_deleted == False,  # noqa: E712
             Inspection.status.in_([InspectionStatus.DRAFT, InspectionStatus.IN_PROGRESS]),
             Inspection.scheduled_date < datetime.now(UTC),
-        ).order_by(Inspection.scheduled_date.asc())
+        )
+        .order_by(Inspection.scheduled_date.asc())
     )
     return list(result.scalars().all())
 
@@ -225,7 +220,9 @@ async def auto_create_actions_from_findings(
     for finding in findings:
         action = CorrectiveAction(
             title=f"CAPA: {finding.title}",
-            description=f"Acción correctiva generada automáticamente para hallazgo: {finding.description or finding.title}",
+            description=(
+                f"Acción correctiva generada automáticamente para hallazgo: {finding.description or finding.title}"
+            ),
             action_type="corrective",
             priority="high" if finding.severity == FindingSeverity.CRITICAL else "medium",
             status="open",
@@ -264,11 +261,12 @@ def generate_inspection_report(
         bottomMargin=2 * cm,
     )
     styles = getSampleStyleSheet()
-    title_style = ParagraphStyle(
-        "InspTitle", parent=styles["Title"], fontSize=18, spaceAfter=12
-    )
+    title_style = ParagraphStyle("InspTitle", parent=styles["Title"], fontSize=18, spaceAfter=12)
     heading_style = ParagraphStyle(
-        "InspHeading", parent=styles["Heading2"], fontSize=13, spaceAfter=8,
+        "InspHeading",
+        parent=styles["Heading2"],
+        fontSize=13,
+        spaceAfter=8,
         textColor=colors.HexColor("#0f172a"),
     )
     body_style = styles["BodyText"]
@@ -277,7 +275,7 @@ def generate_inspection_report(
     elements: list[Any] = []
 
     # Title
-    elements.append(Paragraph(f"Reporte de Inspección", title_style))
+    elements.append(Paragraph("Reporte de Inspección", title_style))
     elements.append(Paragraph(f"<b>{inspection.get('title', '')}</b>", heading_style))
     elements.append(Spacer(1, 6))
 
@@ -295,16 +293,20 @@ def generate_inspection_report(
         ["Puntuación", f"{score} / {max_score} ({pct}%)"],
     ]
     info_table = Table(info_data, colWidths=[4 * cm, 12 * cm])
-    info_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#f1f5f9")),
-        ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, -1), 9),
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#e2e8f0")),
-        ("TOPPADDING", (0, 0), (-1, -1), 4),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-        ("LEFTPADDING", (0, 0), (-1, -1), 6),
-    ]))
+    info_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#f1f5f9")),
+                ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#e2e8f0")),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+            ]
+        )
+    )
     elements.append(info_table)
     elements.append(Spacer(1, 14))
 
@@ -325,25 +327,29 @@ def generate_inspection_report(
 
         if len(q_data) > 1:
             q_table = Table(q_data, colWidths=[1 * cm, 7 * cm, 4 * cm, 4 * cm])
-            q_table.setStyle(TableStyle([
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, -1), 8),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("TOPPADDING", (0, 0), (-1, -1), 3),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-                ("LEFTPADDING", (0, 0), (-1, -1), 4),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fafc")]),
-            ]))
+            q_table.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
+                        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                        ("FONTSIZE", (0, 0), (-1, -1), 8),
+                        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                        ("TOPPADDING", (0, 0), (-1, -1), 3),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fafc")]),
+                    ]
+                )
+            )
             elements.append(q_table)
         elements.append(Spacer(1, 10))
 
     # Findings
     if findings:
         elements.append(Paragraph("Hallazgos", heading_style))
-        severity_colors = {
+        {
             "critical": colors.HexColor("#dc2626"),
             "high": colors.HexColor("#ea580c"),
             "medium": colors.HexColor("#f59e0b"),
@@ -352,23 +358,29 @@ def generate_inspection_report(
         }
         f_data = [["Severidad", "Título", "Estado", "Fecha límite"]]
         for f in findings:
-            f_data.append([
-                f.get("severity", "—").upper(),
-                f.get("title", "—"),
-                f.get("status", "—").replace("_", " ").title(),
-                str(f.get("due_date", "—"))[:10],
-            ])
+            f_data.append(
+                [
+                    f.get("severity", "—").upper(),
+                    f.get("title", "—"),
+                    f.get("status", "—").replace("_", " ").title(),
+                    str(f.get("due_date", "—"))[:10],
+                ]
+            )
         f_table = Table(f_data, colWidths=[2.5 * cm, 7 * cm, 3 * cm, 3.5 * cm])
-        f_table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#7f1d1d")),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONTSIZE", (0, 0), (-1, -1), 8),
-            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-            ("VALIGN", (0, 0), (-1, -1), "TOP"),
-            ("TOPPADDING", (0, 0), (-1, -1), 3),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-        ]))
+        f_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#7f1d1d")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 8),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("TOPPADDING", (0, 0), (-1, -1), 3),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ]
+            )
+        )
         elements.append(f_table)
         elements.append(Spacer(1, 10))
 
@@ -431,9 +443,7 @@ async def get_inspection_kpis(
         Inspection.completed_at >= now - timedelta(days=30),
     )
     score_result = await db.execute(
-        select(
-            func.avg(Inspection.score / Inspection.max_score * 100)
-        ).select_from(scored_q.subquery())
+        select(func.avg(Inspection.score / Inspection.max_score * 100)).select_from(scored_q.subquery())
     )
     avg_score = round(score_result.scalar() or 0, 1)
 

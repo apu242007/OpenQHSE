@@ -1,12 +1,11 @@
 """Authentication endpoints: login, register, refresh, logout, password reset, profile."""
 
 import uuid as uuid_lib
-from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import select
 
-from app.api.deps import CurrentUser, DBSession, JTI_BLACKLIST_PREFIX
+from app.api.deps import JTI_BLACKLIST_PREFIX, CurrentUser, DBSession
 from app.core.config import get_settings
 from app.core.rate_limit import limiter
 from app.core.redis import redis_client
@@ -184,16 +183,14 @@ async def refresh_token(body: RefreshRequest, db: DBSession) -> TokenResponse:
             )
     except HTTPException:
         raise
-    except Exception:
+    except Exception as err:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired refresh token",
-        )
+        ) from err
 
     # Check if token is blacklisted
-    is_blacklisted = await redis_client.get(
-        f"{TOKEN_BLACKLIST_PREFIX}{body.refresh_token[:64]}"
-    )
+    is_blacklisted = await redis_client.get(f"{TOKEN_BLACKLIST_PREFIX}{body.refresh_token[:64]}")
     if is_blacklisted:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -264,11 +261,13 @@ async def logout(
         raw_token = auth_header[7:]
         try:
             from app.core.security import decode_token as _decode
+
             payload = _decode(raw_token)
             jti = payload.get("jti")
             exp = payload.get("exp")
             if jti and exp:
                 import time
+
                 ttl = max(1, int(exp - time.time()))
                 await redis_client.setex(
                     f"{JTI_BLACKLIST_PREFIX}{jti}",
@@ -290,9 +289,7 @@ async def logout(
     summary="Request a password reset email",
 )
 @limiter.limit("3/minute")
-async def forgot_password(
-    request: Request, body: ForgotPasswordRequest, db: DBSession
-) -> MessageResponse:
+async def forgot_password(request: Request, body: ForgotPasswordRequest, db: DBSession) -> MessageResponse:
     """Generate a password reset token and send it via email.
 
     Always returns success to prevent email enumeration.
@@ -314,9 +311,7 @@ async def forgot_password(
         try:
             from app.services.email_service import send_password_reset_email
 
-            reset_url = (
-                f"{settings.api_cors_origins.split(',')[0]}/reset-password?token={reset_token}"
-            )
+            reset_url = f"{settings.api_cors_origins.split(',')[0]}/reset-password?token={reset_token}"
             await send_password_reset_email(
                 to_email=user.email,
                 user_name=user.first_name,
@@ -339,9 +334,7 @@ async def forgot_password(
     summary="Reset password using a token",
 )
 @limiter.limit("5/minute")
-async def reset_password(
-    request: Request, body: ResetPasswordRequest, db: DBSession
-) -> MessageResponse:
+async def reset_password(request: Request, body: ResetPasswordRequest, db: DBSession) -> MessageResponse:
     """Verify the reset token and set a new password."""
     user_id_str = await redis_client.get(f"{RESET_TOKEN_PREFIX}{body.token}")
     if not user_id_str:

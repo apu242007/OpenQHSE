@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import uuid
-from datetime import datetime
 from enum import StrEnum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean,
@@ -19,6 +18,10 @@ from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
+
+if TYPE_CHECKING:
+    import uuid
+    from datetime import datetime
 
 
 class InspectionStatus(StrEnum):
@@ -74,9 +77,7 @@ class InspectionTemplate(BaseModel):
         index=True,
     )
 
-    inspections: Mapped[list[Inspection]] = relationship(
-        "Inspection", back_populates="template", lazy="selectin"
-    )
+    inspections: Mapped[list[Inspection]] = relationship("Inspection", back_populates="template", lazy="selectin")
 
 
 class Inspection(BaseModel):
@@ -85,24 +86,16 @@ class Inspection(BaseModel):
     __tablename__ = "inspections"
 
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    reference_number: Mapped[str] = mapped_column(
-        String(50), unique=True, nullable=False, index=True
-    )
+    reference_number: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
     status: Mapped[InspectionStatus] = mapped_column(
         String(20),
         default=InspectionStatus.DRAFT,
         nullable=False,
         index=True,
     )
-    scheduled_date: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    started_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    scheduled_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     score: Mapped[float | None] = mapped_column(Float, nullable=True)
     max_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -152,9 +145,7 @@ class Inspection(BaseModel):
     template: Mapped[InspectionTemplate] = relationship(
         "InspectionTemplate", back_populates="inspections", lazy="selectin"
     )
-    findings: Mapped[list[Finding]] = relationship(
-        "Finding", back_populates="inspection", lazy="selectin"
-    )
+    findings: Mapped[list[Finding]] = relationship("Finding", back_populates="inspection", lazy="selectin")
 
 
 class Finding(BaseModel):
@@ -176,12 +167,8 @@ class Finding(BaseModel):
         nullable=False,
         index=True,
     )
-    due_date: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    resolved_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     evidence_urls: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
     corrective_action: Mapped[str | None] = mapped_column(Text, nullable=True)
     root_cause: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -206,6 +193,4 @@ class Finding(BaseModel):
     )
 
     # Relationships
-    inspection: Mapped[Inspection] = relationship(
-        "Inspection", back_populates="findings", lazy="selectin"
-    )
+    inspection: Mapped[Inspection] = relationship("Inspection", back_populates="findings", lazy="selectin")

@@ -6,22 +6,18 @@ and PDF export for the executive dashboard.
 
 from __future__ import annotations
 
-import calendar
 import io
 from datetime import UTC, date, datetime, timedelta
-from uuid import UUID
+from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response, status
-from sqlalchemy import and_, case, cast, extract, func, or_, select, text, Integer, update
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Body, HTTPException, Query, Response, status
+from sqlalchemy import and_, extract, func, select
 
-from app.api.deps import AdminUser, CurrentUser, DBSession, ManagerUser
-from app.models.incident import Incident, IncidentSeverity, IncidentStatus
+from app.models.incident import Incident, IncidentStatus
 from app.models.inspection import Inspection, InspectionStatus
-from app.models.permit import WorkPermit, PermitStatus
+from app.models.permit import PermitStatus, WorkPermit
 from app.models.risk import RiskRegister
-from app.models.training import TrainingEnrollment, EnrollmentStatus
-from app.models.user import Site
+from app.models.training import EnrollmentStatus, TrainingEnrollment
 from app.schemas.analytics import (
     ActionsSummaryResponse,
     ActivePermit,
@@ -32,17 +28,20 @@ from app.schemas.analytics import (
     InspectionsComplianceResponse,
     KPIsSummary,
     KPIVariation,
-    OverdueAction,
     RecentIncident,
     RiskMatrixCell,
     RiskMatrixResponse,
     SidebarBadges,
-    TopFindingsArea,
     TrainingComplianceResponse,
     TrainingExpiring,
     UpcomingInspection,
     WeeklyCompliance,
 )
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from app.api.deps import AdminUser, CurrentUser, DBSession, ManagerUser
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
@@ -73,10 +72,7 @@ def _period_range(period: str) -> tuple[date, date]:
 
 def _variation(current: float, previous: float) -> KPIVariation:
     """Build a KPIVariation from two values."""
-    if previous == 0:
-        pct = 100.0 if current > 0 else 0.0
-    else:
-        pct = round(((current - previous) / previous) * 100, 1)
+    pct = (100.0 if current > 0 else 0.0) if previous == 0 else round((current - previous) / previous * 100, 1)
     trend = "stable" if pct == 0 else ("up" if pct > 0 else "down")
     return KPIVariation(
         value=round(current, 2),
@@ -87,11 +83,31 @@ def _variation(current: float, previous: float) -> KPIVariation:
 
 
 RISK_LEVEL_MAP = {
-    (1, 1): "low", (1, 2): "low", (1, 3): "low", (1, 4): "medium", (1, 5): "medium",
-    (2, 1): "low", (2, 2): "low", (2, 3): "medium", (2, 4): "medium", (2, 5): "high",
-    (3, 1): "low", (3, 2): "medium", (3, 3): "medium", (3, 4): "high", (3, 5): "high",
-    (4, 1): "medium", (4, 2): "medium", (4, 3): "high", (4, 4): "very_high", (4, 5): "very_high",
-    (5, 1): "medium", (5, 2): "high", (5, 3): "high", (5, 4): "very_high", (5, 5): "extreme",
+    (1, 1): "low",
+    (1, 2): "low",
+    (1, 3): "low",
+    (1, 4): "medium",
+    (1, 5): "medium",
+    (2, 1): "low",
+    (2, 2): "low",
+    (2, 3): "medium",
+    (2, 4): "medium",
+    (2, 5): "high",
+    (3, 1): "low",
+    (3, 2): "medium",
+    (3, 3): "medium",
+    (3, 4): "high",
+    (3, 5): "high",
+    (4, 1): "medium",
+    (4, 2): "medium",
+    (4, 3): "high",
+    (4, 4): "very_high",
+    (4, 5): "very_high",
+    (5, 1): "medium",
+    (5, 2): "high",
+    (5, 3): "high",
+    (5, 4): "very_high",
+    (5, 5): "extreme",
 }
 
 TYPE_COLORS = {
@@ -106,8 +122,19 @@ TYPE_COLORS = {
 }
 
 MONTH_LABELS_ES = [
-    "", "Ene", "Feb", "Mar", "Abr", "May", "Jun",
-    "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
+    "",
+    "Ene",
+    "Feb",
+    "Mar",
+    "Abr",
+    "May",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dic",
 ]
 
 
@@ -141,58 +168,83 @@ async def get_kpis(
         return filters
 
     # Current period recordable incidents (exclude near_miss)
-    cur_q = select(func.count()).select_from(Incident).where(
-        and_(*_incident_filter(start, end)),
-        Incident.severity != "near_miss",
+    cur_q = (
+        select(func.count())
+        .select_from(Incident)
+        .where(
+            and_(*_incident_filter(start, end)),
+            Incident.severity != "near_miss",
+        )
     )
     cur_recordable = (await db.execute(cur_q)).scalar() or 0
 
     # Current period lost-time incidents
-    cur_lt = select(func.count()).select_from(Incident).where(
-        and_(*_incident_filter(start, end)),
-        Incident.severity == "lost_time",
+    cur_lt = (
+        select(func.count())
+        .select_from(Incident)
+        .where(
+            and_(*_incident_filter(start, end)),
+            Incident.severity == "lost_time",
+        )
     )
     cur_lost_time = (await db.execute(cur_lt)).scalar() or 0
 
     # Previous period
-    prev_q = select(func.count()).select_from(Incident).where(
-        and_(*_incident_filter(prev_start, prev_end)),
-        Incident.severity != "near_miss",
+    prev_q = (
+        select(func.count())
+        .select_from(Incident)
+        .where(
+            and_(*_incident_filter(prev_start, prev_end)),
+            Incident.severity != "near_miss",
+        )
     )
     prev_recordable = (await db.execute(prev_q)).scalar() or 0
 
-    prev_lt = select(func.count()).select_from(Incident).where(
-        and_(*_incident_filter(prev_start, prev_end)),
-        Incident.severity == "lost_time",
+    prev_lt = (
+        select(func.count())
+        .select_from(Incident)
+        .where(
+            and_(*_incident_filter(prev_start, prev_end)),
+            Incident.severity == "lost_time",
+        )
     )
     prev_lost_time = (await db.execute(prev_lt)).scalar() or 0
 
     # TRIR & LTIF (per 200,000 work hours – use 200k as denominator base)
-    HOURS_BASE = 200_000
+    hours_base = 200_000
     work_hours = 50_000  # placeholder – should come from site config
-    trir_cur = (cur_recordable / work_hours * HOURS_BASE) if work_hours else 0
-    trir_prev = (prev_recordable / work_hours * HOURS_BASE) if work_hours else 0
-    ltif_cur = (cur_lost_time / work_hours * HOURS_BASE) if work_hours else 0
-    ltif_prev = (prev_lost_time / work_hours * HOURS_BASE) if work_hours else 0
+    trir_cur = (cur_recordable / work_hours * hours_base) if work_hours else 0
+    trir_prev = (prev_recordable / work_hours * hours_base) if work_hours else 0
+    ltif_cur = (cur_lost_time / work_hours * hours_base) if work_hours else 0
+    ltif_prev = (prev_lost_time / work_hours * hours_base) if work_hours else 0
 
     # ── Inspections ─────────────────────────────────────
     insp_base = [Inspection.organization_id == org_id]
     if site_id:
         insp_base.append(Inspection.site_id == site_id)
 
-    total_sched = (await db.execute(
-        select(func.count()).select_from(Inspection).where(
-            and_(*insp_base, Inspection.scheduled_date >= start, Inspection.scheduled_date <= end)
+    total_sched = (
+        await db.execute(
+            select(func.count())
+            .select_from(Inspection)
+            .where(and_(*insp_base, Inspection.scheduled_date >= start, Inspection.scheduled_date <= end))
         )
-    )).scalar() or 0
+    ).scalar() or 0
 
-    total_done = (await db.execute(
-        select(func.count()).select_from(Inspection).where(
-            and_(*insp_base, Inspection.status == InspectionStatus.COMPLETED,
-                 Inspection.completed_at >= datetime.combine(start, datetime.min.time()),
-                 Inspection.completed_at <= datetime.combine(end, datetime.max.time()))
+    total_done = (
+        await db.execute(
+            select(func.count())
+            .select_from(Inspection)
+            .where(
+                and_(
+                    *insp_base,
+                    Inspection.status == InspectionStatus.COMPLETED,
+                    Inspection.completed_at >= datetime.combine(start, datetime.min.time()),
+                    Inspection.completed_at <= datetime.combine(end, datetime.max.time()),
+                )
+            )
         )
-    )).scalar() or 0
+    ).scalar() or 0
 
     compliance = round((total_done / total_sched * 100) if total_sched else 100, 1)
 
@@ -200,25 +252,33 @@ async def get_kpis(
     overdue_count = 0  # placeholder until CorrectiveAction model is queried
 
     # Open incidents
-    open_inc = (await db.execute(
-        select(func.count()).select_from(Incident).where(
-            Incident.organization_id == org_id,
-            Incident.status.in_(["reported", "under_investigation"]),
-            *([Incident.site_id == site_id] if site_id else []),
+    open_inc = (
+        await db.execute(
+            select(func.count())
+            .select_from(Incident)
+            .where(
+                Incident.organization_id == org_id,
+                Incident.status.in_(["reported", "under_investigation"]),
+                *([Incident.site_id == site_id] if site_id else []),
+            )
         )
-    )).scalar() or 0
+    ).scalar() or 0
 
     # Active permits
     now = datetime.now(UTC)
-    active_perms = (await db.execute(
-        select(func.count()).select_from(WorkPermit).where(
-            WorkPermit.organization_id == org_id,
-            WorkPermit.status == PermitStatus.APPROVED,
-            WorkPermit.valid_from <= now,
-            WorkPermit.valid_until >= now,
-            *([WorkPermit.site_id == site_id] if site_id else []),
+    active_perms = (
+        await db.execute(
+            select(func.count())
+            .select_from(WorkPermit)
+            .where(
+                WorkPermit.organization_id == org_id,
+                WorkPermit.status == PermitStatus.APPROVED,
+                WorkPermit.valid_from <= now,
+                WorkPermit.valid_until >= now,
+                *([WorkPermit.site_id == site_id] if site_id else []),
+            )
         )
-    )).scalar() or 0
+    ).scalar() or 0
 
     # Safety score (100 − TRIR normalized, floor 0)
     safety = max(0, round(100 - trir_cur * 5, 1))
@@ -259,17 +319,19 @@ async def get_incidents_trend(
         filters.append(Incident.site_id == site_id)
 
     # Monthly aggregation
-    rows = (await db.execute(
-        select(
-            extract("year", Incident.occurred_at).label("yr"),
-            extract("month", Incident.occurred_at).label("mo"),
-            Incident.severity,
-            func.count().label("cnt"),
+    rows = (
+        await db.execute(
+            select(
+                extract("year", Incident.occurred_at).label("yr"),
+                extract("month", Incident.occurred_at).label("mo"),
+                Incident.severity,
+                func.count().label("cnt"),
+            )
+            .where(and_(*filters))
+            .group_by("yr", "mo", Incident.severity)
+            .order_by("yr", "mo")
         )
-        .where(and_(*filters))
-        .group_by("yr", "mo", Incident.severity)
-        .order_by("yr", "mo")
-    )).all()
+    ).all()
 
     # Build trend points
     monthly: dict[str, IncidentTrendPoint] = {}
@@ -278,8 +340,13 @@ async def get_incidents_trend(
         key = cursor.strftime("%Y-%m")
         label = f"{MONTH_LABELS_ES[cursor.month]} {cursor.year}"
         monthly[key] = IncidentTrendPoint(
-            month=key, label=label, total=0,
-            near_miss=0, first_aid=0, lost_time=0, fatality=0,
+            month=key,
+            label=label,
+            total=0,
+            near_miss=0,
+            first_aid=0,
+            lost_time=0,
+            fatality=0,
         )
         # advance one month
         if cursor.month == 12:
@@ -305,16 +372,18 @@ async def get_incidents_trend(
     trend = list(monthly.values())
 
     # By type
-    type_rows = (await db.execute(
-        select(Incident.severity, func.count().label("cnt"))
-        .where(and_(*filters))
-        .group_by(Incident.severity)
-    )).all()
+    type_rows = (
+        await db.execute(
+            select(Incident.severity, func.count().label("cnt")).where(and_(*filters)).group_by(Incident.severity)
+        )
+    ).all()
 
     by_type = [
         IncidentsByType(
-            type=str(sev), label=str(sev).replace("_", " ").title(),
-            count=cnt, color=TYPE_COLORS.get(str(sev), "#6B7280"),
+            type=str(sev),
+            label=str(sev).replace("_", " ").title(),
+            count=cnt,
+            color=TYPE_COLORS.get(str(sev), "#6B7280"),
         )
         for sev, cnt in type_rows
     ]
@@ -360,22 +429,24 @@ async def get_inspections_compliance(
         filters.append(Inspection.site_id == site_id)
 
     # Get all inspections in period
-    rows = (await db.execute(
-        select(
-            Inspection.scheduled_date,
-            Inspection.status,
-        ).where(
-            and_(
-                *filters,
-                Inspection.scheduled_date >= start,
-                Inspection.scheduled_date <= end,
+    rows = (
+        await db.execute(
+            select(
+                Inspection.scheduled_date,
+                Inspection.status,
+            ).where(
+                and_(
+                    *filters,
+                    Inspection.scheduled_date >= start,
+                    Inspection.scheduled_date <= end,
+                )
             )
         )
-    )).all()
+    ).all()
 
     # Group by ISO week
     weekly_map: dict[str, WeeklyCompliance] = {}
-    for sched_date, status in rows:
+    for sched_date, sched_status in rows:
         if sched_date is None:
             continue
         d = sched_date if isinstance(sched_date, date) else sched_date.date()
@@ -386,13 +457,11 @@ async def get_inspections_compliance(
                 week=key, label=f"Sem {iso.week}", scheduled=0, completed=0, compliance_pct=0
             )
         weekly_map[key].scheduled += 1
-        if status in (InspectionStatus.COMPLETED, "completed", "reviewed"):
+        if sched_status in (InspectionStatus.COMPLETED, "completed", "reviewed"):
             weekly_map[key].completed += 1
 
     for wc in weekly_map.values():
-        wc.compliance_pct = round(
-            (wc.completed / wc.scheduled * 100) if wc.scheduled else 0, 1
-        )
+        wc.compliance_pct = round((wc.completed / wc.scheduled * 100) if wc.scheduled else 0, 1)
 
     weekly = sorted(weekly_map.values(), key=lambda w: w.week)
     total_s = sum(w.scheduled for w in weekly)
@@ -452,16 +521,18 @@ async def get_risk_matrix(
     if site_id:
         filters.append(RiskRegister.site_id == site_id)
 
-    rows = (await db.execute(
-        select(
-            RiskRegister.residual_likelihood,
-            RiskRegister.residual_severity,
-            func.count().label("cnt"),
-            func.array_agg(RiskRegister.id).label("ids"),
+    rows = (
+        await db.execute(
+            select(
+                RiskRegister.residual_likelihood,
+                RiskRegister.residual_severity,
+                func.count().label("cnt"),
+                func.array_agg(RiskRegister.id).label("ids"),
+            )
+            .where(and_(*filters))
+            .group_by(RiskRegister.residual_likelihood, RiskRegister.residual_severity)
         )
-        .where(and_(*filters))
-        .group_by(RiskRegister.residual_likelihood, RiskRegister.residual_severity)
-    )).all()
+    ).all()
 
     cells: list[RiskMatrixCell] = []
     total = 0
@@ -470,13 +541,15 @@ async def get_risk_matrix(
     # Pre-fill all 25 cells
     for lik in range(1, 6):
         for con in range(1, 6):
-            cells.append(RiskMatrixCell(
-                likelihood=lik,
-                consequence=con,
-                count=0,
-                level=RISK_LEVEL_MAP.get((lik, con), "medium"),
-                risk_ids=[],
-            ))
+            cells.append(
+                RiskMatrixCell(
+                    likelihood=lik,
+                    consequence=con,
+                    count=0,
+                    level=RISK_LEVEL_MAP.get((lik, con), "medium"),
+                    risk_ids=[],
+                )
+            )
 
     for lik, con, cnt, ids in rows:
         for cell in cells:
@@ -510,12 +583,14 @@ async def get_training_compliance(
         filters.append(TrainingEnrollment.site_id == site_id)
 
     # Total enrollments by status
-    rows = (await db.execute(
-        select(TrainingEnrollment.status, func.count().label("cnt"))
-        .join(TrainingCourse, TrainingEnrollment.course_id == TrainingCourse.id)
-        .where(and_(*filters))
-        .group_by(TrainingEnrollment.status)
-    )).all()
+    rows = (
+        await db.execute(
+            select(TrainingEnrollment.status, func.count().label("cnt"))
+            .join(TrainingCourse, TrainingEnrollment.course_id == TrainingCourse.id)
+            .where(and_(*filters))
+            .group_by(TrainingEnrollment.status)
+        )
+    ).all()
 
     status_map = {str(s): c for s, c in rows}
     total = sum(status_map.values())
@@ -526,20 +601,26 @@ async def get_training_compliance(
 
     # Expiring within 30 days
     cutoff = date.today() + timedelta(days=30)
-    expiring = (await db.execute(
-        select(TrainingEnrollment)
-        .join(TrainingCourse, TrainingEnrollment.course_id == TrainingCourse.id)
-        .where(
-            and_(
-                *filters,
-                TrainingEnrollment.expiry_date <= cutoff,
-                TrainingEnrollment.expiry_date >= date.today(),
-                TrainingEnrollment.status == "completed",
+    expiring = (
+        (
+            await db.execute(
+                select(TrainingEnrollment)
+                .join(TrainingCourse, TrainingEnrollment.course_id == TrainingCourse.id)
+                .where(
+                    and_(
+                        *filters,
+                        TrainingEnrollment.expiry_date <= cutoff,
+                        TrainingEnrollment.expiry_date >= date.today(),
+                        TrainingEnrollment.status == "completed",
+                    )
+                )
+                .order_by(TrainingEnrollment.expiry_date)
+                .limit(10)
             )
         )
-        .order_by(TrainingEnrollment.expiry_date)
-        .limit(10)
-    )).scalars().all()
+        .scalars()
+        .all()
+    )
 
     expiring_list = [
         TrainingExpiring(
@@ -585,12 +666,11 @@ async def get_dashboard_widgets(
     if site_id:
         insp_filters.append(Inspection.site_id == site_id)
 
-    upcoming_rows = (await db.execute(
-        select(Inspection)
-        .where(and_(*insp_filters))
-        .order_by(Inspection.scheduled_date)
-        .limit(5)
-    )).scalars().all()
+    upcoming_rows = (
+        (await db.execute(select(Inspection).where(and_(*insp_filters)).order_by(Inspection.scheduled_date).limit(5)))
+        .scalars()
+        .all()
+    )
 
     upcoming = [
         UpcomingInspection(
@@ -608,12 +688,11 @@ async def get_dashboard_widgets(
     if site_id:
         inc_filters.append(Incident.site_id == site_id)
 
-    recent_rows = (await db.execute(
-        select(Incident)
-        .where(and_(*inc_filters))
-        .order_by(Incident.occurred_at.desc())
-        .limit(3)
-    )).scalars().all()
+    recent_rows = (
+        (await db.execute(select(Incident).where(and_(*inc_filters)).order_by(Incident.occurred_at.desc()).limit(3)))
+        .scalars()
+        .all()
+    )
 
     recent = [
         RecentIncident(
@@ -638,12 +717,11 @@ async def get_dashboard_widgets(
     if site_id:
         perm_filters.append(WorkPermit.site_id == site_id)
 
-    perm_rows = (await db.execute(
-        select(WorkPermit)
-        .where(and_(*perm_filters))
-        .order_by(WorkPermit.valid_until)
-        .limit(5)
-    )).scalars().all()
+    perm_rows = (
+        (await db.execute(select(WorkPermit).where(and_(*perm_filters)).order_by(WorkPermit.valid_until).limit(5)))
+        .scalars()
+        .all()
+    )
 
     permits = [
         ActivePermit(
@@ -682,7 +760,7 @@ async def export_dashboard_pdf(
         from reportlab.lib import colors
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-        from reportlab.lib.units import cm, mm
+        from reportlab.lib.units import cm
         from reportlab.platypus import (
             Paragraph,
             SimpleDocTemplate,
@@ -705,16 +783,25 @@ async def export_dashboard_pdf(
     styles = getSampleStyleSheet()
 
     title_style = ParagraphStyle(
-        "CustomTitle", parent=styles["Title"],
-        fontSize=20, spaceAfter=12, textColor=colors.HexColor("#0066FF"),
+        "CustomTitle",
+        parent=styles["Title"],
+        fontSize=20,
+        spaceAfter=12,
+        textColor=colors.HexColor("#0066FF"),
     )
     subtitle_style = ParagraphStyle(
-        "CustomSubtitle", parent=styles["Normal"],
-        fontSize=10, textColor=colors.grey, spaceAfter=20,
+        "CustomSubtitle",
+        parent=styles["Normal"],
+        fontSize=10,
+        textColor=colors.grey,
+        spaceAfter=20,
     )
     section_style = ParagraphStyle(
-        "SectionTitle", parent=styles["Heading2"],
-        fontSize=14, spaceAfter=8, spaceBefore=16,
+        "SectionTitle",
+        parent=styles["Heading2"],
+        fontSize=14,
+        spaceAfter=8,
+        spaceBefore=16,
         textColor=colors.HexColor("#1a1a2e"),
     )
 
@@ -722,11 +809,13 @@ async def export_dashboard_pdf(
 
     # Title
     elements.append(Paragraph("OpenQHSE — Reporte Ejecutivo", title_style))
-    elements.append(Paragraph(
-        f"Período: {period.title()} | Generado: {datetime.now().strftime('%d/%m/%Y %H:%M')} | "
-        f"Usuario: {current_user.full_name}",
-        subtitle_style,
-    ))
+    elements.append(
+        Paragraph(
+            f"Período: {period.title()} | Generado: {datetime.now().strftime('%d/%m/%Y %H:%M')} | "
+            f"Usuario: {current_user.full_name}",
+            subtitle_style,
+        )
+    )
     elements.append(Spacer(1, 10))
 
     # KPI Table
@@ -735,7 +824,12 @@ async def export_dashboard_pdf(
         ["Indicador", "Valor Actual", "Período Anterior", "Variación"],
         ["TRIR", f"{kpis.trir.value:.2f}", f"{kpis.trir.previous:.2f}", f"{kpis.trir.variation_pct:+.1f}%"],
         ["LTIF", f"{kpis.ltif.value:.2f}", f"{kpis.ltif.previous:.2f}", f"{kpis.ltif.variation_pct:+.1f}%"],
-        ["Inspecciones", f"{kpis.inspections_completed}/{kpis.inspections_scheduled}", "", f"{kpis.inspections_compliance_pct:.1f}%"],
+        [
+            "Inspecciones",
+            f"{kpis.inspections_completed}/{kpis.inspections_scheduled}",
+            "",
+            f"{kpis.inspections_compliance_pct:.1f}%",
+        ],
         ["Acciones vencidas", str(kpis.overdue_actions), "", ""],
         ["Incidentes abiertos", str(kpis.open_incidents), "", ""],
         ["Permisos activos", str(kpis.active_permits), "", ""],
@@ -743,26 +837,32 @@ async def export_dashboard_pdf(
     ]
 
     kpi_table = Table(kpi_data, colWidths=[5 * cm, 3.5 * cm, 3.5 * cm, 3 * cm])
-    kpi_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0066FF")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTSIZE", (0, 0), (-1, 0), 10),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("ALIGN", (1, 0), (-1, -1), "CENTER"),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#E5E7EB")),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F9FAFB")]),
-        ("FONTSIZE", (0, 1), (-1, -1), 9),
-        ("TOPPADDING", (0, 0), (-1, -1), 6),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-    ]))
+    kpi_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0066FF")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONTSIZE", (0, 0), (-1, 0), 10),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("ALIGN", (1, 0), (-1, -1), "CENTER"),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#E5E7EB")),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F9FAFB")]),
+                ("FONTSIZE", (0, 1), (-1, -1), 9),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ]
+        )
+    )
     elements.append(kpi_table)
     elements.append(Spacer(1, 20))
 
     # Footer note
-    elements.append(Paragraph(
-        "Este reporte fue generado automáticamente por OpenQHSE Platform.",
-        ParagraphStyle("Footer", parent=styles["Normal"], fontSize=8, textColor=colors.grey),
-    ))
+    elements.append(
+        Paragraph(
+            "Este reporte fue generado automáticamente por OpenQHSE Platform.",
+            ParagraphStyle("Footer", parent=styles["Normal"], fontSize=8, textColor=colors.grey),
+        )
+    )
 
     doc.build(elements)
     buffer.seek(0)
@@ -796,36 +896,56 @@ async def get_sidebar_badges(
         return and_(*clauses)
 
     # Inspections: scheduled or in progress
-    insp_q = select(func.count()).select_from(Inspection).where(
-        org_site_filter(Inspection),
-        Inspection.status.in_([InspectionStatus.SCHEDULED, InspectionStatus.IN_PROGRESS]),
+    insp_q = (
+        select(func.count())
+        .select_from(Inspection)
+        .where(
+            org_site_filter(Inspection),
+            Inspection.status.in_([InspectionStatus.SCHEDULED, InspectionStatus.IN_PROGRESS]),
+        )
     )
 
     # Incidents: open (reported or under investigation)
-    inc_q = select(func.count()).select_from(Incident).where(
-        org_site_filter(Incident),
-        Incident.status.in_([IncidentStatus.REPORTED, IncidentStatus.UNDER_INVESTIGATION]),
+    inc_q = (
+        select(func.count())
+        .select_from(Incident)
+        .where(
+            org_site_filter(Incident),
+            Incident.status.in_([IncidentStatus.REPORTED, IncidentStatus.UNDER_INVESTIGATION]),
+        )
     )
 
     # Permits: active
-    perm_q = select(func.count()).select_from(WorkPermit).where(
-        org_site_filter(WorkPermit),
-        WorkPermit.status == PermitStatus.ACTIVE,
+    perm_q = (
+        select(func.count())
+        .select_from(WorkPermit)
+        .where(
+            org_site_filter(WorkPermit),
+            WorkPermit.status == PermitStatus.ACTIVE,
+        )
     )
 
     # Risks: high or critical unmitigated (residual_score >= 15)
-    risk_q = select(func.count()).select_from(RiskRegister).where(
-        RiskRegister.organization_id == org,
-        RiskRegister.residual_score >= 15,
+    risk_q = (
+        select(func.count())
+        .select_from(RiskRegister)
+        .where(
+            RiskRegister.organization_id == org,
+            RiskRegister.residual_score >= 15,
+        )
     )
 
     # Training: enrollments expiring within 30 days
     thirty_days = now + timedelta(days=30)
-    train_q = select(func.count()).select_from(TrainingEnrollment).where(
-        TrainingEnrollment.status == EnrollmentStatus.COMPLETED,
-        TrainingEnrollment.expiry_date.isnot(None),
-        TrainingEnrollment.expiry_date <= thirty_days.date(),
-        TrainingEnrollment.expiry_date >= now.date(),
+    train_q = (
+        select(func.count())
+        .select_from(TrainingEnrollment)
+        .where(
+            TrainingEnrollment.status == EnrollmentStatus.COMPLETED,
+            TrainingEnrollment.expiry_date.isnot(None),
+            TrainingEnrollment.expiry_date <= thirty_days.date(),
+            TrainingEnrollment.expiry_date >= now.date(),
+        )
     )
 
     # Execute all queries in parallel via asyncio.gather-style
@@ -838,14 +958,14 @@ async def get_sidebar_badges(
     return SidebarBadges(
         inspections=insp_count,
         incidents=inc_count,
-        actions=0,       # TODO: wire when CorrectiveAction model is ready
+        actions=0,  # TODO: wire when CorrectiveAction model is ready
         permits=perm_count,
         risks=risk_count,
-        documents=0,     # TODO: wire when Document model is ready
-        audits=0,        # TODO: wire when Audit model is ready
+        documents=0,  # TODO: wire when Document model is ready
+        audits=0,  # TODO: wire when Audit model is ready
         training=train_count,
-        equipment=0,     # TODO: wire when Equipment model is ready
-        notifications=0, # TODO: wire when Notification model is ready
+        equipment=0,  # TODO: wire when Equipment model is ready
+        notifications=0,  # TODO: wire when Notification model is ready
     )
 
 
@@ -865,9 +985,11 @@ async def list_kpi_alert_rules(
     if is_active is not None:
         filters.append(KPIAlertRule.is_active == is_active)
 
-    rows = (await db.execute(
-        select(KPIAlertRule).where(and_(*filters)).order_by(KPIAlertRule.created_at.desc())
-    )).scalars().all()
+    rows = (
+        (await db.execute(select(KPIAlertRule).where(and_(*filters)).order_by(KPIAlertRule.created_at.desc())))
+        .scalars()
+        .all()
+    )
 
     return [
         {
@@ -990,12 +1112,11 @@ async def list_kpi_alerts(
     if kpi_name:
         filters.append(KPIAlert.kpi_name == KPIName(kpi_name))
 
-    rows = (await db.execute(
-        select(KPIAlert)
-        .where(and_(*filters))
-        .order_by(KPIAlert.triggered_at.desc())
-        .limit(limit)
-    )).scalars().all()
+    rows = (
+        (await db.execute(select(KPIAlert).where(and_(*filters)).order_by(KPIAlert.triggered_at.desc()).limit(limit)))
+        .scalars()
+        .all()
+    )
 
     return [
         {

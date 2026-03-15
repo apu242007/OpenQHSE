@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
-from uuid import UUID
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.models.incident import ActionUpdate, CorrectiveAction
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def list_actions(
@@ -41,17 +45,11 @@ async def list_actions(
             CorrectiveAction.status.notin_(["completed", "verified"]),
         )
 
-    result = await db.execute(
-        query.order_by(CorrectiveAction.created_at.desc())
-        .offset(offset)
-        .limit(limit)
-    )
+    result = await db.execute(query.order_by(CorrectiveAction.created_at.desc()).offset(offset).limit(limit))
     return list(result.scalars().all())
 
 
-async def get_action(
-    db: AsyncSession, action_id: UUID, organization_id: UUID
-) -> CorrectiveAction | None:
+async def get_action(db: AsyncSession, action_id: UUID, organization_id: UUID) -> CorrectiveAction | None:
     result = await db.execute(
         select(CorrectiveAction).where(
             CorrectiveAction.id == action_id,
@@ -114,20 +112,14 @@ async def add_action_update(
     return entry
 
 
-async def get_action_timeline(
-    db: AsyncSession, action_id: UUID
-) -> list[ActionUpdate]:
+async def get_action_timeline(db: AsyncSession, action_id: UUID) -> list[ActionUpdate]:
     result = await db.execute(
-        select(ActionUpdate)
-        .where(ActionUpdate.action_id == action_id)
-        .order_by(ActionUpdate.created_at.asc())
+        select(ActionUpdate).where(ActionUpdate.action_id == action_id).order_by(ActionUpdate.created_at.asc())
     )
     return list(result.scalars().all())
 
 
-async def get_kanban_data(
-    db: AsyncSession, organization_id: UUID
-) -> dict[str, object]:
+async def get_kanban_data(db: AsyncSession, organization_id: UUID) -> dict[str, object]:
     """Build Kanban board data grouped by status."""
     statuses = [
         ("open", "Abierto"),
@@ -152,24 +144,22 @@ async def get_kanban_data(
         else:
             query = query.where(CorrectiveAction.status == status_key)
 
-        result = await db.execute(
-            query.order_by(CorrectiveAction.due_date.asc().nulls_last()).limit(50)
-        )
+        result = await db.execute(query.order_by(CorrectiveAction.due_date.asc().nulls_last()).limit(50))
         items = list(result.scalars().all())
-        columns.append({
-            "status": status_key,
-            "label": label,
-            "count": len(items),
-            "items": items,
-        })
+        columns.append(
+            {
+                "status": status_key,
+                "label": label,
+                "count": len(items),
+                "items": items,
+            }
+        )
         total += len(items)
 
     return {"columns": columns, "total": total}
 
 
-async def get_action_statistics(
-    db: AsyncSession, organization_id: UUID
-) -> dict[str, object]:
+async def get_action_statistics(db: AsyncSession, organization_id: UUID) -> dict[str, object]:
     """Compute action statistics for the organization."""
     base = select(CorrectiveAction).where(
         CorrectiveAction.organization_id == organization_id,
@@ -184,10 +174,7 @@ async def get_action_statistics(
     in_progress = sum(1 for a in actions if a.status == "in_progress")
     completed = sum(1 for a in actions if a.status == "completed")
     verified = sum(1 for a in actions if a.status == "verified")
-    overdue = sum(
-        1 for a in actions
-        if a.due_date and a.due_date < now and a.status not in ("completed", "verified")
-    )
+    overdue = sum(1 for a in actions if a.due_date and a.due_date < now and a.status not in ("completed", "verified"))
 
     by_priority: dict[str, int] = {}
     by_type: dict[str, int] = {}

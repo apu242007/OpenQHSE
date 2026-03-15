@@ -4,13 +4,17 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import UTC, date, datetime, timedelta
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import and_, func, select
 
-from app.api.deps import CurrentUser, DBSession, ManagerUser, Pagination
-from app.models.observation import BehaviorObservation, ObservationCategory, ObservationStatus, ObservationType
+from app.models.observation import (
+    BehaviorObservation,
+    ObservationCategory,
+    ObservationStatus,
+    ObservationType,
+)
 from app.schemas.observation import (
     ObservationCategoryCount,
     ObservationCreate,
@@ -22,11 +26,27 @@ from app.schemas.observation import (
     ObservationUpdate,
 )
 
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from app.api.deps import CurrentUser, DBSession, ManagerUser, Pagination
+
 router = APIRouter(prefix="/observations", tags=["BBS Observations"])
 
 MONTH_LABELS_ES = [
-    "", "Ene", "Feb", "Mar", "Abr", "May", "Jun",
-    "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
+    "",
+    "Ene",
+    "Feb",
+    "Mar",
+    "Abr",
+    "May",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dic",
 ]
 
 
@@ -67,17 +87,23 @@ async def list_observations(
     if date_to:
         filters.append(BehaviorObservation.created_at <= datetime.combine(date_to, datetime.max.time()))
 
-    total = (await db.execute(
-        select(func.count()).select_from(BehaviorObservation).where(and_(*filters))
-    )).scalar() or 0
+    total = (
+        await db.execute(select(func.count()).select_from(BehaviorObservation).where(and_(*filters)))
+    ).scalar() or 0
 
-    rows = (await db.execute(
-        select(BehaviorObservation)
-        .where(and_(*filters))
-        .order_by(BehaviorObservation.created_at.desc())
-        .offset(pagination.offset)
-        .limit(pagination.page_size)
-    )).scalars().all()
+    rows = (
+        (
+            await db.execute(
+                select(BehaviorObservation)
+                .where(and_(*filters))
+                .order_by(BehaviorObservation.created_at.desc())
+                .offset(pagination.offset)
+                .limit(pagination.page_size)
+            )
+        )
+        .scalars()
+        .all()
+    )
 
     page_size = pagination.page_size
     page = pagination.page
@@ -90,7 +116,12 @@ async def list_observations(
     )
 
 
-@router.post("", response_model=ObservationResponse, status_code=status.HTTP_201_CREATED, summary="Create BBS observation")
+@router.post(
+    "",
+    response_model=ObservationResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create BBS observation",
+)
 async def create_observation(
     body: ObservationCreate,
     db: DBSession,
@@ -219,14 +250,16 @@ async def observation_statistics(
         base_filters.append(BehaviorObservation.site_id == site_id)
 
     # All observations in period
-    rows = (await db.execute(
-        select(
-            BehaviorObservation.type,
-            BehaviorObservation.category,
-            BehaviorObservation.area,
-            BehaviorObservation.created_at,
-        ).where(and_(*base_filters))
-    )).all()
+    rows = (
+        await db.execute(
+            select(
+                BehaviorObservation.type,
+                BehaviorObservation.category,
+                BehaviorObservation.area,
+                BehaviorObservation.created_at,
+            ).where(and_(*base_filters))
+        )
+    ).all()
 
     total = len(rows)
     safe_count = sum(1 for r in rows if r.type == ObservationType.SAFE)
@@ -241,7 +274,10 @@ async def observation_statistics(
         monthly[key] = {
             "month": key,
             "label": f"{MONTH_LABELS_ES[cursor.month]} {cursor.year}",
-            "safe": 0, "unsafe": 0, "near_miss": 0, "total": 0,
+            "safe": 0,
+            "unsafe": 0,
+            "near_miss": 0,
+            "total": 0,
         }
         if cursor.month == 12:
             cursor = cursor.replace(year=cursor.year + 1, month=1)
@@ -264,8 +300,12 @@ async def observation_statistics(
 
     monthly_trend = [
         ObservationMonthlyTrend(
-            month=v["month"], label=v["label"],
-            safe=v["safe"], unsafe=v["unsafe"], near_miss=v["near_miss"], total=v["total"],
+            month=v["month"],
+            label=v["label"],
+            safe=v["safe"],
+            unsafe=v["unsafe"],
+            near_miss=v["near_miss"],
+            total=v["total"],
             participation_rate=round(v["total"] / 100, 2),  # placeholder rate per 100 employees
         )
         for v in monthly.values()
@@ -357,13 +397,15 @@ async def unsafe_trends(
     if site_id:
         filters.append(BehaviorObservation.site_id == site_id)
 
-    rows = (await db.execute(
-        select(BehaviorObservation.category, func.count().label("cnt"))
-        .where(and_(*filters))
-        .group_by(BehaviorObservation.category)
-        .order_by(func.count().desc())
-        .limit(5)
-    )).all()
+    rows = (
+        await db.execute(
+            select(BehaviorObservation.category, func.count().label("cnt"))
+            .where(and_(*filters))
+            .group_by(BehaviorObservation.category)
+            .order_by(func.count().desc())
+            .limit(5)
+        )
+    ).all()
 
     return [{"category": str(cat), "count": cnt} for cat, cnt in rows]
 
@@ -387,15 +429,25 @@ async def _get_or_404(db: DBSession, obs_id: UUID, org_id: UUID) -> BehaviorObse
 
 def _to_response(o: BehaviorObservation) -> ObservationResponse:
     return ObservationResponse(
-        id=o.id, created_at=o.created_at, updated_at=o.updated_at,
-        organization_id=o.organization_id, site_id=o.site_id,
-        type=o.type, category=o.category, description=o.description,
-        area=o.area, task_being_performed=o.task_being_performed,
-        observer_id=o.observer_id, is_anonymous=o.is_anonymous,
+        id=o.id,
+        created_at=o.created_at,
+        updated_at=o.updated_at,
+        organization_id=o.organization_id,
+        site_id=o.site_id,
+        type=o.type,
+        category=o.category,
+        description=o.description,
+        area=o.area,
+        task_being_performed=o.task_being_performed,
+        observer_id=o.observer_id,
+        is_anonymous=o.is_anonymous,
         observed_person_id=o.observed_person_id,
         observed_contractor_worker_id=o.observed_contractor_worker_id,
-        positive_feedback=o.positive_feedback, improvement_feedback=o.improvement_feedback,
+        positive_feedback=o.positive_feedback,
+        improvement_feedback=o.improvement_feedback,
         photos=o.photos if isinstance(o.photos, list) else [],
-        status=o.status, action_id=o.action_id,
-        latitude=o.latitude, longitude=o.longitude,
+        status=o.status,
+        action_id=o.action_id,
+        latitude=o.latitude,
+        longitude=o.longitude,
     )

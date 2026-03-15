@@ -5,10 +5,10 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import select
 
 from app.api.deps import CurrentUser, DBSession, ManagerUser, Pagination
-from app.models.permit import PermitExtension, PermitStatus, PermitType, WorkPermit
+from app.models.permit import PermitExtension, PermitStatus, WorkPermit
 from app.schemas.permit import (
     PermitExtensionCreate,
     PermitExtensionRead,
@@ -94,8 +94,13 @@ async def check_conflicts(
     exclude_id: UUID | None = None,
 ) -> list[WorkPermitList]:
     conflicts = await permit_service.check_conflicts(
-        db, current_user.organization_id, site_id, area_id,
-        valid_from, valid_until, exclude_id,
+        db,
+        current_user.organization_id,
+        site_id,
+        area_id,
+        valid_from,
+        valid_until,
+        exclude_id,
     )
     return [WorkPermitList.model_validate(p) for p in conflicts]
 
@@ -166,11 +171,9 @@ async def submit_permit(
     if not permit:
         raise HTTPException(status_code=404, detail="Permit not found")
     try:
-        permit = await permit_service.transition_status(
-            db, permit, PermitStatus.PENDING_APPROVAL, current_user.id
-        )
+        permit = await permit_service.transition_status(db, permit, PermitStatus.PENDING_APPROVAL, current_user.id)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     return WorkPermitRead.model_validate(permit)
 
 
@@ -194,11 +197,9 @@ async def approve_permit(
     if not permit:
         raise HTTPException(status_code=404, detail="Permit not found")
     try:
-        permit = await permit_service.transition_status(
-            db, permit, PermitStatus.APPROVED, manager.id
-        )
+        permit = await permit_service.transition_status(db, permit, PermitStatus.APPROVED, manager.id)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     return WorkPermitRead.model_validate(permit)
 
 
@@ -222,11 +223,9 @@ async def reject_permit(
     if not permit:
         raise HTTPException(status_code=404, detail="Permit not found")
     try:
-        permit = await permit_service.transition_status(
-            db, permit, PermitStatus.REJECTED, manager.id
-        )
+        permit = await permit_service.transition_status(db, permit, PermitStatus.REJECTED, manager.id)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     return WorkPermitRead.model_validate(permit)
 
 
@@ -250,11 +249,9 @@ async def activate_permit(
     if not permit:
         raise HTTPException(status_code=404, detail="Permit not found")
     try:
-        permit = await permit_service.transition_status(
-            db, permit, PermitStatus.ACTIVE, manager.id
-        )
+        permit = await permit_service.transition_status(db, permit, PermitStatus.ACTIVE, manager.id)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     return WorkPermitRead.model_validate(permit)
 
 
@@ -278,11 +275,9 @@ async def suspend_permit(
     if not permit:
         raise HTTPException(status_code=404, detail="Permit not found")
     try:
-        permit = await permit_service.transition_status(
-            db, permit, PermitStatus.SUSPENDED, manager.id
-        )
+        permit = await permit_service.transition_status(db, permit, PermitStatus.SUSPENDED, manager.id)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     return WorkPermitRead.model_validate(permit)
 
 
@@ -306,11 +301,9 @@ async def close_permit(
     if not permit:
         raise HTTPException(status_code=404, detail="Permit not found")
     try:
-        permit = await permit_service.transition_status(
-            db, permit, PermitStatus.CLOSED, manager.id
-        )
+        permit = await permit_service.transition_status(db, permit, PermitStatus.CLOSED, manager.id)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     return WorkPermitRead.model_validate(permit)
 
 
@@ -339,9 +332,7 @@ async def list_permits(
         base = base.where(WorkPermit.site_id == site_id)
 
     result = await db.execute(
-        base.order_by(WorkPermit.created_at.desc())
-        .offset(pagination.offset)
-        .limit(pagination.page_size)
+        base.order_by(WorkPermit.created_at.desc()).offset(pagination.offset).limit(pagination.page_size)
     )
     permits = result.scalars().all()
     return [WorkPermitList.model_validate(p) for p in permits]
@@ -479,8 +470,6 @@ async def list_extensions(
     db: DBSession,
     current_user: CurrentUser,
 ) -> list[PermitExtensionRead]:
-    result = await db.execute(
-        select(PermitExtension).where(PermitExtension.permit_id == permit_id)
-    )
+    result = await db.execute(select(PermitExtension).where(PermitExtension.permit_id == permit_id))
     extensions = result.scalars().all()
     return [PermitExtensionRead.model_validate(e) for e in extensions]

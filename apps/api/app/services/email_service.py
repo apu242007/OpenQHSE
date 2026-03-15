@@ -29,7 +29,7 @@ RESET_PASSWORD_TEMPLATE = """
   <title>Restablecer Contraseña - OpenQHSE</title>
 </head>
 <body style="margin:0;padding:0;background-color:#0f172a;font-family:'Segoe UI',Roboto,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:40px auto;background:#1e293b;border-radius:12px;overflow:hidden;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:40px auto;background:#1e293b;border-radius:12px;overflow:hidden;">  # noqa: E501
     <tr>
       <td style="background:linear-gradient(135deg,#0066FF,#0044CC);padding:32px;text-align:center;">
         <h1 style="color:#fff;margin:0;font-size:28px;">🛡️ OpenQHSE</h1>
@@ -49,7 +49,7 @@ RESET_PASSWORD_TEMPLATE = """
         <table cellpadding="0" cellspacing="0" width="100%">
           <tr>
             <td align="center">
-              <a href="{reset_url}" style="display:inline-block;background:#0066FF;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">
+              <a href="{reset_url}" style="display:inline-block;background:#0066FF;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">  # noqa: E501
                 Restablecer contraseña
               </a>
             </td>
@@ -79,7 +79,7 @@ WELCOME_TEMPLATE = """
   <title>Bienvenido a OpenQHSE</title>
 </head>
 <body style="margin:0;padding:0;background-color:#0f172a;font-family:'Segoe UI',Roboto,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:40px auto;background:#1e293b;border-radius:12px;overflow:hidden;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:40px auto;background:#1e293b;border-radius:12px;overflow:hidden;">  # noqa: E501
     <tr>
       <td style="background:linear-gradient(135deg,#0066FF,#0044CC);padding:32px;text-align:center;">
         <h1 style="color:#fff;margin:0;font-size:28px;">🛡️ OpenQHSE</h1>
@@ -108,7 +108,7 @@ WELCOME_TEMPLATE = """
         <table cellpadding="0" cellspacing="0" width="100%">
           <tr>
             <td align="center">
-              <a href="{login_url}" style="display:inline-block;background:#0066FF;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">
+              <a href="{login_url}" style="display:inline-block;background:#0066FF;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">  # noqa: E501
                 Iniciar sesión
               </a>
             </td>
@@ -137,7 +137,7 @@ INCIDENT_ALERT_TEMPLATE = """
   <title>Alerta de Incidente - OpenQHSE</title>
 </head>
 <body style="margin:0;padding:0;background-color:#0f172a;font-family:'Segoe UI',Roboto,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:40px auto;background:#1e293b;border-radius:12px;overflow:hidden;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:40px auto;background:#1e293b;border-radius:12px;overflow:hidden;">  # noqa: E501
     <tr>
       <td style="background:linear-gradient(135deg,#dc2626,#991b1b);padding:32px;text-align:center;">
         <h1 style="color:#fff;margin:0;font-size:28px;">⚠️ Alerta de Incidente</h1>
@@ -173,7 +173,7 @@ INCIDENT_ALERT_TEMPLATE = """
         <table cellpadding="0" cellspacing="0" width="100%">
           <tr>
             <td align="center">
-              <a href="{incident_url}" style="display:inline-block;background:#dc2626;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">
+              <a href="{incident_url}" style="display:inline-block;background:#dc2626;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">  # noqa: E501
                 Ver incidente
               </a>
             </td>
@@ -199,7 +199,7 @@ ACTION_NOTIFICATION_TEMPLATE = """
   <title>Notificación de Acción - OpenQHSE</title>
 </head>
 <body style="margin:0;padding:0;background-color:#0f172a;font-family:'Segoe UI',Roboto,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:40px auto;background:#1e293b;border-radius:12px;overflow:hidden;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:40px auto;background:#1e293b;border-radius:12px;overflow:hidden;">  # noqa: E501
     <tr>
       <td style="background:linear-gradient(135deg,#0066FF,#0044CC);padding:32px;text-align:center;">
         <h1 style="color:#fff;margin:0;font-size:28px;">🛡️ OpenQHSE</h1>
@@ -216,7 +216,7 @@ ACTION_NOTIFICATION_TEMPLATE = """
         <table cellpadding="0" cellspacing="0" width="100%">
           <tr>
             <td align="center">
-              <a href="{action_url}" style="display:inline-block;background:#0066FF;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">
+              <a href="{action_url}" style="display:inline-block;background:#0066FF;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">  # noqa: E501
                 Ver detalles
               </a>
             </td>
@@ -276,9 +276,7 @@ async def _send_email_smtp(
 async def send_email(to_email: str, subject: str, html_body: str) -> None:
     """Public email send function. Uses SMTP in production, logs in dev."""
     if settings.environment == "development" and settings.smtp_host == "localhost":
-        logger.info(
-            f"[DEV] Email to={to_email} subject='{subject}' (not sent — dev mode)"
-        )
+        logger.info(f"[DEV] Email to={to_email} subject='{subject}' (not sent — dev mode)")
         return
 
     await _send_email_smtp(to_email, subject, html_body)

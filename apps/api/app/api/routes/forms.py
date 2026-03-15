@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import copy
 from datetime import UTC, datetime
-from uuid import UUID
+from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, HTTPException, Query, Response, status
-from sqlalchemy import func, select
+from fastapi import APIRouter, HTTPException, Response, status
+from sqlalchemy import select
 
-from app.api.deps import CurrentUser, DBSession, ManagerUser, Pagination
 from app.models.form import (
     FormAttachment,
     FormStatus,
@@ -35,6 +34,11 @@ from app.services.form_service import (
     validate_submission,
 )
 
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from app.api.deps import CurrentUser, DBSession, ManagerUser, Pagination
+
 router = APIRouter(prefix="/forms", tags=["Forms"])
 
 
@@ -53,16 +57,13 @@ async def list_templates(
     category: str | None = None,
 ) -> list[FormTemplateList]:
     query = select(FormTemplate).where(
-        (FormTemplate.organization_id == current_user.organization_id)
-        | (FormTemplate.is_global == True),  # noqa: E712
+        (FormTemplate.organization_id == current_user.organization_id) | (FormTemplate.is_global == True),  # noqa: E712
         FormTemplate.is_deleted == False,  # noqa: E712
     )
     if category:
         query = query.where(FormTemplate.category == category)
     result = await db.execute(
-        query.order_by(FormTemplate.created_at.desc())
-        .offset(pagination.offset)
-        .limit(pagination.page_size)
+        query.order_by(FormTemplate.created_at.desc()).offset(pagination.offset).limit(pagination.page_size)
     )
     templates = result.scalars().all()
     return [FormTemplateList.model_validate(t) for t in templates]
@@ -110,8 +111,7 @@ async def get_template(
     result = await db.execute(
         select(FormTemplate).where(
             FormTemplate.id == template_id,
-            (FormTemplate.organization_id == current_user.organization_id)
-            | (FormTemplate.is_global == True),  # noqa: E712
+            (FormTemplate.organization_id == current_user.organization_id) | (FormTemplate.is_global == True),  # noqa: E712
         )
     )
     template = result.scalar_one_or_none()
@@ -253,8 +253,7 @@ async def duplicate_template(
     result = await db.execute(
         select(FormTemplate).where(
             FormTemplate.id == template_id,
-            (FormTemplate.organization_id == manager.organization_id)
-            | (FormTemplate.is_global == True),  # noqa: E712
+            (FormTemplate.organization_id == manager.organization_id) | (FormTemplate.is_global == True),  # noqa: E712
         )
     )
     original = result.scalar_one_or_none()
@@ -295,8 +294,7 @@ async def get_template_versions(
     result = await db.execute(
         select(FormTemplate).where(
             FormTemplate.id == template_id,
-            (FormTemplate.organization_id == current_user.organization_id)
-            | (FormTemplate.is_global == True),  # noqa: E712
+            (FormTemplate.organization_id == current_user.organization_id) | (FormTemplate.is_global == True),  # noqa: E712
         )
     )
     template = result.scalar_one_or_none()
@@ -336,9 +334,7 @@ async def list_submissions(
     if site_id:
         query = query.where(FormSubmission.site_id == site_id)
     result = await db.execute(
-        query.order_by(FormSubmission.created_at.desc())
-        .offset(pagination.offset)
-        .limit(pagination.page_size)
+        query.order_by(FormSubmission.created_at.desc()).offset(pagination.offset).limit(pagination.page_size)
     )
     submissions = result.scalars().all()
     return [FormSubmissionList.model_validate(s) for s in submissions]
@@ -356,9 +352,7 @@ async def create_submission(
     current_user: CurrentUser,
 ) -> FormSubmissionRead:
     # Load template for scoring
-    tpl_result = await db.execute(
-        select(FormTemplate).where(FormTemplate.id == body.template_id)
-    )
+    tpl_result = await db.execute(select(FormTemplate).where(FormTemplate.id == body.template_id))
     template = tpl_result.scalar_one_or_none()
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
@@ -369,9 +363,7 @@ async def create_submission(
         raise HTTPException(status_code=422, detail={"validation_errors": errors})
 
     # Calculate score
-    score_result = calculate_score(
-        template.schema, body.data, template.scoring_config
-    )
+    score_result = calculate_score(template.schema, body.data, template.scoring_config)
 
     submission = FormSubmission(
         template_id=body.template_id,
@@ -522,16 +514,12 @@ async def submission_pdf_report(
     if not submission:
         raise HTTPException(status_code=404, detail="Submission not found")
 
-    tpl_result = await db.execute(
-        select(FormTemplate).where(FormTemplate.id == submission.template_id)
-    )
+    tpl_result = await db.execute(select(FormTemplate).where(FormTemplate.id == submission.template_id))
     template = tpl_result.scalar_one_or_none()
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
 
-    score_result = calculate_score(
-        template.schema, submission.data, template.scoring_config
-    )
+    score_result = calculate_score(template.schema, submission.data, template.scoring_config)
     pdf_bytes = generate_pdf_report(
         template_data={"name": template.name, "schema": template.schema, "scoring_config": template.scoring_config},
         submission_data={
@@ -581,15 +569,11 @@ async def sync_submissions(
                 continue
 
         # Load template for scoring
-        tpl_result = await db.execute(
-            select(FormTemplate).where(FormTemplate.id == item.template_id)
-        )
+        tpl_result = await db.execute(select(FormTemplate).where(FormTemplate.id == item.template_id))
         template = tpl_result.scalar_one_or_none()
         score_result = {"score": 0, "max_score": 0, "percentage": 0}
         if template:
-            score_result = calculate_score(
-                template.schema, item.data, template.scoring_config
-            )
+            score_result = calculate_score(template.schema, item.data, template.scoring_config)
 
         submission = FormSubmission(
             template_id=item.template_id,
