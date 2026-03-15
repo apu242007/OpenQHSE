@@ -15,6 +15,7 @@ import { getSession } from "next-auth/react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 const AI_BASE = process.env.NEXT_PUBLIC_AI_URL ?? "http://localhost:8100";
+const AUTH_DISABLED = process.env.NEXT_PUBLIC_DISABLE_AUTH === "true";
 
 export class ApiError extends Error {
   constructor(
@@ -48,6 +49,7 @@ export interface SidebarBadgesResponse {
  * Works in client components only. For server components use `auth()` directly.
  */
 async function getAuthHeaders(): Promise<Record<string, string>> {
+  if (AUTH_DISABLED) return {};
   const session = await getSession();
   if (!session?.accessToken) return {};
   return { Authorization: `Bearer ${session.accessToken}` };
