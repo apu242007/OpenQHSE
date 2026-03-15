@@ -53,6 +53,9 @@ jobs:
       - name: Remove API routes incompatible with static export
         run: rm -rf apps/web/src/app/api
 
+      - name: Remove middleware (not compatible with static export)
+        run: rm -f apps/web/src/middleware.ts
+
       - name: Remove dynamic detail routes (require live backend)
         run: find apps/web/src/app -type d -name '\[*\]' -exec rm -rf {} + 2>/dev/null || true
 
@@ -61,6 +64,7 @@ jobs:
         env:
           GITHUB_PAGES: "true"
           NEXT_PUBLIC_API_URL: ""
+          AUTH_URL: "https://apu242007.github.io/OpenQHSE"
           NEXTAUTH_URL: "https://apu242007.github.io/OpenQHSE"
           NEXTAUTH_SECRET: "github-pages-placeholder"
           NEXT_TELEMETRY_DISABLED: 1
