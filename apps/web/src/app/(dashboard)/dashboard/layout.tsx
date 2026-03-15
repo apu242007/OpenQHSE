@@ -43,7 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const handleLogout = async () => {
     clearUser();
     await signOut({ redirect: false });
-    router.push('/login');
+    router.push('/');
   };
 
   const navItems: NavItem[] = [

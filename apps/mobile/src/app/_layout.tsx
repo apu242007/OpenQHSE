@@ -4,7 +4,7 @@
 
 import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Slot, useRouter, useSegments } from 'expo-router';
+import { Slot, useRouter } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
@@ -27,14 +27,10 @@ function AuthGuard() {
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuthGroup = segments[0] === 'login';
-
-    if (!isAuthenticated && !inAuthGroup) {
-      router.replace('/login');
-    } else if (isAuthenticated && inAuthGroup) {
+    if (isAuthenticated) {
       router.replace('/(tabs)/home');
     }
-  }, [isAuthenticated, isLoading, segments]);
+  }, [isAuthenticated, isLoading]);
 
   if (isLoading) {
     return (

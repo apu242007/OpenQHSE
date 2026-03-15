@@ -4,29 +4,13 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
-const AUTH_DISABLED = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
-
 /**
- * Auth layout — wraps login, register, forgot-password, reset-password.
+ * Auth layout — wraps register, forgot-password, reset-password.
  * Redirects already-authenticated users to the dashboard.
  * Uses NextAuth useSession() as source of truth (not Zustand store).
- *
- * When NEXT_PUBLIC_DISABLE_AUTH=true (GitHub Pages) auth pages are meaningless;
- * redirect to home immediately so NextAuth is never invoked.
  */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-
-  // In Pages / no-auth mode: skip everything related to NextAuth and go home.
-  useEffect(() => {
-    if (AUTH_DISABLED) {
-      router.replace('/');
-    }
-  }, [router]);
-
-  if (AUTH_DISABLED) {
-    return null;
-  }
 
   return <AuthLayoutInner router={router}>{children}</AuthLayoutInner>;
 }

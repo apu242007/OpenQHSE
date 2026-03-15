@@ -261,14 +261,14 @@ function ResetPasswordForm() {
           </form>
         ) : (
           <Link
-            href="/login"
+            href="/dashboard"
             className={cn(
               'inline-flex h-11 w-full items-center justify-center rounded-lg',
               'bg-primary px-4 py-2 text-sm font-medium text-primary-foreground',
               'hover:bg-primary/90 transition-all duration-200',
             )}
           >
-            Iniciar sesión
+            Ir al dashboard
           </Link>
         )}
       </div>

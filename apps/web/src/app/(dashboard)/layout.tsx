@@ -18,15 +18,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { status } = useSession();
   const { sidebarOpen } = useUIStore();
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.replace('/login');
-    }
-  }, [status, router]);
-
   // Show loading spinner while checking auth
-  if (status === 'loading' || status === 'unauthenticated') {
+  if (status === 'loading') {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">

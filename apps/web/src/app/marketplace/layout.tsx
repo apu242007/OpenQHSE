@@ -46,22 +46,6 @@ export default function MarketplaceLayout({ children }: { children: React.ReactN
             </Link>
           </nav>
 
-          {process.env.NEXT_PUBLIC_DISABLE_AUTH !== 'true' && (
-            <div className="flex items-center gap-2">
-              <Link
-                href="/login"
-                className="rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                Iniciar sesión
-              </Link>
-              <Link
-                href="/register"
-                className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                Crear cuenta gratis
-              </Link>
-            </div>
-          )}
         </div>
       </header>
 

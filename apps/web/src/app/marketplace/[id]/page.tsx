@@ -180,8 +180,8 @@ function ImportResult({ state }: { state: 'success' | 'error' | 'auth' | null })
       <Icon className="h-4 w-4 shrink-0" />
       <span>{msg}</span>
       {state === 'auth' && (
-        <Link href="/login" className="ml-auto flex items-center gap-1 underline">
-          Iniciar sesión <ChevronRight className="h-3.5 w-3.5" />
+        <Link href="/dashboard" className="ml-auto flex items-center gap-1 underline">
+          Ir al dashboard <ChevronRight className="h-3.5 w-3.5" />
         </Link>
       )}
     </div>
@@ -466,7 +466,7 @@ export default function MarketplaceDetailPage() {
               <LogIn className="h-3.5 w-3.5" />
               <span>
                 Necesitas{' '}
-                <Link href="/login" className="text-primary hover:underline">iniciar sesión</Link>
+                <Link href="/dashboard" className="text-primary hover:underline">ir al dashboard</Link>
                 {' '}para importar.
               </span>
             </div>

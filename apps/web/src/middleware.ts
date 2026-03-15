@@ -17,7 +17,6 @@ import type { Locale } from "./i18n/request";
 // ── Route config ──────────────────────────────────────────────
 
 const PUBLIC_PATHS = new Set([
-  "/login",
   "/register",
   "/forgot-password",
   "/reset-password",
@@ -74,13 +73,6 @@ export default async function middleware(req: NextRequest) {
   const isPublicPath =
     PUBLIC_PATHS.has(pathname) ||
     [...PUBLIC_PATHS].some((p) => pathname.startsWith(p + "/"));
-
-  // Unauthenticated → /login
-  if (!isPublicPath && !isAuthenticated) {
-    const loginUrl = new URL("/login", req.url);
-    if (pathname !== "/") loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
 
   // Authenticated → away from public auth pages
   if (isPublicPath && isAuthenticated && pathname !== "/reset-password") {

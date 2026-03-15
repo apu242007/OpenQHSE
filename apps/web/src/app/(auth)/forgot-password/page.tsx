@@ -144,25 +144,25 @@ export default function ForgotPasswordPage() {
           </form>
         ) : (
           <Link
-            href="/login"
+            href="/dashboard"
             className={cn(
               'inline-flex h-11 w-full items-center justify-center rounded-lg',
               'bg-primary px-4 py-2 text-sm font-medium text-primary-foreground',
               'hover:bg-primary/90 transition-all duration-200',
             )}
           >
-            Volver a iniciar sesión
+            Ir al inicio
           </Link>
         )}
 
         {/* Back link */}
         <div className="text-center">
           <Link
-            href="/login"
+            href="/dashboard"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Volver al inicio de sesión
+            Volver al inicio
           </Link>
         </div>
       </div>

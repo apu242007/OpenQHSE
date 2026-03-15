@@ -188,8 +188,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 
   pages: {
-    signIn: "/login",
-    error: "/login",
+    signIn: "/dashboard",
+    error: "/dashboard",
   },
 
   // Use JWT strategy (default for Credentials provider)
