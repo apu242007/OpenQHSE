@@ -107,4 +107,8 @@ const nextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+// For static export (GitHub Pages), skip withNextIntl: the plugin registers
+// src/i18n/request.ts which calls requestLocale → headers() at pre-render time,
+// breaking static export. The root layout hardcodes locale="es" and messages
+// directly, so no server-side i18n plugin is needed for the static build.
+export default isGithubPages ? nextConfig : withNextIntl(nextConfig);
