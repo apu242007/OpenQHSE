@@ -77,6 +77,8 @@ ignore = [
     "B008",
     # Line length enforced by formatter, not linter
     "E501",
+    # PEP 695 type param syntax — TypeVar pattern is fine for Python 3.12
+    "UP047",
 ]
 
 [tool.ruff.lint.per-file-ignores]
