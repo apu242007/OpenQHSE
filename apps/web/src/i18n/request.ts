@@ -5,8 +5,14 @@ export type Locale = (typeof locales)[number];
 export const defaultLocale: Locale = 'es';
 
 export default getRequestConfig(async ({ requestLocale }) => {
-  const requested = await requestLocale;
-  const locale: Locale = locales.includes(requested as Locale) ? (requested as Locale) : defaultLocale;
+  // During GitHub Pages static export (output:'export'), requestLocale reads
+  // headers() which is unavailable at pre-render time. Skip it and use the
+  // default locale — the root layout already hardcodes locale="es".
+  let locale: Locale = defaultLocale;
+  if (process.env.GITHUB_PAGES !== 'true') {
+    const requested = await requestLocale;
+    locale = locales.includes(requested as Locale) ? (requested as Locale) : defaultLocale;
+  }
 
   return {
     locale,
