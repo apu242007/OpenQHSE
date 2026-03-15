@@ -14,12 +14,12 @@ const AUTH_DISABLED = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
 /**
  * Demo layout (AUTH_DISABLED=true / GitHub Pages).
  * Never calls useSession — SessionProvider is not mounted in this mode.
- * Immediately redirects to /marketplace since dashboard requires auth.
+ * Immediately redirects to /templates since dashboard requires auth.
  */
 function DashboardLayoutDemo({ children: _children }: { children: React.ReactNode }) {
   const router = useRouter();
   useEffect(() => {
-    router.replace('/marketplace');
+    router.replace('/templates');
   }, [router]);
   return null;
 }
