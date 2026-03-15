@@ -101,8 +101,10 @@ export function Header() {
   // ── Handlers ─────────────────────────────────────────
   const handleLogout = useCallback(async () => {
     clearUser();
-    await signOut({ redirect: false });
-    router.push('/login');
+    if (process.env.NEXT_PUBLIC_DISABLE_AUTH !== 'true') {
+      await signOut({ redirect: false });
+      router.push('/login');
+    }
   }, [clearUser, router]);
 
   const toggleTheme = useCallback(() => {

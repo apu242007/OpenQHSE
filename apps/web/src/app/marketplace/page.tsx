@@ -408,12 +408,14 @@ export default function MarketplacePage() {
             Crea una cuenta gratuita e importa cualquier template en segundos.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
-            <Link
-              href="/register"
-              className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              Crear cuenta gratis <ChevronRight className="h-4 w-4" />
-            </Link>
+            {process.env.NEXT_PUBLIC_DISABLE_AUTH !== 'true' && (
+              <Link
+                href="/register"
+                className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                Crear cuenta gratis <ChevronRight className="h-4 w-4" />
+              </Link>
+            )}
             <a
               href="https://github.com/apu242007/OpenQHSE"
               target="_blank"
