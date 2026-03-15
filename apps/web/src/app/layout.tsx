@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     'Plataforma open-source de gestión de Calidad, Salud, Seguridad y Medio Ambiente para industria pesada.',
   keywords: ['QHSE', 'safety', 'inspections', 'incidents', 'oil and gas', 'mining', 'HSE'],
   authors: [{ name: 'OpenQHSE Contributors' }],
-  manifest: '/manifest.json',
+  manifest: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/manifest.json`,
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -53,7 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: `
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').catch(function(){});
+                  navigator.serviceWorker.register('${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/sw.js').catch(function(){});
                 });
               }
             `,
