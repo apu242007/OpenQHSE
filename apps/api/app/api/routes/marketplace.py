@@ -81,7 +81,7 @@ async def list_templates(
             or_(
                 MarketplaceTemplate.name.ilike(like),
                 MarketplaceTemplate.description.ilike(like),
-                MarketplaceTemplate.tags.any(q.lower()),
+                MarketplaceTemplate.tags.any(q.lower()),  # type: ignore[arg-type]
             )
         )
     if category:
@@ -89,7 +89,7 @@ async def list_templates(
     if industry:
         query = query.where(MarketplaceTemplate.industry.ilike(f"%{industry}%"))
     if standard:
-        query = query.where(MarketplaceTemplate.standards.any(standard))
+        query = query.where(MarketplaceTemplate.standards.any(standard))  # type: ignore[arg-type]
     if language:
         query = query.where(MarketplaceTemplate.language == language)
     if min_rating is not None:
@@ -102,7 +102,7 @@ async def list_templates(
         "rating": MarketplaceTemplate.rating_average.desc(),
         "name": MarketplaceTemplate.name.asc(),
     }
-    query = query.order_by(order_map.get(sort_by, MarketplaceTemplate.download_count.desc()))
+    query = query.order_by(order_map.get(sort_by, MarketplaceTemplate.download_count.desc()))  # type: ignore[arg-type]
 
     offset = (page - 1) * page_size
     result = await db.execute(query.offset(offset).limit(page_size))
@@ -141,7 +141,7 @@ async def search_templates(
     if industry:
         query = query.where(MarketplaceTemplate.industry.ilike(f"%{industry}%"))
     if standard:
-        query = query.where(MarketplaceTemplate.standards.any(standard))
+        query = query.where(MarketplaceTemplate.standards.any(standard))  # type: ignore[arg-type]
 
     offset = (page - 1) * page_size
     result = await db.execute(query.order_by(MarketplaceTemplate.rating_average.desc()).offset(offset).limit(page_size))
@@ -328,7 +328,7 @@ async def submit_template(
         slug = f"{slug}-{uuid.uuid4().hex[:6]}"
 
     # Count questions & sections from schema
-    sections = body.schema_json.get("sections", [])
+    sections = body.schema_data.get("sections", [])
     section_count = len(sections)
     question_count = sum(len(s.get("questions", [])) for s in sections)
 
@@ -342,7 +342,7 @@ async def submit_template(
         standards=body.standards,
         tags=body.tags,
         language=body.language,
-        schema_json=body.schema_json,
+        schema_json=body.schema_data,
         scoring_config=body.scoring_config,
         estimated_duration_minutes=body.estimated_duration_minutes,
         question_count=question_count,

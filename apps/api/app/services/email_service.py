@@ -258,7 +258,7 @@ async def _send_email_smtp(
                 hostname=settings.smtp_host,
                 port=settings.smtp_port,
                 username=settings.smtp_user or None,
-                password=settings.smtp_password or None,
+                password=settings.smtp_pass or None,
                 use_tls=settings.smtp_port == 465,
                 start_tls=settings.smtp_port == 587,
             )

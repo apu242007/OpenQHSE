@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import EmailStr, Field
 
@@ -26,8 +26,8 @@ class ContractorCreate(BaseSchema):
     contact_phone: str | None = Field(None, max_length=50)
     insurance_expiry: datetime | None = None
     insurance_url: str | None = Field(None, max_length=500)
-    certifications: list[dict] = Field(default_factory=list)
-    documents: list[dict] = Field(default_factory=list)
+    certifications: list[dict[str, Any]] = Field(default_factory=list)
+    documents: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class ContractorUpdate(BaseSchema):
@@ -39,8 +39,8 @@ class ContractorUpdate(BaseSchema):
     contact_phone: str | None = None
     insurance_expiry: datetime | None = None
     insurance_url: str | None = None
-    certifications: list[dict] | None = None
-    documents: list[dict] | None = None
+    certifications: list[dict[str, Any]] | None = None
+    documents: list[dict[str, Any]] | None = None
     suspension_reason: str | None = None
 
 
@@ -55,8 +55,8 @@ class ContractorResponse(IDSchema, TimestampSchema):
     status: ContractorStatus
     insurance_expiry: datetime | None
     insurance_url: str | None
-    certifications: list[dict]
-    documents: list[dict]
+    certifications: list[dict[str, Any]]
+    documents: list[dict[str, Any]]
     approved_by: UUID | None
     approved_at: datetime | None
     suspension_reason: str | None
@@ -68,7 +68,7 @@ class ContractorResponse(IDSchema, TimestampSchema):
 
 
 class ContractorListResponse(PaginatedResponse):
-    items: list[ContractorResponse]  # type: ignore[assignment]
+    items: list[ContractorResponse]
 
 
 # ── ContractorWorker ────────────────────────────────────────────────────────
@@ -80,7 +80,7 @@ class ContractorWorkerCreate(BaseSchema):
     id_number: str = Field(min_length=1, max_length=50)
     position: str | None = Field(None, max_length=150)
     photo_url: str | None = Field(None, max_length=500)
-    certifications: list[dict] = Field(default_factory=list)
+    certifications: list[dict[str, Any]] = Field(default_factory=list)
     access_sites: list[str] = Field(default_factory=list)
     induction_completed: bool = False
     induction_date: datetime | None = None
@@ -91,7 +91,7 @@ class ContractorWorkerUpdate(BaseSchema):
     last_name: str | None = None
     position: str | None = None
     photo_url: str | None = None
-    certifications: list[dict] | None = None
+    certifications: list[dict[str, Any]] | None = None
     access_sites: list[str] | None = None
     induction_completed: bool | None = None
     induction_date: datetime | None = None
@@ -107,7 +107,7 @@ class ContractorWorkerResponse(IDSchema, TimestampSchema):
     id_number: str
     position: str | None
     photo_url: str | None
-    certifications: list[dict]
+    certifications: list[dict[str, Any]]
     induction_completed: bool
     induction_date: datetime | None
     access_sites: list[str]

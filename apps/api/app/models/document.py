@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import (
     DateTime,
@@ -68,10 +68,10 @@ class Document(BaseModel):
     effective_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     review_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     expiry_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    distribution_list: Mapped[dict | None] = mapped_column(  # type: ignore[type-arg]
+    distribution_list: Mapped[dict[str, Any] | None] = mapped_column(
         JSONB, nullable=True, doc="[{user_id, role, required}]"
     )
-    change_log: Mapped[dict | None] = mapped_column(  # type: ignore[type-arg]
+    change_log: Mapped[dict[str, Any] | None] = mapped_column(
         JSONB, nullable=True, doc="[{version, date, author, summary}]"
     )
 

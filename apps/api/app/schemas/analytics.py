@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import Field
 
@@ -67,8 +67,8 @@ class IncidentsTrendResponse(BaseSchema):
 
     trend: list[IncidentTrendPoint]
     by_type: list[IncidentsByType]
-    trir_current_year: list[dict]
-    trir_previous_year: list[dict]
+    trir_current_year: list[dict[str, Any]]
+    trir_previous_year: list[dict[str, Any]]
 
 
 # ── Inspections Compliance ──────────────────────────────────
@@ -115,8 +115,8 @@ class ActionsSummaryResponse(BaseSchema):
     total_open: int
     total_overdue: int
     overdue_actions: list[OverdueAction]
-    by_priority: list[dict]
-    by_source: list[dict]
+    by_priority: list[dict[str, Any]]
+    by_source: list[dict[str, Any]]
 
 
 # ── Risk Matrix ─────────────────────────────────────────────

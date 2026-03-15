@@ -7,7 +7,10 @@ can be dispatched reliably from any part of the application.
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+from collections.abc import AsyncGenerator, Coroutine
+from typing import Any, TypeVar
+
+_T = TypeVar("_T")
 
 from app.celery_app import celery_app
 from app.core.logging import get_logger
@@ -17,7 +20,7 @@ logger = get_logger("tasks.notifications")
 # ── Helper: run async code inside sync Celery workers ─────────
 
 
-def _run_async(coro):  # noqa: ANN001, ANN202
+def _run_async(coro: Coroutine[Any, Any, _T]) -> _T:
     """Run an async coroutine from a sync Celery task."""
     try:
         loop = asyncio.get_event_loop()
@@ -29,7 +32,7 @@ def _run_async(coro):  # noqa: ANN001, ANN202
     return loop.run_until_complete(coro)
 
 
-async def _get_db_session():  # noqa: ANN202
+async def _get_db_session() -> AsyncGenerator[Any, None]:
     """Create a standalone async DB session for use inside Celery."""
     from app.core.database import async_session_factory
 
@@ -42,7 +45,7 @@ async def _get_db_session():  # noqa: ANN202
 # ═══════════════════════════════════════════════════════════════
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.tasks.notifications.dispatch_notification_event",
     bind=True,
     max_retries=3,
@@ -50,7 +53,7 @@ async def _get_db_session():  # noqa: ANN202
     acks_late=True,
 )
 def dispatch_notification_event(
-    self,  # noqa: ANN001
+    self: Any,  # noqa: ANN001
     event_type: str,
     event_data: dict[str, Any],
 ) -> dict[str, str]:
@@ -101,12 +104,12 @@ def dispatch_notification_event(
 # ═══════════════════════════════════════════════════════════════
 
 
-@celery_app.task(name="app.tasks.notifications.send_email")
+@celery_app.task(name="app.tasks.notifications.send_email")  # type: ignore[untyped-decorator]
 def send_email_task(
     to: str,
     subject: str,
     template: str,
-    context: dict,  # type: ignore[type-arg]
+    context: dict[str, Any],
 ) -> dict[str, str]:
     """Send an email notification asynchronously.
 
@@ -145,7 +148,7 @@ def send_email_task(
         }
         if settings.smtp_user:
             smtp_options["user"] = settings.smtp_user
-            smtp_options["password"] = settings.smtp_password
+            smtp_options["password"] = settings.smtp_pass
 
         response = message.send(to=to, smtp=smtp_options)
 
@@ -167,12 +170,12 @@ def send_email_task(
         return {"status": "error", "to": to, "error": str(e)}
 
 
-@celery_app.task(name="app.tasks.notifications.send_push_notification")
+@celery_app.task(name="app.tasks.notifications.send_push_notification")  # type: ignore[untyped-decorator]
 def send_push_notification_task(
     user_id: str,
     title: str,
     body: str,
-    data: dict | None = None,  # type: ignore[type-arg]
+    data: dict[str, Any] | None = None,
 ) -> dict[str, str]:
     """Send a push notification to a mobile device.
 
@@ -182,14 +185,14 @@ def send_push_notification_task(
     return {"status": "sent", "user_id": user_id, "title": title}
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.tasks.notifications.send_whatsapp_message",
     bind=True,
     max_retries=3,
     default_retry_delay=15,
 )
 def send_whatsapp_message_task(
-    self,  # noqa: ANN001
+    self: Any,  # noqa: ANN001
     phone: str,
     template: str,
     params: dict[str, Any],
@@ -213,14 +216,14 @@ def send_whatsapp_message_task(
         raise self.retry(exc=exc) from exc
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.tasks.notifications.send_telegram_message",
     bind=True,
     max_retries=3,
     default_retry_delay=10,
 )
 def send_telegram_message_task(
-    self,  # noqa: ANN001
+    self: Any,  # noqa: ANN001
     chat_id: str,
     message: str,
     parse_mode: str = "HTML",
@@ -244,14 +247,14 @@ def send_telegram_message_task(
         raise self.retry(exc=exc) from exc
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.tasks.notifications.send_teams_message",
     bind=True,
     max_retries=3,
     default_retry_delay=10,
 )
 def send_teams_message_task(
-    self,  # noqa: ANN001
+    self: Any,  # noqa: ANN001
     webhook_url: str,
     card: dict[str, Any],
 ) -> dict[str, str]:
@@ -279,7 +282,7 @@ def send_teams_message_task(
 # ═══════════════════════════════════════════════════════════════
 
 
-@celery_app.task(name="app.tasks.notifications.check_permit_expiry")
+@celery_app.task(name="app.tasks.notifications.check_permit_expiry")  # type: ignore[untyped-decorator]
 def check_permit_expiry_task() -> dict[str, str]:
     """Check for permits expiring within the configured window and notify."""
     logger.info("Checking permits about to expire")
@@ -304,14 +307,14 @@ def check_permit_expiry_task() -> dict[str, str]:
                 select(WorkPermit).where(
                     WorkPermit.status == PermitStatus.APPROVED,
                     WorkPermit.is_deleted == False,  # noqa: E712
-                    WorkPermit.end_datetime <= threshold,
-                    WorkPermit.end_datetime > now,
+                    WorkPermit.valid_until <= threshold,
+                    WorkPermit.valid_until > now,
                 )
             )
             permits = result.scalars().all()
             count = 0
             for permit in permits:
-                remaining = permit.end_datetime - now
+                remaining = permit.valid_until - now
                 data = {
                     "id": str(permit.id),
                     "organization_id": str(permit.organization_id),
@@ -329,7 +332,7 @@ def check_permit_expiry_task() -> dict[str, str]:
     return _run_async(_check())
 
 
-@celery_app.task(name="app.tasks.notifications.check_overdue_actions")
+@celery_app.task(name="app.tasks.notifications.check_overdue_actions")  # type: ignore[untyped-decorator]
 def check_overdue_actions_task() -> dict[str, str]:
     """Check for overdue corrective actions and send notifications."""
     logger.info("Checking overdue corrective actions")
@@ -374,7 +377,7 @@ def check_overdue_actions_task() -> dict[str, str]:
     return _run_async(_check())
 
 
-@celery_app.task(name="app.tasks.notifications.check_overdue_inspections")
+@celery_app.task(name="app.tasks.notifications.check_overdue_inspections")  # type: ignore[untyped-decorator]
 def check_overdue_inspections_task() -> dict[str, str]:
     """Check for overdue inspections and send notifications."""
     logger.info("Checking overdue inspections")
@@ -394,7 +397,7 @@ def check_overdue_inspections_task() -> dict[str, str]:
             result = await session.execute(
                 select(Inspection).where(
                     Inspection.scheduled_date < now,
-                    Inspection.status == InspectionStatus.PENDING,
+                    Inspection.status == InspectionStatus.DRAFT,
                     Inspection.is_deleted == False,  # noqa: E712
                 )
             )
@@ -423,7 +426,7 @@ def check_overdue_inspections_task() -> dict[str, str]:
 # ═══════════════════════════════════════════════════════════════
 
 
-@celery_app.task(
+@celery_app.task(  # type: ignore[untyped-decorator]
     name="app.tasks.notifications.send_kpi_alert_notification",
     bind=True,
     max_retries=3,
@@ -431,14 +434,14 @@ def check_overdue_inspections_task() -> dict[str, str]:
     acks_late=True,
 )
 def send_kpi_alert_notification(
-    self,  # noqa: ANN001
+    self: Any,  # noqa: ANN001
     org_id: str,
     kpi_name: str,
     current_value: float,
     condition: str,
     threshold: float,
-    recipients: dict,
-    channels: dict,
+    recipients: dict[str, Any],
+    channels: dict[str, Any],
 ) -> dict[str, str]:
     """Send KPI threshold breach notifications via configured channels.
 

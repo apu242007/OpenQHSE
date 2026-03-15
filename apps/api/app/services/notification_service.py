@@ -10,7 +10,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
-import httpx  # type: ignore[import-untyped]
+import httpx
 from sqlalchemy import func, select
 
 from app.core.config import get_settings
@@ -139,7 +139,7 @@ class NotificationService:
 
         Uses pre-approved templates with dynamic parameters.
         """
-        if not settings.whatsapp_access_token or not settings.whatsapp_phone_number_id:
+        if not settings.whatsapp_api_token or not settings.whatsapp_phone_number_id:
             logger.warning("WhatsApp not configured, skipping")
             return {"status": "skipped", "reason": "not_configured"}
 
@@ -160,7 +160,7 @@ class NotificationService:
             },
         }
         headers = {
-            "Authorization": f"Bearer {settings.whatsapp_access_token}",
+            "Authorization": f"Bearer {settings.whatsapp_api_token}",
             "Content-Type": "application/json",
         }
 
@@ -398,7 +398,7 @@ class NotificationService:
             from app.core.redis import redis_client
 
             token = await redis_client.get(f"push_token:{user_id}")
-            return token  # type: ignore[return-value]
+            return str(token) if token is not None else None
         except Exception:
             return None
 
@@ -428,7 +428,7 @@ class NotificationService:
             )
         )
         val = result.scalar_one_or_none()
-        return val or settings.teams_default_webhook_url or None
+        return val or settings.teams_webhook or None
 
     # ── Copy builder ──────────────────────────────────────
 

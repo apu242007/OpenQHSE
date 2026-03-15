@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import (
     DateTime,
@@ -78,7 +78,7 @@ class Incident(BaseModel):
     immediate_actions: Mapped[str | None] = mapped_column(Text, nullable=True)
     root_cause_analysis: Mapped[str | None] = mapped_column(Text, nullable=True)
     evidence_urls: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
-    witness_statements: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    witness_statements: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     # Foreign keys
     organization_id: Mapped[uuid.UUID] = mapped_column(

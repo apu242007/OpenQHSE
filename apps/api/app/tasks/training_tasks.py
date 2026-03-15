@@ -6,8 +6,8 @@ from app.core.logging import get_logger
 logger = get_logger("tasks.training")
 
 
-@celery_app.task(name="app.tasks.training_tasks.check_expiring_certifications")
-def check_expiring_certifications() -> dict:  # type: ignore[type-arg]
+@celery_app.task(name="app.tasks.training_tasks.check_expiring_certifications")  # type: ignore[untyped-decorator]
+def check_expiring_certifications() -> dict[str, object]:
     """Weekly task: notify users whose training certifications are expiring soon.
 
     Schedule: run every Monday at 09:00 via Celery Beat.
@@ -24,7 +24,7 @@ def check_expiring_certifications() -> dict:  # type: ignore[type-arg]
     from app.models.training import EnrollmentStatus, TrainingCourse, TrainingEnrollment
     from app.tasks.notifications import send_email_task
 
-    async def _check() -> dict:  # type: ignore[type-arg]
+    async def _check() -> dict[str, object]:
         async with get_db_context() as db:
             now = datetime.now(UTC)
             thresholds = [14, 30]
@@ -73,8 +73,8 @@ def check_expiring_certifications() -> dict:  # type: ignore[type-arg]
     return asyncio.get_event_loop().run_until_complete(_check())
 
 
-@celery_app.task(name="app.tasks.training_tasks.auto_expire_certifications")
-def auto_expire_certifications() -> dict:  # type: ignore[type-arg]
+@celery_app.task(name="app.tasks.training_tasks.auto_expire_certifications")  # type: ignore[untyped-decorator]
+def auto_expire_certifications() -> dict[str, object]:
     """Daily task: mark expired enrollments as EXPIRED status.
 
     Returns:
@@ -88,7 +88,7 @@ def auto_expire_certifications() -> dict:  # type: ignore[type-arg]
     from app.core.database import get_db_context
     from app.models.training import EnrollmentStatus, TrainingEnrollment
 
-    async def _expire() -> dict:  # type: ignore[type-arg]
+    async def _expire() -> dict[str, object]:
         async with get_db_context() as db:
             now = datetime.now(UTC)
             result = await db.execute(

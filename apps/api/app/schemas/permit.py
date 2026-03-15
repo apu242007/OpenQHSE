@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
@@ -22,7 +22,7 @@ class WorkPermitCreate(BaseModel):
     ppe_required: list[str] | None = None
     valid_from: datetime
     valid_until: datetime
-    checklist_data: dict | None = None
+    checklist_data: dict[str, Any] | None = None
 
 
 class WorkPermitUpdate(BaseModel):
@@ -33,8 +33,8 @@ class WorkPermitUpdate(BaseModel):
     precautions: list[str] | None = None
     ppe_required: list[str] | None = None
     valid_until: datetime | None = None
-    checklist_data: dict | None = None
-    signatures: dict | None = None
+    checklist_data: dict[str, Any] | None = None
+    signatures: dict[str, Any] | None = None
 
 
 class WorkPermitRead(BaseModel):
@@ -51,8 +51,8 @@ class WorkPermitRead(BaseModel):
     valid_until: datetime
     approved_at: datetime | None
     closed_at: datetime | None
-    checklist_data: dict | None
-    signatures: dict | None
+    checklist_data: dict[str, Any] | None
+    signatures: dict[str, Any] | None
     organization_id: uuid.UUID
     site_id: uuid.UUID
     area_id: uuid.UUID | None

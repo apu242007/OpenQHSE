@@ -35,11 +35,13 @@ KEY STRATEGY:
 - Public / unauthenticated endpoints: keyed by X-Forwarded-For or remote addr.
 """
 
+from starlette.requests import Request
+
 from slowapi import Limiter  # noqa: E402
 from slowapi.util import get_remote_address  # noqa: E402
 
 
-def _get_rate_limit_key(request) -> str:  # type: ignore[no-untyped-def]
+def _get_rate_limit_key(request: Request) -> str:
     """Key function: org_id for authenticated requests, IP for public ones.
 
     Reads org_id from the current_org_id ContextVar set by get_current_user().

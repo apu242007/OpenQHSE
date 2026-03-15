@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
@@ -162,7 +162,7 @@ class NotificationDeliveryLog(BaseModel):
     )
     channel: Mapped[NotificationChannel] = mapped_column(String(20), nullable=False)
     status: Mapped[NotificationStatus] = mapped_column(String(20), nullable=False)
-    provider_response: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    provider_response: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     attempted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 

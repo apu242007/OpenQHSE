@@ -1,6 +1,6 @@
 """FastAPI dependencies: auth, pagination, org context."""
 
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, Query, status
@@ -118,7 +118,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 DBSession = Annotated[AsyncSession, Depends(get_db)]
 
 
-def require_roles(*roles: UserRole):  # noqa: ANN201
+def require_roles(*roles: UserRole) -> Any:  # noqa: ANN201
     """Dependency factory que restringe el acceso a roles específicos."""
 
     async def _check_role(current_user: CurrentUser) -> User:
@@ -144,7 +144,7 @@ ManagerUser = Annotated[
 ]
 
 
-def require_site_access(site_id_param: str = "site_id"):  # noqa: ANN201
+def require_site_access(site_id_param: str = "site_id") -> Any:  # noqa: ANN201
     """Dependency factory: verifica que el usuario pertenece al sitio solicitado.
 
     Managers y superiores tienen acceso a todos los sitios de su organización.

@@ -1,5 +1,6 @@
 """Risk management endpoints: Risk Register, HAZOP, Bow-Tie."""
 
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -43,7 +44,7 @@ router = APIRouter(prefix="/risks", tags=["Risk Management"])
 async def risk_matrix(
     db: DBSession,
     current_user: CurrentUser,
-) -> dict:
+) -> dict[str, Any]:
     return await risk_service.get_risk_matrix(db, current_user.organization_id)
 
 
@@ -54,7 +55,7 @@ async def risk_matrix(
 async def risk_statistics(
     db: DBSession,
     current_user: CurrentUser,
-) -> dict:
+) -> dict[str, Any]:
     return await risk_service.get_risk_statistics(db, current_user.organization_id)
 
 

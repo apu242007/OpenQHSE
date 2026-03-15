@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 if TYPE_CHECKING:
     import uuid
@@ -44,8 +44,10 @@ class MarketplaceTemplateList(BaseModel):
 class MarketplaceTemplateRead(MarketplaceTemplateList):
     """Full template detail including the JSON schema."""
 
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
     description: str
-    schema_json: dict[str, Any]
+    schema_data: dict[str, Any] = Field(alias="schema_json")
     scoring_config: dict[str, Any] | None
     contributor_org: str | None
     updated_at: datetime
@@ -53,6 +55,8 @@ class MarketplaceTemplateRead(MarketplaceTemplateList):
 
 class MarketplaceTemplateSubmit(BaseModel):
     """Payload for contributing a new template."""
+
+    model_config = ConfigDict(populate_by_name=True)
 
     name: str = Field(..., min_length=5, max_length=255)
     description: str = Field(..., min_length=20)
@@ -62,7 +66,7 @@ class MarketplaceTemplateSubmit(BaseModel):
     standards: list[str] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
     language: str = "es"
-    schema_json: dict[str, Any]
+    schema_data: dict[str, Any] = Field(alias="schema_json")
     scoring_config: dict[str, Any] | None = None
     estimated_duration_minutes: int = 15
     contributor_name: str = ""

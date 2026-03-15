@@ -181,7 +181,7 @@ def validate_submission(
             # Type-specific validations
             if ftype == "number":
                 try:
-                    num = float(answer_value)
+                    num = float(answer_value) if answer_value is not None else 0.0
                     min_val = field.get("min")
                     max_val = field.get("max")
                     if min_val is not None and num < float(min_val):
@@ -455,7 +455,7 @@ def _format_answer(value: Any, field: dict[str, Any]) -> str:
         options = {o["value"]: o.get("label", o["value"]) for o in field.get("options", [])}
         if isinstance(value, list):
             return ", ".join(options.get(v, str(v)) for v in value)
-        return options.get(value, str(value))
+        return str(options.get(value, str(value)))
 
     if ftype == "risk_matrix" and isinstance(value, dict):
         lik = value.get("likelihood", "?")

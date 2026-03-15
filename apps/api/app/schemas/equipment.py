@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
@@ -24,8 +24,8 @@ class EquipmentCreate(BaseModel):
     location: str | None = None
     purchase_date: datetime | None = None
     next_inspection_date: datetime | None = None
-    certifications: list[dict] | None = None
-    documents: list[dict] | None = None
+    certifications: list[dict[str, Any]] | None = None
+    documents: list[dict[str, Any]] | None = None
 
 
 class EquipmentUpdate(BaseModel):
@@ -40,8 +40,8 @@ class EquipmentUpdate(BaseModel):
     status: str | None = None
     last_inspection_date: datetime | None = None
     next_inspection_date: datetime | None = None
-    certifications: list[dict] | None = None
-    documents: list[dict] | None = None
+    certifications: list[dict[str, Any]] | None = None
+    documents: list[dict[str, Any]] | None = None
 
 
 class EquipmentRead(BaseModel):
@@ -62,8 +62,8 @@ class EquipmentRead(BaseModel):
     purchase_date: datetime | None
     last_inspection_date: datetime | None
     next_inspection_date: datetime | None
-    certifications: dict | None
-    documents: dict | None
+    certifications: dict[str, Any] | None
+    documents: dict[str, Any] | None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -90,9 +90,9 @@ class EquipmentInspectionCreate(BaseModel):
     inspected_at: datetime
     result: str
     notes: str | None = None
-    findings: list[dict] | None = None
+    findings: list[dict[str, Any]] | None = None
     next_inspection_date: datetime | None = None
-    attachments: list[dict] | None = None
+    attachments: list[dict[str, Any]] | None = None
 
 
 class EquipmentInspectionRead(BaseModel):
@@ -102,9 +102,9 @@ class EquipmentInspectionRead(BaseModel):
     inspected_at: datetime
     result: str
     notes: str | None
-    findings: dict | None
+    findings: dict[str, Any] | None
     next_inspection_date: datetime | None
-    attachments: dict | None
+    attachments: dict[str, Any] | None
     created_at: datetime
 
     model_config = {"from_attributes": True}

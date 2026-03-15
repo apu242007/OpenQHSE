@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import (
     Boolean,
@@ -71,13 +71,13 @@ class Contractor(BaseModel):
     insurance_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     # ── Documentación y certificaciones (flexible JSONB) ─────
-    certifications: Mapped[dict] = mapped_column(
+    certifications: Mapped[dict[str, Any]] = mapped_column(
         JSONB,
         nullable=False,
         default=dict,
         doc="Lista de certificaciones ISO, OHSAS, etc. [{name, issuer, expiry, url}]",
     )
-    documents: Mapped[dict] = mapped_column(
+    documents: Mapped[dict[str, Any]] = mapped_column(
         JSONB,
         nullable=False,
         default=dict,
@@ -123,7 +123,7 @@ class ContractorWorker(BaseModel):
     photo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     # ── Certificaciones del trabajador ────────────────────────
-    certifications: Mapped[dict] = mapped_column(
+    certifications: Mapped[dict[str, Any]] = mapped_column(
         JSONB,
         nullable=False,
         default=dict,

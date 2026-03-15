@@ -9,9 +9,11 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, date, datetime, timedelta
+from typing import Any
 
 from celery import shared_task  # pyright: ignore[reportMissingTypeStubs]
 from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +21,9 @@ logger = logging.getLogger(__name__)
 # ── Helpers ────────────────────────────────────────────────────────────────
 
 
-def _sync_session():  # type: ignore[return]
+def _sync_session() -> Session:
     """Return a synchronous SQLAlchemy session for use in Celery tasks."""
     from sqlalchemy import create_engine
-    from sqlalchemy.orm import Session
 
     from app.core.config import get_settings
 
@@ -36,13 +37,13 @@ def _sync_session():  # type: ignore[return]
 # ── Tasks ──────────────────────────────────────────────────────────────────
 
 
-@shared_task(
+@shared_task(  # type: ignore[untyped-decorator]
     name="app.tasks.kpi_tasks.compute_monthly_snapshots",
     bind=True,
     max_retries=3,
     default_retry_delay=300,
 )
-def compute_monthly_snapshots(self) -> dict:  # type: ignore[no-untyped-def]
+def compute_monthly_snapshots(self: Any) -> dict[str, object]:
     """Pre-compute KPI snapshots for all active organizations for last month.
 
     Calculates TRIR, LTIF, DART, leading indicators (inspection compliance,
@@ -78,7 +79,7 @@ def compute_monthly_snapshots(self) -> dict:  # type: ignore[no-untyped-def]
     return {"period": period, "computed": computed, "errors": errors}
 
 
-def _compute_org_kpi(session, org_id: str, period: str) -> None:  # type: ignore[no-untyped-def]
+def _compute_org_kpi(session: Session, org_id: str, period: str) -> None:
     """Compute and upsert KPI snapshot for one org + period."""
 
     year, month = map(int, period.split("-"))
@@ -231,13 +232,13 @@ def _compute_org_kpi(session, org_id: str, period: str) -> None:  # type: ignore
         )
 
 
-@shared_task(
+@shared_task(  # type: ignore[untyped-decorator]
     name="app.tasks.kpi_tasks.check_kpi_alerts",
     bind=True,
     max_retries=2,
     default_retry_delay=60,
 )
-def check_kpi_alerts(self) -> dict:  # type: ignore[no-untyped-def]
+def check_kpi_alerts(self: Any) -> dict[str, object]:
     """Evaluate KPI threshold alert rules and fire alerts when thresholds are breached.
 
     Reads KPIAlertRule configurations and compares against the latest KPISnapshot.

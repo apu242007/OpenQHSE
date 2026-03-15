@@ -258,7 +258,7 @@ async def create_notification(
 async def dispatch_notification(
     body: NotificationDispatchRequest,
     db: DBSession,
-    current_user: AdminUser,  # type: ignore[assignment]
+    current_user: AdminUser,
 ) -> dict[str, str]:
     """Trigger a multi-channel notification dispatch via Celery."""
     from app.tasks.notifications import dispatch_notification_event

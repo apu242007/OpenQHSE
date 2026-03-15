@@ -68,7 +68,7 @@ class ObservationResponse(IDSchema, TimestampSchema):
 
 
 class ObservationListResponse(PaginatedResponse):
-    items: list[ObservationResponse]  # type: ignore[assignment]
+    items: list[ObservationResponse]
 
 
 # ── Statistics ─────────────────────────────────────────────────────────────

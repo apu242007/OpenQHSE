@@ -62,7 +62,7 @@ async def get_risk_matrix(db: AsyncSession, organization_id: UUID) -> dict[str, 
                 }
             )
 
-    return {"cells": cells, "total_risks": sum(c["count"] for c in cells)}
+    return {"cells": cells, "total_risks": sum(int(c["count"]) for c in cells)}  # type: ignore[call-overload, arg-type]
 
 
 async def get_risk_statistics(db: AsyncSession, organization_id: UUID) -> dict[str, object]:

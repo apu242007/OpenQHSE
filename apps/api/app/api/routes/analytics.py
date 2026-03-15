@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import io
 from datetime import UTC, date, datetime, timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Body, HTTPException, Query, Response, status
 from sqlalchemy import and_, extract, func, select
@@ -49,7 +49,7 @@ router = APIRouter(prefix="/analytics", tags=["Analytics"])
 # ── Helpers ─────────────────────────────────────────────────
 
 
-def _org_filter(user: CurrentUser):
+def _org_filter(user: CurrentUser) -> bool:
     """Return org-level filter condition."""
     return True  # placeholder – expanded when models expose org_id
 
@@ -147,7 +147,7 @@ async def get_kpis(
     current_user: CurrentUser,
     site_id: UUID | None = Query(None),
     period: str = Query("year", regex="^(week|month|quarter|year)$"),
-):
+) -> KPIsSummary:
     """Return all executive KPIs for the dashboard top row."""
     org_id = current_user.organization_id
     start, end = _period_range(period)
@@ -157,8 +157,8 @@ async def get_kpis(
     prev_end = start - timedelta(days=1)
 
     # ── Incidents counts ────────────────────────────────
-    def _incident_filter(s: date, e: date):
-        filters = [
+    def _incident_filter(s: date, e: date) -> list[Any]:
+        filters: list[Any] = [
             Incident.organization_id == org_id,
             Incident.occurred_at >= datetime.combine(s, datetime.min.time()),
             Incident.occurred_at <= datetime.combine(e, datetime.max.time()),
@@ -305,7 +305,7 @@ async def get_incidents_trend(
     current_user: CurrentUser,
     site_id: UUID | None = Query(None),
     months: int = Query(12, ge=1, le=24),
-):
+) -> IncidentsTrendResponse:
     """Return monthly incident trend for the last N months + pie by type."""
     org_id = current_user.organization_id
     today = date.today()
@@ -419,7 +419,7 @@ async def get_inspections_compliance(
     current_user: CurrentUser,
     site_id: UUID | None = Query(None),
     period: str = Query("quarter", regex="^(month|quarter|year)$"),
-):
+) -> InspectionsComplianceResponse:
     """Return weekly inspection compliance for bar chart."""
     org_id = current_user.organization_id
     start, end = _period_range(period)
@@ -483,7 +483,7 @@ async def get_actions_summary(
     db: DBSession,
     current_user: CurrentUser,
     site_id: UUID | None = Query(None),
-):
+) -> ActionsSummaryResponse:
     """Return overdue and open corrective actions."""
     # Placeholder — will query CorrectiveAction model when available.
     # For now return empty summary so the frontend can render.
@@ -513,7 +513,7 @@ async def get_risk_matrix(
     db: DBSession,
     current_user: CurrentUser,
     site_id: UUID | None = Query(None),
-):
+) -> RiskMatrixResponse:
     """Return 5×5 risk matrix cell data."""
     org_id = current_user.organization_id
 
@@ -572,7 +572,7 @@ async def get_training_compliance(
     db: DBSession,
     current_user: CurrentUser,
     site_id: UUID | None = Query(None),
-):
+) -> TrainingComplianceResponse:
     """Return training compliance + expiring-soon list."""
     org_id = current_user.organization_id
 
@@ -627,8 +627,8 @@ async def get_training_compliance(
             id=e.id,
             course_name=getattr(e, "course_name", "N/A"),
             user_name=getattr(e, "user_name", "N/A"),
-            expiry_date=e.expiry_date,
-            days_remaining=(e.expiry_date - date.today()).days,
+            expiry_date=e.expiry_date.date() if e.expiry_date else date.today(),
+            days_remaining=(e.expiry_date.date() - date.today()).days if e.expiry_date else 0,
             status="expiring",
         )
         for e in expiring
@@ -652,7 +652,7 @@ async def get_dashboard_widgets(
     db: DBSession,
     current_user: CurrentUser,
     site_id: UUID | None = Query(None),
-):
+) -> DashboardWidgets:
     """Return secondary dashboard widget data (lists/tables)."""
     org_id = current_user.organization_id
     now = datetime.now(UTC)
@@ -677,7 +677,7 @@ async def get_dashboard_widgets(
             id=i.id,
             title=i.title,
             site_name=getattr(i, "site_name", "N/A"),
-            scheduled_date=i.scheduled_date,
+            scheduled_date=i.scheduled_date or datetime.now(UTC),
             inspector_name=getattr(i, "inspector_name", "N/A"),
         )
         for i in upcoming_rows
@@ -754,7 +754,7 @@ async def export_dashboard_pdf(
     current_user: CurrentUser,
     site_id: UUID | None = Query(None),
     period: str = Query("year", regex="^(week|month|quarter|year)$"),
-):
+) -> Response:
     """Generate a PDF summary of the executive dashboard."""
     try:
         from reportlab.lib import colors
@@ -889,7 +889,7 @@ async def get_sidebar_badges(
     org = user.organization_id
     now = datetime.now(UTC)
 
-    def org_site_filter(model_cls):  # type: ignore[no-untyped-def]
+    def org_site_filter(model_cls: Any) -> Any:
         clauses = [model_cls.organization_id == org]
         if site_id:
             clauses.append(model_cls.site_id == site_id)
@@ -901,7 +901,7 @@ async def get_sidebar_badges(
         .select_from(Inspection)
         .where(
             org_site_filter(Inspection),
-            Inspection.status.in_([InspectionStatus.SCHEDULED, InspectionStatus.IN_PROGRESS]),
+            Inspection.status.in_([InspectionStatus.DRAFT, InspectionStatus.IN_PROGRESS]),
         )
     )
 
@@ -931,7 +931,7 @@ async def get_sidebar_badges(
         .select_from(RiskRegister)
         .where(
             RiskRegister.organization_id == org,
-            RiskRegister.residual_score >= 15,
+            RiskRegister.residual_rating >= 15,
         )
     )
 
@@ -977,7 +977,7 @@ async def list_kpi_alert_rules(
     db: DBSession,
     current_user: CurrentUser,
     is_active: bool | None = Query(None),
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """List all KPI alert rules for the current organization."""
     from app.models.kpi_alert import KPIAlertRule
 
@@ -1014,8 +1014,8 @@ async def list_kpi_alert_rules(
 async def create_kpi_alert_rule(
     db: DBSession,
     current_user: AdminUser,
-    body: dict = Body(...),
-) -> dict:
+    body: dict[str, Any] = Body(...),
+) -> dict[str, Any]:
     """Create a new KPI alert rule. Requires admin role."""
     from app.models.kpi_alert import AlertCondition, AlertPeriod, KPIAlertRule, KPIName
 
@@ -1045,8 +1045,8 @@ async def update_kpi_alert_rule(
     rule_id: UUID,
     db: DBSession,
     current_user: AdminUser,
-    body: dict = Body(...),
-) -> dict:
+    body: dict[str, Any] = Body(...),
+) -> dict[str, Any]:
     """Update an existing KPI alert rule."""
     from app.models.kpi_alert import KPIAlertRule
 
@@ -1102,7 +1102,7 @@ async def list_kpi_alerts(
     alert_status: str | None = Query(None, alias="status"),
     kpi_name: str | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """List triggered KPI alerts for the current organization."""
     from app.models.kpi_alert import AlertStatus, KPIAlert, KPIName
 
@@ -1142,8 +1142,8 @@ async def acknowledge_kpi_alert(
     alert_id: UUID,
     db: DBSession,
     current_user: CurrentUser,
-    body: dict = Body(default={}),
-) -> dict:
+    body: dict[str, Any] = Body(default={}),
+) -> dict[str, Any]:
     """Acknowledge a triggered KPI alert."""
     from app.models.kpi_alert import AlertStatus, KPIAlert
 
@@ -1172,7 +1172,7 @@ async def resolve_kpi_alert(
     alert_id: UUID,
     db: DBSession,
     current_user: ManagerUser,
-) -> dict:
+) -> dict[str, Any]:
     """Mark a KPI alert as resolved."""
     from app.models.kpi_alert import AlertStatus, KPIAlert
 

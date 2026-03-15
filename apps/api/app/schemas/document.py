@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
@@ -28,7 +28,7 @@ class DocumentCreate(BaseModel):
     effective_date: datetime | None = None
     review_date: datetime | None = None
     expiry_date: datetime | None = None
-    distribution_list: list[dict] | None = None
+    distribution_list: list[dict[str, Any]] | None = None
 
 
 class DocumentUpdate(BaseModel):
@@ -40,7 +40,7 @@ class DocumentUpdate(BaseModel):
     approver_id: uuid.UUID | None = None
     review_date: datetime | None = None
     expiry_date: datetime | None = None
-    distribution_list: list[dict] | None = None
+    distribution_list: list[dict[str, Any]] | None = None
 
 
 class DocumentRead(BaseModel):
@@ -63,8 +63,8 @@ class DocumentRead(BaseModel):
     effective_date: datetime | None
     review_date: datetime | None
     expiry_date: datetime | None
-    distribution_list: dict | None
-    change_log: dict | None
+    distribution_list: dict[str, Any] | None
+    change_log: dict[str, Any] | None
     created_at: datetime
     updated_at: datetime
 

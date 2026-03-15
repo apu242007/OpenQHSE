@@ -2,6 +2,7 @@
 
 import uuid as uuid_mod
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -38,7 +39,7 @@ def _generate_permit_ref() -> str:
 async def get_checklist(
     permit_type: str,
     current_user: CurrentUser,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     return await permit_service.get_checklist_for_type(permit_type)
 
 
@@ -48,7 +49,7 @@ async def get_checklist(
 )
 async def gas_limits(
     current_user: CurrentUser,
-) -> dict:
+) -> dict[str, Any]:
     return permit_service.GAS_LIMITS
 
 
@@ -57,9 +58,9 @@ async def gas_limits(
     summary="Validate gas readings against safe limits",
 )
 async def validate_gas_readings(
-    readings: list[dict],
+    readings: list[dict[str, Any]],
     current_user: CurrentUser,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     return permit_service.validate_gas_readings(readings)
 
 
@@ -73,7 +74,7 @@ async def validate_gas_readings(
 async def permit_statistics(
     db: DBSession,
     current_user: CurrentUser,
-) -> dict:
+) -> dict[str, Any]:
     return await permit_service.get_permit_statistics(db, current_user.organization_id)
 
 
@@ -116,7 +117,7 @@ async def generate_qr(
     permit_id: UUID,
     db: DBSession,
     current_user: CurrentUser,
-) -> dict:
+) -> dict[str, Any]:
     result = await db.execute(
         select(WorkPermit).where(
             WorkPermit.id == permit_id,
@@ -138,7 +139,7 @@ async def validate_qr(
     token: str,
     db: DBSession,
     current_user: CurrentUser,
-) -> dict:
+) -> dict[str, Any]:
     permit = await permit_service.validate_qr_token(db, reference_number, token)
     if not permit:
         raise HTTPException(status_code=404, detail="Invalid QR code or permit not found")

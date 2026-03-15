@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 import uuid
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import structlog
 from fastapi import FastAPI, Request, status
@@ -101,7 +101,7 @@ def create_app() -> FastAPI:
 
     # ── Rate Limiting (slowapi) ────────────────────────────────
     app.state.limiter = limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
     app.add_middleware(SlowAPIMiddleware)
 
     # ── CORS ──────────────────────────────────────────────────
@@ -177,7 +177,7 @@ def create_app() -> FastAPI:
         summary="Health check",
         response_model=None,
     )
-    async def health_check() -> dict:
+    async def health_check() -> dict[str, Any]:
         """Retorna el estado de salud del servicio y sus dependencias."""
         db_status = "ok"
         redis_status = "ok"

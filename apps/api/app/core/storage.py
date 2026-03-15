@@ -10,7 +10,7 @@ DISEÑO CORREGIDO:
 from __future__ import annotations
 
 import io
-from typing import BinaryIO
+from typing import Any, BinaryIO
 
 import boto3
 from botocore.config import Config as BotoConfig
@@ -23,7 +23,7 @@ settings = get_settings()
 _client = None
 
 
-def _get_client():  # type: ignore[return]
+def _get_client() -> Any:
     """Lazy-initialise el cliente S3/MinIO."""
     global _client
     if _client is None:
@@ -117,7 +117,7 @@ def upload_file(
     if isinstance(file, bytes):
         file = io.BytesIO(file)
 
-    extra_args: dict = {"ContentType": content_type}
+    extra_args: dict[str, Any] = {"ContentType": content_type}
     if public:
         extra_args["ACL"] = "public-read"
 
@@ -154,14 +154,14 @@ def get_presigned_url(
     """
     bucket = bucket or settings.effective_bucket
     client = _get_client()
-    return client.generate_presigned_url(
+    return str(client.generate_presigned_url(
         ClientMethod=method,
         Params={"Bucket": bucket, "Key": path},
         ExpiresIn=expiry,
-    )
+    ))
 
 
-def list_objects(prefix: str = "", *, bucket: str | None = None) -> list[dict]:
+def list_objects(prefix: str = "", *, bucket: str | None = None) -> list[dict[str, Any]]:
     """Lista objetos con un prefijo dado."""
     bucket = bucket or settings.effective_bucket
     client = _get_client()

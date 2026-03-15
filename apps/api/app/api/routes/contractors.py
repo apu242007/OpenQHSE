@@ -444,12 +444,12 @@ async def contractor_compliance_report(
     certs_expiring = 0
     certs_valid = 0
     for w in workers:
-        certs = w.certifications if isinstance(w.certifications, list) else []
+        certs: list[dict[str, object]] = w.certifications if isinstance(w.certifications, list) else []
         for cert in certs:
             expiry_str = cert.get("expiry")
             if expiry_str:
                 try:
-                    exp = datetime.fromisoformat(expiry_str)
+                    exp = datetime.fromisoformat(str(expiry_str))
                     if not exp.tzinfo:
                         exp = exp.replace(tzinfo=UTC)
                     if exp < now or exp <= cutoff_expiring:
@@ -527,7 +527,7 @@ async def expiring_documents(
 # ── Private helpers ──────────────────────────────────────────────────────────
 
 
-async def _get_or_404(db: DBSession, contractor_id: UUID, org_id: UUID) -> Contractor:  # type: ignore[valid-type]
+async def _get_or_404(db: DBSession, contractor_id: UUID, org_id: UUID) -> Contractor:
     result = await db.execute(
         select(Contractor).where(
             Contractor.id == contractor_id,
@@ -541,7 +541,7 @@ async def _get_or_404(db: DBSession, contractor_id: UUID, org_id: UUID) -> Contr
     return c
 
 
-async def _get_worker_or_404(db: DBSession, worker_id: UUID, contractor_id: UUID) -> ContractorWorker:  # type: ignore[valid-type]
+async def _get_worker_or_404(db: DBSession, worker_id: UUID, contractor_id: UUID) -> ContractorWorker:
     result = await db.execute(
         select(ContractorWorker).where(
             ContractorWorker.id == worker_id,

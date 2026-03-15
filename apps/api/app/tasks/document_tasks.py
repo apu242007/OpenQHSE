@@ -6,8 +6,8 @@ from app.core.logging import get_logger
 logger = get_logger("tasks.documents")
 
 
-@celery_app.task(name="app.tasks.document_tasks.check_expiring_documents")
-def check_expiring_documents() -> dict:  # type: ignore[type-arg]
+@celery_app.task(name="app.tasks.document_tasks.check_expiring_documents")  # type: ignore[untyped-decorator]
+def check_expiring_documents() -> dict[str, object]:
     """Weekly task: find documents expiring within 30/60/90 days and notify owners.
 
     Schedule: run every Monday at 08:00 via Celery Beat.
@@ -24,7 +24,7 @@ def check_expiring_documents() -> dict:  # type: ignore[type-arg]
     from app.models.document import Document, DocumentStatus
     from app.tasks.notifications import send_email_task
 
-    async def _check() -> dict:  # type: ignore[type-arg]
+    async def _check() -> dict[str, object]:
         async with get_db_context() as db:
             now = datetime.now(UTC)
             # Notify at 30, 60, and 90-day thresholds

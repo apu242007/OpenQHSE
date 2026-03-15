@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import io
 from datetime import UTC, datetime, timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
 
@@ -33,7 +33,7 @@ async def notify_reviewers_for_approval(
     if doc.status != DocumentStatus.UNDER_REVIEW:
         return
 
-    distribution = doc.distribution_list or []
+    distribution: list[Any] = list(doc.distribution_list or [])
     reviewers = [entry for entry in distribution if isinstance(entry, dict) and entry.get("required")]
 
     from app.tasks.notifications import send_email_task

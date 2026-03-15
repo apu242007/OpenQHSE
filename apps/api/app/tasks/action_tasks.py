@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from celery import shared_task
 
 
-@shared_task(name="actions.check_overdue", queue="notifications")
+@shared_task(name="actions.check_overdue", queue="notifications")  # type: ignore[misc, untyped-decorator]
 def check_overdue_actions() -> dict[str, int]:
     """
     Periodic task: find actions past due_date that aren't completed/verified.
@@ -50,7 +50,7 @@ def check_overdue_actions() -> dict[str, int]:
     return {"overdue_notifications_sent": count}
 
 
-@shared_task(name="actions.send_reminders", queue="notifications")
+@shared_task(name="actions.send_reminders", queue="notifications")  # type: ignore[misc, untyped-decorator]
 def send_due_date_reminders() -> dict[str, int]:
     """
     Periodic task: remind assignees 48h before due date.
@@ -95,7 +95,7 @@ def send_due_date_reminders() -> dict[str, int]:
     return {"reminder_notifications_sent": count}
 
 
-@shared_task(name="actions.auto_escalate", queue="notifications")
+@shared_task(name="actions.auto_escalate", queue="notifications")  # type: ignore[misc, untyped-decorator]
 def auto_escalate_overdue() -> dict[str, int]:
     """
     Periodic task: auto-escalate actions overdue > 7 days.

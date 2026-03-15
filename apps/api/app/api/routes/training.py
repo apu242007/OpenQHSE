@@ -304,7 +304,7 @@ async def bulk_enroll(
     if role:
         users_query = users_query.where(User.role == role)
     if site_id:
-        users_query = users_query.where(User.site_ids.contains([str(site_id)]))
+        users_query = users_query.where(User.site_id == site_id)  # type: ignore[attr-defined]
 
     users_result = await db.execute(users_query)
     users = users_result.scalars().all()
@@ -471,14 +471,14 @@ async def submit_assessment(
     if not assessment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assessment not found")
 
-    questions = assessment.questions if isinstance(assessment.questions, list) else []
+    questions: list[dict[str, object]] = assessment.questions if isinstance(assessment.questions, list) else []
     total_points = 0.0
     earned_points = 0.0
     results = []
 
     for q in questions:
         q_id = str(q.get("id", ""))
-        points = float(q.get("points", 1))
+        points = float(q.get("points", 1))  # type: ignore[arg-type]
         total_points += points
 
         # Find submitted answer for this question
@@ -489,7 +489,7 @@ async def submit_assessment(
 
         # Check correctness
         options = q.get("options", [])
-        correct_options = [o for o in options if o.get("is_correct")]
+        correct_options = [o for o in options if o.get("is_correct")]  # type: ignore[union-attr, attr-defined]
         submitted_text = str(submitted.get("answer", "")).lower()
         is_correct = any(submitted_text == str(o.get("text", "")).lower() for o in correct_options)
 
@@ -530,7 +530,7 @@ async def submit_assessment(
 
     return {
         "score": round(score_pct, 1),
-        "passed": score_pct >= (questions[0].get("passing_score", 70) if questions else 70),
+        "passed": score_pct >= (questions[0].get("passing_score", 70) if questions else 70),  # type: ignore[operator]
         "results": results,
         "total_points": total_points,
         "earned_points": earned_points,

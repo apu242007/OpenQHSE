@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
@@ -19,7 +19,7 @@ class TrainingCourseCreate(BaseModel):
     category: str | None = None
     course_type: str
     duration_hours: float = 1.0
-    content: list[dict] | None = None
+    content: list[dict[str, Any]] | None = None
     passing_score: float = 70.0
     validity_months: int | None = None
     certificate_template_url: str | None = None
@@ -33,7 +33,7 @@ class TrainingCourseUpdate(BaseModel):
     category: str | None = None
     course_type: str | None = None
     duration_hours: float | None = None
-    content: list[dict] | None = None
+    content: list[dict[str, Any]] | None = None
     passing_score: float | None = None
     validity_months: int | None = None
     is_mandatory: bool | None = None
@@ -48,7 +48,7 @@ class TrainingCourseRead(BaseModel):
     category: str | None
     course_type: str
     duration_hours: float
-    content: dict | None
+    content: dict[str, Any] | None
     passing_score: float
     validity_months: int | None
     certificate_template_url: str | None
@@ -123,13 +123,13 @@ class TrainingEnrollmentList(BaseModel):
 
 class TrainingAssessmentCreate(BaseModel):
     course_id: uuid.UUID
-    questions: list[dict]
+    questions: list[dict[str, Any]]
 
 
 class TrainingAssessmentRead(BaseModel):
     id: uuid.UUID
     course_id: uuid.UUID
-    questions: dict
+    questions: dict[str, Any]
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -140,15 +140,15 @@ class TrainingAssessmentRead(BaseModel):
 
 class CompetencyMatrixCreate(BaseModel):
     role: str
-    required_courses: list[dict] | None = None
-    required_certifications: list[dict] | None = None
+    required_courses: list[dict[str, Any]] | None = None
+    required_certifications: list[dict[str, Any]] | None = None
     review_cycle_months: int = 12
 
 
 class CompetencyMatrixUpdate(BaseModel):
     role: str | None = None
-    required_courses: list[dict] | None = None
-    required_certifications: list[dict] | None = None
+    required_courses: list[dict[str, Any]] | None = None
+    required_certifications: list[dict[str, Any]] | None = None
     review_cycle_months: int | None = None
 
 
@@ -156,8 +156,8 @@ class CompetencyMatrixRead(BaseModel):
     id: uuid.UUID
     organization_id: uuid.UUID
     role: str
-    required_courses: dict | None
-    required_certifications: dict | None
+    required_courses: dict[str, Any] | None
+    required_certifications: dict[str, Any] | None
     review_cycle_months: int
     created_at: datetime
 

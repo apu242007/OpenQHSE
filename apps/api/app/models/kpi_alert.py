@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import (
     Boolean,
@@ -99,13 +99,13 @@ class KPIAlertRule(BaseModel):
     )
 
     # Canales de notificación y destinatarios
-    channels: Mapped[dict] = mapped_column(
+    channels: Mapped[dict[str, Any]] = mapped_column(
         JSONB,
         nullable=False,
         default=dict,
         doc='{"email": true, "slack": false, "whatsapp": true, "in_app": true}',
     )
-    recipients: Mapped[dict] = mapped_column(
+    recipients: Mapped[dict[str, Any]] = mapped_column(
         JSONB,
         nullable=False,
         default=dict,
@@ -113,7 +113,7 @@ class KPIAlertRule(BaseModel):
     )
 
     # Reglas de escalamiento
-    escalation_rules: Mapped[dict] = mapped_column(
+    escalation_rules: Mapped[dict[str, Any]] = mapped_column(
         JSONB,
         nullable=False,
         default=dict,
@@ -169,14 +169,14 @@ class KPIAlert(BaseModel):
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Canales por los que se notificó
-    notification_channels: Mapped[dict] = mapped_column(
+    notification_channels: Mapped[dict[str, Any]] = mapped_column(
         JSONB,
         nullable=False,
         default=dict,
         doc='{"email": true, "slack": false, "whatsapp": true}',
     )
     # Reglas de escalamiento heredadas de la regla
-    escalation_rules: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    escalation_rules: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     escalation_count: Mapped[int] = mapped_column(default=0)
     last_escalated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     notes: Mapped[str | None] = mapped_column(String(1000), nullable=True)

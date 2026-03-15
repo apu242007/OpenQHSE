@@ -69,7 +69,7 @@ class Settings(BaseSettings):
     database_pool_size: int = 10
     database_max_overflow: int = 20
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def effective_database_url(self) -> str:
         if self.database_url:
@@ -158,24 +158,24 @@ class Settings(BaseSettings):
     rate_limit_forgot_password: str = "3/minute"
     rate_limit_marketplace: str = "100/minute"
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.api_cors_origins.split(",") if o.strip()]
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def storage_access_key(self) -> str:
         """Clave de acceso efectiva: AWS en prod, MinIO en dev."""
         return self.aws_access_key_id if self.is_production else self.minio_root_user
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def storage_secret_key(self) -> str:
         """Secret efectivo: AWS en prod, MinIO en dev."""
         return self.aws_secret_access_key if self.is_production else self.minio_root_password
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def effective_bucket(self) -> str:
         """Bucket efectivo según entorno."""

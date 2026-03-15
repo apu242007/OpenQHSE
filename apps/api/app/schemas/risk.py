@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
@@ -68,7 +68,7 @@ class RiskRegisterRead(BaseModel):
     inherent_likelihood: int
     inherent_severity: int
     inherent_rating: int
-    controls: dict
+    controls: dict[str, Any]
     residual_likelihood: int
     residual_severity: int
     residual_rating: int
@@ -104,7 +104,7 @@ class HazopStudyCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     system_description: str
     p_and_id_url: str | None = None
-    team_members: list[dict] | None = None
+    team_members: list[dict[str, Any]] | None = None
     facilitator_id: uuid.UUID | None = None
 
 
@@ -112,7 +112,7 @@ class HazopStudyUpdate(BaseModel):
     name: str | None = None
     system_description: str | None = None
     status: str | None = None
-    team_members: list[dict] | None = None
+    team_members: list[dict[str, Any]] | None = None
     facilitator_id: uuid.UUID | None = None
 
 
@@ -124,7 +124,7 @@ class HazopStudyRead(BaseModel):
     system_description: str
     p_and_id_url: str | None
     status: str
-    team_members: dict | None
+    team_members: dict[str, Any] | None
     facilitator_id: uuid.UUID | None
     created_at: datetime
 
@@ -137,11 +137,11 @@ class HazopNodeCreate(BaseModel):
     design_intent: str
     guide_word: str
     deviation: str
-    causes: list[dict] | None = None
-    consequences: list[dict] | None = None
-    safeguards: list[dict] | None = None
+    causes: list[dict[str, Any]] | None = None
+    consequences: list[dict[str, Any]] | None = None
+    safeguards: list[dict[str, Any]] | None = None
     risk_rating: int | None = None
-    recommendations: list[dict] | None = None
+    recommendations: list[dict[str, Any]] | None = None
 
 
 class HazopNodeRead(BaseModel):
@@ -151,11 +151,11 @@ class HazopNodeRead(BaseModel):
     design_intent: str
     guide_word: str
     deviation: str
-    causes: dict | None
-    consequences: dict | None
-    safeguards: dict | None
+    causes: dict[str, Any] | None
+    consequences: dict[str, Any] | None
+    safeguards: dict[str, Any] | None
     risk_rating: int | None
-    recommendations: dict | None
+    recommendations: dict[str, Any] | None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -168,21 +168,21 @@ class BowTieCreate(BaseModel):
     site_id: uuid.UUID
     top_event: str
     hazard: str
-    threats: list[dict] = []
-    consequences: list[dict] = []
-    prevention_barriers: list[dict] = []
-    mitigation_barriers: list[dict] = []
-    critical_controls: list[dict] | None = None
+    threats: list[dict[str, Any]] = []
+    consequences: list[dict[str, Any]] = []
+    prevention_barriers: list[dict[str, Any]] = []
+    mitigation_barriers: list[dict[str, Any]] = []
+    critical_controls: list[dict[str, Any]] | None = None
 
 
 class BowTieUpdate(BaseModel):
     top_event: str | None = None
     hazard: str | None = None
-    threats: list[dict] | None = None
-    consequences: list[dict] | None = None
-    prevention_barriers: list[dict] | None = None
-    mitigation_barriers: list[dict] | None = None
-    critical_controls: list[dict] | None = None
+    threats: list[dict[str, Any]] | None = None
+    consequences: list[dict[str, Any]] | None = None
+    prevention_barriers: list[dict[str, Any]] | None = None
+    mitigation_barriers: list[dict[str, Any]] | None = None
+    critical_controls: list[dict[str, Any]] | None = None
 
 
 class BowTieRead(BaseModel):
@@ -191,11 +191,11 @@ class BowTieRead(BaseModel):
     site_id: uuid.UUID
     top_event: str
     hazard: str
-    threats: dict
-    consequences: dict
-    prevention_barriers: dict
-    mitigation_barriers: dict
-    critical_controls: dict | None
+    threats: dict[str, Any]
+    consequences: dict[str, Any]
+    prevention_barriers: dict[str, Any]
+    mitigation_barriers: dict[str, Any]
+    critical_controls: dict[str, Any] | None
     created_at: datetime
 
     model_config = {"from_attributes": True}

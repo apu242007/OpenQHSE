@@ -413,7 +413,7 @@ async def unsafe_trends(
 # ── Private helpers ──────────────────────────────────────────────────────────
 
 
-async def _get_or_404(db: DBSession, obs_id: UUID, org_id: UUID) -> BehaviorObservation:  # type: ignore[valid-type]
+async def _get_or_404(db: DBSession, obs_id: UUID, org_id: UUID) -> BehaviorObservation:
     result = await db.execute(
         select(BehaviorObservation).where(
             BehaviorObservation.id == obs_id,

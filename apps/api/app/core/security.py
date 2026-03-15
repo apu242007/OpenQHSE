@@ -208,7 +208,7 @@ def check_module_permission(user_role: str, module: str, action: str) -> bool:
     return user_role in allowed_roles
 
 
-def require_permission(module: str, action: str):  # noqa: ANN201
+def require_permission(module: str, action: str) -> Any:  # noqa: ANN201
     """FastAPI dependency factory: check granular module+action permission.
 
     IMPORTANTE: Siempre consulta DB via get_current_user (no solo el JWT).

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
@@ -49,7 +49,7 @@ class FormTemplateCreate(BaseModel):
     site_id: uuid.UUID | None = None
     is_global: bool = False
     tags: list[str] | None = None
-    schema_def: dict  # Full JSON schema
+    schema_def: dict[str, Any]  # Full JSON schema
     scoring_config: ScoringConfigSchema | None = None
 
 
@@ -59,7 +59,7 @@ class FormTemplateUpdate(BaseModel):
     category: str | None = None
     status: str | None = None
     tags: list[str] | None = None
-    schema_def: dict | None = None
+    schema_def: dict[str, Any] | None = None
     scoring_config: ScoringConfigSchema | None = None
 
 
@@ -72,8 +72,8 @@ class FormTemplateRead(BaseModel):
     status: str
     is_global: bool
     tags: list[str] | None
-    schema_def: dict
-    scoring_config: dict | None
+    schema_def: dict[str, Any]
+    scoring_config: dict[str, Any] | None
     organization_id: uuid.UUID
     site_id: uuid.UUID | None
     created_at: datetime
@@ -100,15 +100,15 @@ class FormTemplateList(BaseModel):
 class FormSubmissionCreate(BaseModel):
     template_id: uuid.UUID
     site_id: uuid.UUID
-    data: dict
+    data: dict[str, Any]
     gps_latitude: float | None = None
     gps_longitude: float | None = None
-    device_info: dict | None = None
+    device_info: dict[str, Any] | None = None
     offline_id: str | None = None
 
 
 class FormSubmissionUpdate(BaseModel):
-    data: dict | None = None
+    data: dict[str, Any] | None = None
     status: str | None = None
 
 
@@ -119,7 +119,7 @@ class FormSubmissionRead(BaseModel):
     site_id: uuid.UUID
     submitted_by: uuid.UUID
     submitted_at: datetime | None
-    data: dict
+    data: dict[str, Any]
     score: float | None
     max_score: float | None
     percentage: float | None
@@ -163,7 +163,7 @@ class FormAttachmentRead(BaseModel):
     file_type: str
     file_size: int
     ocr_text: str | None
-    ai_analysis: dict | None
+    ai_analysis: dict[str, Any] | None
     created_at: datetime
 
     model_config = {"from_attributes": True}

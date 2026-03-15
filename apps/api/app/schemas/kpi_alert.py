@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import Field
 
@@ -24,9 +24,9 @@ class KPIAlertRuleCreate(BaseSchema):
     threshold: float
     period: AlertPeriod = AlertPeriod.MONTHLY
     site_id: UUID | None = None
-    channels: dict = Field(default_factory=lambda: {"email": True, "in_app": True})
-    recipients: dict = Field(default_factory=dict)
-    escalation_rules: dict = Field(default_factory=dict)
+    channels: dict[str, Any] = Field(default_factory=lambda: {"email": True, "in_app": True})
+    recipients: dict[str, Any] = Field(default_factory=dict)
+    escalation_rules: dict[str, Any] = Field(default_factory=dict)
     is_active: bool = True
 
 
@@ -34,9 +34,9 @@ class KPIAlertRuleUpdate(BaseSchema):
     name: str | None = None
     description: str | None = None
     threshold: float | None = None
-    channels: dict | None = None
-    recipients: dict | None = None
-    escalation_rules: dict | None = None
+    channels: dict[str, Any] | None = None
+    recipients: dict[str, Any] | None = None
+    escalation_rules: dict[str, Any] | None = None
     is_active: bool | None = None
 
 
@@ -49,14 +49,14 @@ class KPIAlertRuleResponse(IDSchema, TimestampSchema):
     condition: AlertCondition
     threshold: float
     period: AlertPeriod
-    channels: dict
-    recipients: dict
-    escalation_rules: dict
+    channels: dict[str, Any]
+    recipients: dict[str, Any]
+    escalation_rules: dict[str, Any]
     is_active: bool
 
 
 class KPIAlertRuleListResponse(PaginatedResponse):
-    items: list[KPIAlertRuleResponse]  # type: ignore[assignment]
+    items: list[KPIAlertRuleResponse]
 
 
 # ── Alert Instance ─────────────────────────────────────────────────────────
@@ -88,4 +88,4 @@ class KPIAlertResponse(IDSchema, TimestampSchema):
 
 
 class KPIAlertListResponse(PaginatedResponse):
-    items: list[KPIAlertResponse]  # type: ignore[assignment]
+    items: list[KPIAlertResponse]

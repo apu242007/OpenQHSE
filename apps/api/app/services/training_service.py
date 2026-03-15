@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import io
 from datetime import UTC, datetime, timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from sqlalchemy import select
@@ -220,7 +220,7 @@ async def calculate_compliance_matrix(
     course_ids: set[UUID] = set()
     role_courses: dict[str, list[UUID]] = {}
     for m in matrices:
-        required = m.required_courses or []
+        required: list[dict[str, Any]] = list(m.required_courses or [])
         ids = [UUID(str(rc["course_id"])) for rc in required if "course_id" in rc]
         role_courses[m.role] = ids
         course_ids.update(ids)

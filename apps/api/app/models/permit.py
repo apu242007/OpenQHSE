@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
@@ -60,8 +60,8 @@ class WorkPermit(BaseModel):
     valid_until: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    checklist_data: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    signatures: Mapped[dict | None] = mapped_column(
+    checklist_data: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    signatures: Mapped[dict[str, Any] | None] = mapped_column(
         JSONB,
         nullable=True,
         doc="JSON: {requester_sig, approver_sig, closer_sig}",

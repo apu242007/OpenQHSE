@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
 from sqlalchemy import create_engine, text
@@ -83,3 +84,23 @@ async def init_db() -> None:
     """Crea todas las tablas (solo para desarrollo/tests)."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+
+@asynccontextmanager
+async def get_db_context() -> AsyncGenerator[AsyncSession, None]:
+    """Async context manager yielding a database session for use in Celery tasks.
+
+    Usage::
+
+        async with get_db_context() as db:
+            ...
+    """
+    async with async_session_factory() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
