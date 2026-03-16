@@ -12,36 +12,47 @@ import type {
   DocumentListItem,
   DocumentVersion,
 } from '@/types/documents';
+import { DEMO_DOCUMENTS_LIST } from '@/lib/demo-data';
+
+const AUTH_DISABLED = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
 
 // ── Documents ──────────────────────────────────────────────
 
 export function useDocuments(params?: string) {
   return useQuery<DocumentListItem[]>({
     queryKey: ['documents', params],
-    queryFn: () => api.get<DocumentListItem[]>(`/documents${params ? `?${params}` : ''}`),
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve(DEMO_DOCUMENTS_LIST as unknown as DocumentListItem[])
+      : api.get<DocumentListItem[]>(`/documents${params ? `?${params}` : ''}`),
   });
 }
 
 export function useDocument(id: string | undefined) {
   return useQuery<Document>({
     queryKey: ['documents', id],
-    queryFn: () => api.get<Document>(`/documents/${id}`),
-    enabled: !!id,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve((DEMO_DOCUMENTS_LIST.find(d => d.id === id) ?? DEMO_DOCUMENTS_LIST[0]) as unknown as Document)
+      : api.get<Document>(`/documents/${id}`),
+    enabled: AUTH_DISABLED ? true : !!id,
   });
 }
 
 export function useExpiringDocuments(days = 30) {
   return useQuery<DocumentListItem[]>({
     queryKey: ['documents', 'expiring', days],
-    queryFn: () => api.get<DocumentListItem[]>(`/documents/expiring?days=${days}`),
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve(DEMO_DOCUMENTS_LIST.filter(d => d.status === 'EXPIRING_SOON') as unknown as DocumentListItem[])
+      : api.get<DocumentListItem[]>(`/documents/expiring?days=${days}`),
   });
 }
 
 export function useCreateDocument() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Record<string, unknown>) =>
-      api.post<Document>('/documents', data),
+    mutationFn: (data: Record<string, unknown>) => {
+      if (AUTH_DISABLED) return Promise.resolve({ ...data, id: 'demo-' + Date.now() } as unknown as Document);
+      return api.post<Document>('/documents', data);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['documents'] }),
   });
 }
@@ -49,8 +60,10 @@ export function useCreateDocument() {
 export function useUpdateDocument() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
-      api.patch<Document>(`/documents/${id}`, data),
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) => {
+      if (AUTH_DISABLED) return Promise.resolve({ id, ...data } as unknown as Document);
+      return api.patch<Document>(`/documents/${id}`, data);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['documents'] }),
   });
 }
@@ -58,7 +71,10 @@ export function useUpdateDocument() {
 export function useSubmitForApproval() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.post<Document>(`/documents/${id}/submit-for-approval`),
+    mutationFn: (id: string) => {
+      if (AUTH_DISABLED) return Promise.resolve({ id } as unknown as Document);
+      return api.post<Document>(`/documents/${id}/submit-for-approval`);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['documents'] }),
   });
 }
@@ -66,7 +82,10 @@ export function useSubmitForApproval() {
 export function useApproveDocument() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.post<Document>(`/documents/${id}/approve`),
+    mutationFn: (id: string) => {
+      if (AUTH_DISABLED) return Promise.resolve({ id } as unknown as Document);
+      return api.post<Document>(`/documents/${id}/approve`);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['documents'] }),
   });
 }
@@ -74,7 +93,10 @@ export function useApproveDocument() {
 export function useDeleteDocument() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/documents/${id}`),
+    mutationFn: (id: string) => {
+      if (AUTH_DISABLED) return Promise.resolve({});
+      return api.delete(`/documents/${id}`);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['documents'] }),
   });
 }
@@ -84,16 +106,20 @@ export function useDeleteDocument() {
 export function useDocumentVersions(docId: string | undefined) {
   return useQuery<DocumentVersion[]>({
     queryKey: ['documents', docId, 'versions'],
-    queryFn: () => api.get<DocumentVersion[]>(`/documents/${docId}/versions`),
-    enabled: !!docId,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve([] as DocumentVersion[])
+      : api.get<DocumentVersion[]>(`/documents/${docId}/versions`),
+    enabled: AUTH_DISABLED ? true : !!docId,
   });
 }
 
 export function useCreateDocumentVersion() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ docId, data }: { docId: string; data: Record<string, unknown> }) =>
-      api.post<DocumentVersion>(`/documents/${docId}/versions`, data),
+    mutationFn: ({ docId, data }: { docId: string; data: Record<string, unknown> }) => {
+      if (AUTH_DISABLED) return Promise.resolve({ docId, ...data, id: 'demo-' + Date.now() } as unknown as DocumentVersion);
+      return api.post<DocumentVersion>(`/documents/${docId}/versions`, data);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['documents'] }),
   });
 }
@@ -103,23 +129,25 @@ export function useCreateDocumentVersion() {
 export function useDocumentAcknowledgments(docId: string | undefined) {
   return useQuery<DocumentAcknowledgment[]>({
     queryKey: ['documents', docId, 'acknowledgments'],
-    queryFn: () => api.get<DocumentAcknowledgment[]>(`/documents/${docId}/acknowledgments`),
-    enabled: !!docId,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve([] as DocumentAcknowledgment[])
+      : api.get<DocumentAcknowledgment[]>(`/documents/${docId}/acknowledgments`),
+    enabled: AUTH_DISABLED ? true : !!docId,
   });
 }
 
 export function useAcknowledgeDocument() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ docId, data }: { docId: string; data?: Record<string, unknown> }) =>
-      api.post<DocumentAcknowledgment>(`/documents/${docId}/acknowledge`, data),
+    mutationFn: ({ docId, data }: { docId: string; data?: Record<string, unknown> }) => {
+      if (AUTH_DISABLED) return Promise.resolve({ docId, ...data } as unknown as DocumentAcknowledgment);
+      return api.post<DocumentAcknowledgment>(`/documents/${docId}/acknowledge`, data);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['documents'] }),
   });
 }
 
 // ── Report ─────────────────────────────────────────────────
-
-const AUTH_DISABLED = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
 
 export function useDownloadDocumentReport() {
   return useMutation({

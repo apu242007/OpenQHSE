@@ -47,6 +47,8 @@ function resolveLocale(req: NextRequest): Locale {
 
 // ── Main middleware ───────────────────────────────────────────
 
+const AUTH_DISABLED = process.env.NEXT_PUBLIC_DISABLE_AUTH === "true";
+
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -59,6 +61,14 @@ export default async function middleware(req: NextRequest) {
     pathname === "/metrics"
   ) {
     return NextResponse.next();
+  }
+
+  // Demo mode — no auth, no redirects, just set locale header and proceed
+  if (AUTH_DISABLED) {
+    const locale = resolveLocale(req);
+    const response = NextResponse.next();
+    response.headers.set("x-next-intl-locale", locale);
+    return response;
   }
 
   // ── Auth ──────────────────────────────────────────────────

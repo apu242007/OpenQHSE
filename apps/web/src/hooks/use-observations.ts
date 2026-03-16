@@ -6,6 +6,11 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import {
+  DEMO_OBSERVATIONS_LIST, DEMO_OBSERVATIONS_TREND, DEMO_OBSERVATIONS_BY_CATEGORY,
+} from '@/lib/demo-data';
+
+const AUTH_DISABLED = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -98,23 +103,29 @@ export interface ObservationStats {
 export function useObservations(params?: string) {
   return useQuery<ObservationListResponse>({
     queryKey: ['observations', params],
-    queryFn: () =>
-      api.observations.list(params) as unknown as Promise<ObservationListResponse>,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve(DEMO_OBSERVATIONS_LIST as unknown as ObservationListResponse)
+      : api.observations.list(params) as unknown as Promise<ObservationListResponse>,
   });
 }
 
 export function useObservation(id: string | undefined) {
   return useQuery<Observation>({
     queryKey: ['observations', id],
-    queryFn: () => api.observations.get(id!) as unknown as Promise<Observation>,
-    enabled: !!id,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve((DEMO_OBSERVATIONS_LIST.items.find(o => o.id === id) ?? DEMO_OBSERVATIONS_LIST.items[0]) as unknown as Observation)
+      : api.observations.get(id!) as unknown as Promise<Observation>,
+    enabled: AUTH_DISABLED ? true : !!id,
   });
 }
 
 export function useCreateObservation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Record<string, unknown>) => api.observations.create(data),
+    mutationFn: (data: Record<string, unknown>) => {
+      if (AUTH_DISABLED) return Promise.resolve({ ...data, id: 'demo-' + Date.now() });
+      return api.observations.create(data);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['observations'] });
       qc.invalidateQueries({ queryKey: ['observations-stats'] });
@@ -125,8 +136,10 @@ export function useCreateObservation() {
 export function useUpdateObservation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
-      api.observations.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) => {
+      if (AUTH_DISABLED) return Promise.resolve({ id, ...data });
+      return api.observations.update(id, data);
+    },
     onSuccess: (_data, { id }) => {
       qc.invalidateQueries({ queryKey: ['observations'] });
       qc.invalidateQueries({ queryKey: ['observations', id] });
@@ -137,7 +150,10 @@ export function useUpdateObservation() {
 export function useReviewObservation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.observations.review(id),
+    mutationFn: (id: string) => {
+      if (AUTH_DISABLED) return Promise.resolve({ id });
+      return api.observations.review(id);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['observations'] }),
   });
 }
@@ -145,7 +161,10 @@ export function useReviewObservation() {
 export function useCloseObservation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.observations.close(id),
+    mutationFn: (id: string) => {
+      if (AUTH_DISABLED) return Promise.resolve({ id });
+      return api.observations.close(id);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['observations'] }),
   });
 }
@@ -155,18 +174,34 @@ export function useCloseObservation() {
 export function useObservationStats(params?: string) {
   return useQuery<ObservationStats>({
     queryKey: ['observations-stats', params],
-    queryFn: () =>
-      api.observations.statistics(params) as unknown as Promise<ObservationStats>,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve({
+          total: DEMO_OBSERVATIONS_LIST.total,
+          safe_count: DEMO_OBSERVATIONS_LIST.items.filter(o => o.type === 'SAFE').length,
+          unsafe_count: DEMO_OBSERVATIONS_LIST.items.filter(o => o.type === 'UNSAFE').length,
+          near_miss_count: DEMO_OBSERVATIONS_LIST.items.filter(o => o.type === 'NEAR_MISS_BEHAVIOR').length,
+          safe_pct: 40,
+          unsafe_pct: 40,
+          participation_index: 75,
+          monthly_trend: DEMO_OBSERVATIONS_TREND,
+          by_category: DEMO_OBSERVATIONS_BY_CATEGORY,
+          top_unsafe_areas: [
+            { area: 'Taller Mecánico', total: 12, unsafe_count: 6, unsafe_pct: 50 },
+            { area: 'Bodega Central', total: 8, unsafe_count: 3, unsafe_pct: 37.5 },
+          ],
+          period_start: '2024-07-01T00:00:00Z',
+          period_end: '2025-01-05T23:59:59Z',
+        } as ObservationStats)
+      : api.observations.statistics(params) as unknown as Promise<ObservationStats>,
   });
 }
 
 export function useUnsafeTrends(params?: string) {
   return useQuery<{ category: string; count: number }[]>({
     queryKey: ['observations-unsafe-trends', params],
-    queryFn: () =>
-      api.observations.unsafeTrends(params) as unknown as Promise<
-        { category: string; count: number }[]
-      >,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve(DEMO_OBSERVATIONS_BY_CATEGORY.map(c => ({ category: c.category, count: c.unsafe_count })))
+      : api.observations.unsafeTrends(params) as unknown as Promise<{ category: string; count: number }[]>,
   });
 }
 

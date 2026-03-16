@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useUIStore } from '@/lib/stores';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -14,14 +12,37 @@ const AUTH_DISABLED = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
 /**
  * Demo layout (AUTH_DISABLED=true / GitHub Pages).
  * Never calls useSession — SessionProvider is not mounted in this mode.
- * Immediately redirects to /templates since dashboard requires auth.
+ * Renders the full shell (Sidebar + Header + content) without auth.
  */
-function DashboardLayoutDemo({ children: _children }: { children: React.ReactNode }) {
-  const router = useRouter();
-  useEffect(() => {
-    router.replace('/templates');
-  }, [router]);
-  return null;
+function DashboardLayoutDemo({ children }: { children: React.ReactNode }) {
+  const { sidebarOpen } = useUIStore();
+  return (
+    <div className="flex h-screen overflow-hidden bg-background">
+      {/* Desktop Sidebar */}
+      <aside
+        className={cn(
+          'hidden border-r border-border bg-card transition-all duration-300 ease-in-out lg:block',
+          sidebarOpen ? 'w-64' : 'w-[72px]',
+        )}
+      >
+        <Sidebar />
+      </aside>
+
+      {/* Mobile Drawer */}
+      <MobileDrawer />
+
+      {/* Main Content Area */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Header */}
+        <Header />
+
+        {/* Page Content */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
 }
 
 /**

@@ -11,37 +11,48 @@ import type {
   EquipmentInspection,
   EquipmentListItem,
 } from '@/types/equipment';
+import { DEMO_EQUIPMENT_LIST } from '@/lib/demo-data';
+
+const AUTH_DISABLED = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
 
 // ── Equipment ──────────────────────────────────────────────
 
 export function useEquipmentList(params?: string) {
   return useQuery<EquipmentListItem[]>({
     queryKey: ['equipment', params],
-    queryFn: () => api.get<EquipmentListItem[]>(`/equipment${params ? `?${params}` : ''}`),
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve(DEMO_EQUIPMENT_LIST as unknown as EquipmentListItem[])
+      : api.get<EquipmentListItem[]>(`/equipment${params ? `?${params}` : ''}`),
   });
 }
 
 export function useEquipment(id: string | undefined) {
   return useQuery<Equipment>({
     queryKey: ['equipment', id],
-    queryFn: () => api.get<Equipment>(`/equipment/${id}`),
-    enabled: !!id,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve((DEMO_EQUIPMENT_LIST.find(e => e.id === id) ?? DEMO_EQUIPMENT_LIST[0]) as unknown as Equipment)
+      : api.get<Equipment>(`/equipment/${id}`),
+    enabled: AUTH_DISABLED ? true : !!id,
   });
 }
 
 export function useEquipmentByCode(code: string | undefined) {
   return useQuery<Equipment>({
     queryKey: ['equipment', 'code', code],
-    queryFn: () => api.get<Equipment>(`/equipment/by-code/${code}`),
-    enabled: !!code,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve((DEMO_EQUIPMENT_LIST.find(e => e.code === code) ?? DEMO_EQUIPMENT_LIST[0]) as unknown as Equipment)
+      : api.get<Equipment>(`/equipment/by-code/${code}`),
+    enabled: AUTH_DISABLED ? true : !!code,
   });
 }
 
 export function useCreateEquipment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Record<string, unknown>) =>
-      api.post<Equipment>('/equipment', data),
+    mutationFn: (data: Record<string, unknown>) => {
+      if (AUTH_DISABLED) return Promise.resolve({ ...data, id: 'demo-' + Date.now() } as unknown as Equipment);
+      return api.post<Equipment>('/equipment', data);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['equipment'] }),
   });
 }
@@ -49,8 +60,10 @@ export function useCreateEquipment() {
 export function useUpdateEquipment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
-      api.patch<Equipment>(`/equipment/${id}`, data),
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) => {
+      if (AUTH_DISABLED) return Promise.resolve({ id, ...data } as unknown as Equipment);
+      return api.patch<Equipment>(`/equipment/${id}`, data);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['equipment'] }),
   });
 }
@@ -58,7 +71,10 @@ export function useUpdateEquipment() {
 export function useDeleteEquipment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/equipment/${id}`),
+    mutationFn: (id: string) => {
+      if (AUTH_DISABLED) return Promise.resolve({});
+      return api.delete(`/equipment/${id}`);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['equipment'] }),
   });
 }
@@ -71,11 +87,12 @@ export function useEquipmentInspections(
 ) {
   return useQuery<EquipmentInspection[]>({
     queryKey: ['equipment', equipmentId, 'inspections', params],
-    queryFn: () =>
-      api.get<EquipmentInspection[]>(
-        `/equipment/${equipmentId}/inspections${params ? `?${params}` : ''}`,
-      ),
-    enabled: !!equipmentId,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve([] as EquipmentInspection[])
+      : api.get<EquipmentInspection[]>(
+          `/equipment/${equipmentId}/inspections${params ? `?${params}` : ''}`,
+        ),
+    enabled: AUTH_DISABLED ? true : !!equipmentId,
   });
 }
 
@@ -88,7 +105,10 @@ export function useCreateInspection() {
     }: {
       equipmentId: string;
       data: Record<string, unknown>;
-    }) => api.post<EquipmentInspection>(`/equipment/${equipmentId}/inspections`, data),
+    }) => {
+      if (AUTH_DISABLED) return Promise.resolve({ equipmentId, ...data, id: 'demo-' + Date.now() } as unknown as EquipmentInspection);
+      return api.post<EquipmentInspection>(`/equipment/${equipmentId}/inspections`, data);
+    },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ['equipment', vars.equipmentId, 'inspections'] });
       qc.invalidateQueries({ queryKey: ['equipment', vars.equipmentId] });

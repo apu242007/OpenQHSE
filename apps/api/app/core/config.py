@@ -59,7 +59,9 @@ class Settings(BaseSettings):
     nextauth_secret: str = "change-me-in-production"
     nextauth_url: str = "http://localhost:3000"
 
-    # ── Database (PostgreSQL 17) ──────────────────────────────
+    # ── Database ──────────────────────────────────────────────
+    # Set DATABASE_URL=sqlite+aiosqlite:///./openqhse.db for local dev (no Docker)
+    # Leave unset to build the PostgreSQL URL from individual components.
     postgres_host: str = "localhost"
     postgres_port: int = 5432
     postgres_user: str = "openqhse"
@@ -68,6 +70,11 @@ class Settings(BaseSettings):
     database_url: str | None = None
     database_pool_size: int = 10
     database_max_overflow: int = 20
+
+    # ── Auth bypass (local demo mode) ─────────────────────────
+    # When True, the API accepts all requests without a JWT token
+    # and attaches the first org_admin user as the current user.
+    disable_auth: bool = False
 
     @computed_field  # type: ignore[prop-decorator]
     @property

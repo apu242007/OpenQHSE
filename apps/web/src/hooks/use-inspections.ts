@@ -15,20 +15,30 @@ import type {
   Finding,
   BulkScheduleRequest,
 } from '@/types/inspections';
+import {
+  DEMO_INSPECTION_TEMPLATES, DEMO_INSPECTIONS_LIST, DEMO_INSPECTION_KPIS,
+} from '@/lib/demo-data';
+
+const AUTH_DISABLED = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
 
 // ── Templates ──────────────────────────────────────────────
 
 export function useInspectionTemplates(params?: string) {
   return useQuery<InspectionTemplate[]>({
     queryKey: ['inspections', 'templates', params],
-    queryFn: () => api.inspections.templates.list(params) as unknown as Promise<InspectionTemplate[]>,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve(DEMO_INSPECTION_TEMPLATES as unknown as InspectionTemplate[])
+      : api.inspections.templates.list(params) as unknown as Promise<InspectionTemplate[]>,
   });
 }
 
 export function useCreateInspectionTemplate() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Record<string, unknown>) => api.inspections.templates.create(data),
+    mutationFn: (data: Record<string, unknown>) => {
+      if (AUTH_DISABLED) return Promise.resolve({ ...data, id: 'demo-' + Date.now() });
+      return api.inspections.templates.create(data);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['inspections', 'templates'] }),
   });
 }
@@ -38,22 +48,29 @@ export function useCreateInspectionTemplate() {
 export function useInspections(params?: string) {
   return useQuery<InspectionListResponse>({
     queryKey: ['inspections', params],
-    queryFn: () => api.inspections.list(params) as unknown as Promise<InspectionListResponse>,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve(DEMO_INSPECTIONS_LIST as unknown as InspectionListResponse)
+      : api.inspections.list(params) as unknown as Promise<InspectionListResponse>,
   });
 }
 
 export function useInspection(id: string | undefined) {
   return useQuery<Inspection>({
     queryKey: ['inspections', id],
-    queryFn: () => api.inspections.get(id!) as unknown as Promise<Inspection>,
-    enabled: !!id,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve((DEMO_INSPECTIONS_LIST.items.find(i => i.id === id) ?? DEMO_INSPECTIONS_LIST.items[0]) as unknown as Inspection)
+      : api.inspections.get(id!) as unknown as Promise<Inspection>,
+    enabled: AUTH_DISABLED ? true : !!id,
   });
 }
 
 export function useCreateInspection() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Record<string, unknown>) => api.inspections.create(data),
+    mutationFn: (data: Record<string, unknown>) => {
+      if (AUTH_DISABLED) return Promise.resolve({ ...data, id: 'demo-' + Date.now() });
+      return api.inspections.create(data);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['inspections'] }),
   });
 }
@@ -61,8 +78,10 @@ export function useCreateInspection() {
 export function useUpdateInspection() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
-      api.inspections.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) => {
+      if (AUTH_DISABLED) return Promise.resolve({ id, ...data });
+      return api.inspections.update(id, data);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['inspections'] }),
   });
 }
@@ -72,7 +91,9 @@ export function useUpdateInspection() {
 export function useInspectionKPIs() {
   return useQuery<InspectionKPIs>({
     queryKey: ['inspections', 'kpis'],
-    queryFn: () => api.get<InspectionKPIs>('/inspections/kpis'),
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve(DEMO_INSPECTION_KPIS as unknown as InspectionKPIs)
+      : api.get<InspectionKPIs>('/inspections/kpis'),
   });
 }
 
@@ -81,8 +102,9 @@ export function useInspectionKPIs() {
 export function useInspectionCalendar(month?: string) {
   return useQuery<InspectionCalendarEvent[]>({
     queryKey: ['inspections', 'calendar', month],
-    queryFn: () =>
-      api.get<InspectionCalendarEvent[]>(`/inspections/calendar${month ? `?month=${month}` : ''}`),
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve([] as InspectionCalendarEvent[])
+      : api.get<InspectionCalendarEvent[]>(`/inspections/calendar${month ? `?month=${month}` : ''}`),
   });
 }
 
@@ -91,7 +113,9 @@ export function useInspectionCalendar(month?: string) {
 export function useOverdueInspections() {
   return useQuery<Inspection[]>({
     queryKey: ['inspections', 'overdue'],
-    queryFn: () => api.get<Inspection[]>('/inspections/overdue'),
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve([] as Inspection[])
+      : api.get<Inspection[]>('/inspections/overdue'),
   });
 }
 
@@ -100,8 +124,10 @@ export function useOverdueInspections() {
 export function useBulkScheduleInspections() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: BulkScheduleRequest) =>
-      api.post<{ created: number }>('/inspections/schedule-bulk', data),
+    mutationFn: (data: BulkScheduleRequest) => {
+      if (AUTH_DISABLED) return Promise.resolve({ created: 0 });
+      return api.post<{ created: number }>('/inspections/schedule-bulk', data);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inspections'] });
       qc.invalidateQueries({ queryKey: ['inspections', 'calendar'] });
@@ -114,7 +140,10 @@ export function useBulkScheduleInspections() {
 export function useStartInspection() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.post<Inspection>(`/inspections/${id}/start`),
+    mutationFn: (id: string) => {
+      if (AUTH_DISABLED) return Promise.resolve({ id } as unknown as Inspection);
+      return api.post<Inspection>(`/inspections/${id}/start`);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['inspections'] }),
   });
 }
@@ -122,7 +151,10 @@ export function useStartInspection() {
 export function useCompleteInspection() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.post<Inspection>(`/inspections/${id}/complete`),
+    mutationFn: (id: string) => {
+      if (AUTH_DISABLED) return Promise.resolve({ id } as unknown as Inspection);
+      return api.post<Inspection>(`/inspections/${id}/complete`);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['inspections'] }),
   });
 }
@@ -132,16 +164,20 @@ export function useCompleteInspection() {
 export function useInspectionFindings(inspectionId: string | undefined) {
   return useQuery<Finding[]>({
     queryKey: ['inspections', inspectionId, 'findings'],
-    queryFn: () => api.inspections.findings.list(inspectionId!) as unknown as Promise<Finding[]>,
-    enabled: !!inspectionId,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve([] as Finding[])
+      : api.inspections.findings.list(inspectionId!) as unknown as Promise<Finding[]>,
+    enabled: AUTH_DISABLED ? true : !!inspectionId,
   });
 }
 
 export function useCreateFinding() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ inspectionId, data }: { inspectionId: string; data: Record<string, unknown> }) =>
-      api.inspections.findings.create(inspectionId, data),
+    mutationFn: ({ inspectionId, data }: { inspectionId: string; data: Record<string, unknown> }) => {
+      if (AUTH_DISABLED) return Promise.resolve({ inspectionId, ...data, id: 'demo-' + Date.now() });
+      return api.inspections.findings.create(inspectionId, data);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['inspections'] }),
   });
 }

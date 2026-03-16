@@ -6,7 +6,7 @@ import uuid
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, String, event, false, func
-from sqlalchemy.dialects.postgresql import UUID
+from app.models._compat import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base

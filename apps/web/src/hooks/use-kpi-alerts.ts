@@ -6,6 +6,9 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { DEMO_KPI_ALERT_RULES, DEMO_KPI_ALERTS } from '@/lib/demo-data';
+
+const AUTH_DISABLED = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -67,16 +70,23 @@ export function useKPIAlertRules(isActive?: boolean) {
   const params = isActive !== undefined ? `is_active=${isActive}` : undefined;
   return useQuery<KPIAlertRule[]>({
     queryKey: ['kpi-alert-rules', isActive],
-    queryFn: () =>
-      api.analytics.kpiAlertRules.list(params) as unknown as Promise<KPIAlertRule[]>,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve(
+          (isActive !== undefined
+            ? DEMO_KPI_ALERT_RULES.filter(r => r.is_active === isActive)
+            : DEMO_KPI_ALERT_RULES) as unknown as KPIAlertRule[]
+        )
+      : api.analytics.kpiAlertRules.list(params) as unknown as Promise<KPIAlertRule[]>,
   });
 }
 
 export function useCreateKPIAlertRule() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Record<string, unknown>) =>
-      api.analytics.kpiAlertRules.create(data),
+    mutationFn: (data: Record<string, unknown>) => {
+      if (AUTH_DISABLED) return Promise.resolve({ ...data, id: 'demo-' + Date.now() });
+      return api.analytics.kpiAlertRules.create(data);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['kpi-alert-rules'] }),
   });
 }
@@ -84,8 +94,10 @@ export function useCreateKPIAlertRule() {
 export function useUpdateKPIAlertRule() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
-      api.analytics.kpiAlertRules.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) => {
+      if (AUTH_DISABLED) return Promise.resolve({ id, ...data });
+      return api.analytics.kpiAlertRules.update(id, data);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['kpi-alert-rules'] }),
   });
 }
@@ -93,7 +105,10 @@ export function useUpdateKPIAlertRule() {
 export function useDeleteKPIAlertRule() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.analytics.kpiAlertRules.delete(id),
+    mutationFn: (id: string) => {
+      if (AUTH_DISABLED) return Promise.resolve() as Promise<void>;
+      return api.analytics.kpiAlertRules.delete(id);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['kpi-alert-rules'] }),
   });
 }
@@ -103,16 +118,19 @@ export function useDeleteKPIAlertRule() {
 export function useKPIAlerts(params?: string) {
   return useQuery<KPIAlert[]>({
     queryKey: ['kpi-alerts', params],
-    queryFn: () =>
-      api.analytics.kpiAlerts.list(params) as unknown as Promise<KPIAlert[]>,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve(DEMO_KPI_ALERTS as unknown as KPIAlert[])
+      : api.analytics.kpiAlerts.list(params) as unknown as Promise<KPIAlert[]>,
   });
 }
 
 export function useAcknowledgeKPIAlert() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, notes }: { id: string; notes?: string }) =>
-      api.analytics.kpiAlerts.acknowledge(id, notes),
+    mutationFn: ({ id, notes }: { id: string; notes?: string }) => {
+      if (AUTH_DISABLED) return Promise.resolve({ id, notes });
+      return api.analytics.kpiAlerts.acknowledge(id, notes);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['kpi-alerts'] }),
   });
 }
@@ -120,7 +138,10 @@ export function useAcknowledgeKPIAlert() {
 export function useResolveKPIAlert() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.analytics.kpiAlerts.resolve(id),
+    mutationFn: (id: string) => {
+      if (AUTH_DISABLED) return Promise.resolve({ id });
+      return api.analytics.kpiAlerts.resolve(id);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['kpi-alerts'] }),
   });
 }

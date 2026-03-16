@@ -1,16 +1,14 @@
-"""Alembic environment configuration for PostgreSQL.
+"""Alembic environment configuration.
 
-Uses psycopg2 (sync) for migrations to avoid asyncpg/Python 3.13 Windows
-compatibility issues. The application runtime still uses asyncpg via SQLAlchemy.
+Supports both PostgreSQL (uses psycopg2 sync driver) and
+SQLite (uses the stdlib sqlite3 driver) based on DATABASE_URL.
 """
 
 from logging.config import fileConfig
 
 from sqlalchemy import pool
 
-# Import the models package so every model is registered with Base.metadata.
-# The __init__.py re-exports all models across all domains.
-import app.models  # noqa: F401
+import app.models  # noqa: F401  — registers all models with Base.metadata
 from alembic import context
 from app.core.config import get_settings
 from app.core.database import Base
@@ -23,8 +21,16 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-# Use psycopg2 (sync) URL for Alembic — swap asyncpg driver
-_db_url = settings.effective_database_url.replace("postgresql+asyncpg://", "postgresql+psycopg2://")
+_raw_url = settings.effective_database_url
+_IS_SQLITE = _raw_url.startswith("sqlite")
+
+if _IS_SQLITE:
+    # Strip aiosqlite driver for sync Alembic usage
+    _db_url = _raw_url.replace("sqlite+aiosqlite", "sqlite")
+else:
+    # Swap asyncpg → psycopg2 for sync Alembic usage
+    _db_url = _raw_url.replace("postgresql+asyncpg://", "postgresql+psycopg2://")
+
 config.set_main_option("sqlalchemy.url", _db_url)
 
 
@@ -36,30 +42,39 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        render_as_batch=_IS_SQLITE,  # required for ALTER TABLE in SQLite
     )
     with context.begin_transaction():
         context.run_migrations()
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode (sync psycopg2)."""
+    """Run migrations in 'online' mode."""
     from sqlalchemy import create_engine
 
-    connectable = create_engine(
-        _db_url,
-        poolclass=pool.NullPool,
-        connect_args={"client_encoding": "utf8"},
-    )
+    if _IS_SQLITE:
+        connectable = create_engine(
+            _db_url,
+            poolclass=pool.NullPool,
+            connect_args={"check_same_thread": False},
+        )
+        connect_opts: dict = {}
+    else:
+        connectable = create_engine(
+            _db_url,
+            poolclass=pool.NullPool,
+            connect_args={"client_encoding": "utf8"},
+        )
+        connect_opts = {}
+
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            render_as_batch=_IS_SQLITE,
+        )
         with context.begin_transaction():
             context.run_migrations()
-
-
-if context.is_offline_mode():
-    run_migrations_offline()
-else:
-    run_migrations_online()
 
 
 if context.is_offline_mode():

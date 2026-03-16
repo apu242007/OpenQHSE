@@ -12,20 +12,27 @@ import type {
   IncidentStatistics,
   CorrectiveAction,
 } from '@/types/incidents';
+import { DEMO_INCIDENTS_LIST, DEMO_INCIDENT_STATISTICS, DEMO_ACTIONS_LIST } from '@/lib/demo-data';
+
+const AUTH_DISABLED = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
 
 // ── Incidents ──────────────────────────────────────────────
 
 export function useIncidents(params?: string) {
   return useQuery<IncidentListResponse>({
     queryKey: ['incidents', params],
-    queryFn: () => api.incidents.list(params) as unknown as Promise<IncidentListResponse>,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve(DEMO_INCIDENTS_LIST as unknown as IncidentListResponse)
+      : api.incidents.list(params) as unknown as Promise<IncidentListResponse>,
   });
 }
 
 export function useIncident(id: string | undefined) {
   return useQuery<Incident>({
     queryKey: ['incidents', id],
-    queryFn: () => api.incidents.get(id!) as unknown as Promise<Incident>,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve((DEMO_INCIDENTS_LIST.items.find(i => i.id === id) ?? DEMO_INCIDENTS_LIST.items[0]) as unknown as Incident)
+      : api.incidents.get(id!) as unknown as Promise<Incident>,
     enabled: !!id,
   });
 }
@@ -33,7 +40,10 @@ export function useIncident(id: string | undefined) {
 export function useCreateIncident() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Record<string, unknown>) => api.incidents.create(data),
+    mutationFn: (data: Record<string, unknown>) => {
+      if (AUTH_DISABLED) return Promise.resolve({ ...data, id: 'demo-' + Date.now() });
+      return api.incidents.create(data);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['incidents'] }),
   });
 }
@@ -41,8 +51,10 @@ export function useCreateIncident() {
 export function useUpdateIncident() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
-      api.incidents.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) => {
+      if (AUTH_DISABLED) return Promise.resolve({ id, ...data });
+      return api.incidents.update(id, data);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['incidents'] }),
   });
 }
@@ -50,7 +62,10 @@ export function useUpdateIncident() {
 export function useDeleteIncident() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/incidents/${id}`),
+    mutationFn: (id: string) => {
+      if (AUTH_DISABLED) return Promise.resolve({});
+      return api.delete(`/incidents/${id}`);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['incidents'] }),
   });
 }
@@ -60,7 +75,9 @@ export function useDeleteIncident() {
 export function useIncidentStatistics(params?: string) {
   return useQuery<IncidentStatistics>({
     queryKey: ['incidents', 'statistics', params],
-    queryFn: () => api.get<IncidentStatistics>(`/incidents/statistics${params ? `?${params}` : ''}`),
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve(DEMO_INCIDENT_STATISTICS as unknown as IncidentStatistics)
+      : api.get<IncidentStatistics>(`/incidents/statistics${params ? `?${params}` : ''}`),
   });
 }
 
@@ -105,8 +122,10 @@ export function useReopenIncident() {
 export function useIncidentActions(incidentId: string | undefined) {
   return useQuery<CorrectiveAction[]>({
     queryKey: ['incidents', incidentId, 'actions'],
-    queryFn: () => api.incidents.actions.list(incidentId!) as unknown as Promise<CorrectiveAction[]>,
-    enabled: !!incidentId,
+    queryFn: () => AUTH_DISABLED
+      ? Promise.resolve(DEMO_ACTIONS_LIST as unknown as CorrectiveAction[])
+      : api.incidents.actions.list(incidentId!) as unknown as Promise<CorrectiveAction[]>,
+    enabled: AUTH_DISABLED ? true : !!incidentId,
   });
 }
 
@@ -157,6 +176,7 @@ export function useAddTimelineEvent() {
 export function useDownloadIncidentReport() {
   return useMutation({
     mutationFn: async (id: string) => {
+      if (AUTH_DISABLED) throw new Error('Descarga de reportes no disponible en modo demo.');
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/incidents/${id}/report`,
         {

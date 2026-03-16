@@ -5,38 +5,61 @@ from uuid import UUID
 
 from fastapi import Depends, HTTPException, Query, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from joserfc.errors import JoseError
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.context import current_org_id, current_user_id
-from app.core.database import get_db
-from app.core.security import decode_token, verify_token_type
+from app.core.database import _IS_SQLITE, get_db
 from app.models.user import User, UserRole, UserStatus
 from app.schemas.common import PaginationParams
 
+settings = get_settings()
 bearer_scheme = HTTPBearer(auto_error=False)
 
 # Redis key prefix for jti (JWT ID) blacklist.
-# Populated by auth.py on logout and by the token rotation logic on refresh.
 JTI_BLACKLIST_PREFIX = "token:jti:blacklist:"
+
+# ── Demo user UUID — seeded by seed_local.py ──────────────────
+DEMO_USER_ID = "00000000-0000-0000-0000-000000000001"
 
 
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> User:
-    """Extrae y valida el usuario actual desde el JWT bearer token.
+    """Extrae y valida el usuario actual.
 
-    Validation order (fail-fast):
-    1. Bearer token present
-    2. Signature + expiry (joserfc)
-    3. Token type == "access"
-    4. jti NOT in Redis blacklist (prevents use of revoked tokens after logout)
-    5. User exists in DB and is ACTIVE
-    6. Set ContextVars (current_user_id, current_org_id) for SQLAlchemy events + RLS
-    7. Activate PostgreSQL RLS for this session via SET LOCAL
+    When DISABLE_AUTH=true (local demo mode), skips JWT validation
+    and returns the first active org_admin user from the database.
     """
+    # ── Demo mode (no auth) ───────────────────────────────────
+    if settings.disable_auth:
+        result = await db.execute(
+            select(User).where(
+                User.is_deleted.is_(False),
+                User.status == UserStatus.ACTIVE,
+            ).limit(1)
+        )
+        user = result.scalar_one_or_none()
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Demo user not found. Run: python seed_local.py",
+            )
+        current_user_id.set(str(user.id))
+        current_org_id.set(str(user.organization_id))
+        if not _IS_SQLITE:
+            await db.execute(
+                text(f"SET LOCAL app.current_org_id = '{user.organization_id!s}'")
+            )
+        return user
+
+    # ── Full auth ─────────────────────────────────────────────
+    from joserfc.errors import JoseError
+
+    from app.core.security import decode_token, verify_token_type
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -58,9 +81,6 @@ async def get_current_user(
         raise credentials_exception from err
 
     # ── jti blacklist check ───────────────────────────────────
-    # If the user has logged out (or their token was explicitly revoked), the jti
-    # is stored in Redis until the original token's expiry.  Any request carrying
-    # a blacklisted jti is rejected even if the JWT signature is still valid.
     jti: str | None = payload.get("jti")
     if jti:
         try:
@@ -76,11 +96,9 @@ async def get_current_user(
         except HTTPException:
             raise
         except Exception:
-            # Redis unavailable — fail open (log and continue) to avoid a Redis
-            # outage taking down the entire API.  Security trade-off: documented.
-            pass
+            pass  # Redis unavailable — fail open
 
-    # ── DB verification — ALWAYS verify in DB, never trust JWT alone ──────────
+    # ── DB verification ───────────────────────────────────────
     result = await db.execute(select(User).where(User.id == user_id, User.is_deleted.is_(False)))
     user = result.scalar_one_or_none()
 
@@ -93,23 +111,12 @@ async def get_current_user(
             detail="User account is not active",
         )
 
-    # ── Set ContextVars for SQLAlchemy events (base.py) and RLS (database.py) ─
     current_user_id.set(str(user.id))
     current_org_id.set(str(user.organization_id))
 
-    # ── Expose org_id in request.state for rate limiting ─────────────────────
-    # This allows the limiter key function to key by org, not by IP, so that
-    # organisations behind the same reverse-proxy don't share a rate limit bucket.
-    # request is not directly available here — the org_id is set via ContextVar;
-    # the rate_limit key function reads it from there via current_org_id.get().
-
-    # ── Activate RLS for this request's DB session ────────────────────────────
-    # SET LOCAL does not support parameterized values ($1 / :param), so we must
-    # embed the org_id directly.  It is safe to do so because:
-    #   1. org_id is a UUID sourced from the DB (not user input)
-    #   2. We validate it as UUID above, so there is no SQL-injection risk.
-    org_id_str = str(user.organization_id)
-    await db.execute(text(f"SET LOCAL app.current_org_id = '{org_id_str}'"))
+    if not _IS_SQLITE:
+        org_id_str = str(user.organization_id)
+        await db.execute(text(f"SET LOCAL app.current_org_id = '{org_id_str}'"))
 
     return user
 
@@ -122,6 +129,8 @@ def require_roles(*roles: UserRole) -> Any:  # noqa: ANN201
     """Dependency factory que restringe el acceso a roles específicos."""
 
     async def _check_role(current_user: CurrentUser) -> User:
+        if settings.disable_auth:
+            return current_user  # skip role check in demo mode
         if current_user.role not in roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -145,34 +154,20 @@ ManagerUser = Annotated[
 
 
 def require_site_access(site_id_param: str = "site_id") -> Any:  # noqa: ANN201
-    """Dependency factory: verifica que el usuario pertenece al sitio solicitado.
-
-    Managers y superiores tienen acceso a todos los sitios de su organización.
-    Workers, Inspectors y Supervisors solo acceden a sus sitios asignados.
-
-    Usage:
-        @router.get("/{site_id}/permits")
-        async def list_permits(
-            site_id: UUID,
-            current_user: Annotated[User, require_site_access()],
-        ):
-    """
+    """Dependency factory: verifica que el usuario pertenece al sitio solicitado."""
 
     async def _check(
         current_user: CurrentUser,
         db: DBSession,
     ) -> User:
-        # super_admin, org_admin y manager tienen acceso completo dentro de su org
+        if settings.disable_auth:
+            return current_user
         unrestricted = {UserRole.SUPER_ADMIN, UserRole.ORG_ADMIN, UserRole.MANAGER}
         if current_user.role in unrestricted:
             return current_user
-        # Para otros roles, verificar que el site_id esté en sus sitios asignados
         assigned = getattr(current_user, "site_ids", None) or []
         if not assigned:
-            # Si no tiene restricción de sitios, acceso completo dentro de la org
             return current_user
-        # site_id viene como path param — se lee del user's assigned_sites
-        # La validación real se hace a nivel de query (RLS cubre la org, esto cubre el site)
         return current_user
 
     return Depends(_check)

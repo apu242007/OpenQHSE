@@ -1,4 +1,8 @@
-"""Async database engine, session management y soporte para PostgreSQL RLS."""
+"""Async database engine, session management.
+
+Supports both PostgreSQL (production) and SQLite (local dev, no Docker needed).
+Set DATABASE_URL=sqlite+aiosqlite:///./openqhse.db to use SQLite.
+"""
 
 from __future__ import annotations
 
@@ -20,15 +24,26 @@ if TYPE_CHECKING:
 
 settings = get_settings()
 
+_db_url = settings.effective_database_url
+_IS_SQLITE = _db_url.startswith("sqlite")
+
 # ── Async engine (FastAPI) ────────────────────────────────────
-engine = create_async_engine(
-    settings.effective_database_url,
-    echo=settings.debug,
-    pool_size=settings.database_pool_size,
-    max_overflow=settings.database_max_overflow,
-    pool_pre_ping=True,
-    pool_recycle=300,
-)
+
+if _IS_SQLITE:
+    engine = create_async_engine(
+        _db_url,
+        echo=settings.debug,
+        connect_args={"check_same_thread": False},
+    )
+else:
+    engine = create_async_engine(
+        _db_url,
+        echo=settings.debug,
+        pool_size=settings.database_pool_size,
+        max_overflow=settings.database_max_overflow,
+        pool_pre_ping=True,
+        pool_recycle=300,
+    )
 
 async_session_factory = async_sessionmaker(
     engine,
@@ -37,14 +52,24 @@ async_session_factory = async_sessionmaker(
 )
 
 # ── Sync engine (Celery tasks) ────────────────────────────────
-_sync_url = settings.effective_database_url.replace("postgresql+asyncpg", "postgresql+psycopg2")
-sync_engine = create_engine(
-    _sync_url,
-    echo=settings.debug,
-    pool_size=5,
-    max_overflow=5,
-    pool_pre_ping=True,
-)
+
+if _IS_SQLITE:
+    _sync_url = _db_url.replace("sqlite+aiosqlite", "sqlite")
+    sync_engine = create_engine(
+        _sync_url,
+        echo=settings.debug,
+        connect_args={"check_same_thread": False},
+    )
+else:
+    _sync_url = _db_url.replace("postgresql+asyncpg", "postgresql+psycopg2")
+    sync_engine = create_engine(
+        _sync_url,
+        echo=settings.debug,
+        pool_size=5,
+        max_overflow=5,
+        pool_pre_ping=True,
+    )
+
 sync_session_factory = sessionmaker(bind=sync_engine, expire_on_commit=False)
 
 
@@ -57,20 +82,20 @@ class Base(DeclarativeBase):
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """FastAPI dependency que yields una sesión de base de datos.
 
-    Setea SET LOCAL app.current_org_id para activar las políticas RLS
-    de PostgreSQL. Este valor es seteado por deps.get_current_user() via
-    ContextVar antes de que get_db() sea invocado por la request.
+    For PostgreSQL: sets SET LOCAL app.current_org_id for RLS.
+    For SQLite: skips the RLS command (not supported).
     """
     from app.core.context import current_org_id  # evitar import circular
 
     async with async_session_factory() as session:
         try:
-            org_id = current_org_id.get()
-            if org_id:
-                await session.execute(
-                    text("SET LOCAL app.current_org_id = :org_id"),
-                    {"org_id": org_id},
-                )
+            if not _IS_SQLITE:
+                org_id = current_org_id.get()
+                if org_id:
+                    await session.execute(
+                        text("SET LOCAL app.current_org_id = :org_id"),
+                        {"org_id": org_id},
+                    )
             yield session
             await session.commit()
         except Exception:
@@ -81,20 +106,14 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db() -> None:
-    """Crea todas las tablas (solo para desarrollo/tests)."""
+    """Crea todas las tablas (desarrollo/tests/SQLite local)."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
 
 @asynccontextmanager
 async def get_db_context() -> AsyncGenerator[AsyncSession, None]:
-    """Async context manager yielding a database session for use in Celery tasks.
-
-    Usage::
-
-        async with get_db_context() as db:
-            ...
-    """
+    """Async context manager yielding a database session for Celery tasks."""
     async with async_session_factory() as session:
         try:
             yield session
